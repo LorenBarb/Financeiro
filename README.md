@@ -1,6 +1,6 @@
 # 🚀 Controle Financeiro - O Dono do Seu Dinheiro é VOCÊ! 🚀
 
-![Dashboard Incrível do Sistema](https://i.imgur.com/your-image-id.png) ## 🔥 QUE PROJETO É ESSE?! 🔥
+ ## 🔥 QUE PROJETO É ESSE?! 🔥
 
 Chega de planilhas complicadas e apps sem graça! Este é o **SEU** sistema de controle financeiro pessoal, criado do zero para ser **poderoso, rápido e com um visual SENSACIONAL**. Aqui, você não apenas anota gastos, você TOMA O CONTROLE da sua vida financeira de um jeito que nunca viu antes!
 
