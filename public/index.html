@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Controle Financeiro</title>
+    <!-- FAVICON ADICIONADO AQUI.... -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2215%22 fill=%22%23111827%22/><text x=%2250%22 y=%2255%22 font-size=%2250%22 fill=%22%23F59E0B%22 font-family=%22Inter, sans-serif%22 font-weight=%22bold%22 text-anchor=%22middle%22>CF</text></svg>">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Configuração de cores customizadas para o Tailwind CSS (Dark Mode)
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#1F2937',      // Cinza Escuro (Textos nos cards)
+                        'primary-accent': '#FFFFFF', // Branco (Texto nos botões primários)
+                        'secondary': '#F59E0B',    // Dourado (Destaque)
+                        'positive': '#16A34A',    // Verde (Sucesso)
+                        'negative': '#DC2626',    // Vermelho (Negativo)
+                        'neutral': '#3B82F6',     // Azul (Neutro/Informativo)
+                        'dark-bg': '#111827',       // Fundo Escuro
+                        'card-bg': '#FFFFFF',     // Fundo dos Cards
+                        'light-text': '#F9FAFB',    // Texto claro para fundos escuros
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-button { 
+            padding-top: 1rem; padding-bottom: 1rem; padding-left: 0.25rem; padding-right: 0.25rem; 
+            border-bottom-width: 2px; border-color: transparent; 
+            font-weight: 500; font-size: 0.875rem; line-height: 1.25rem;
+            color: #9CA3AF; /* Tom de cinza mais claro para o texto inativo */
+        }
+        .tab-button:hover { 
+            border-bottom-color: #4B5563; /* Borda cinza no hover */
+            color: #F9FAFB; /* Texto branco no hover */
+        }
+        .tab-button.active { 
+            border-bottom-color: #F59E0B; /* Dourado para a aba ativa */
+            color: #F59E0B; 
+            font-weight: 600; 
+        }
+        .modal { transition: opacity 0.25s ease; }
+        .item-checkbox {
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body class="bg-dark-bg text-light-text">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-light-text">Controle Financeiro</h1>
+            <p class="text-gray-400 mt-2">Sua vida financeira organizada em um só lugar.</p>
+        </header>
+
+        <!-- ABAS DE NAVEGAÇÃO -->
+        <div class="mb-6 border-b border-gray-700">
+            <nav class="flex space-x-4" aria-label="Tabs">
+                <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+                <button class="tab-button" data-tab="entradas">Entradas</button>
+                <button class="tab-button" data-tab="saidas">Saídas</button>
+                <button class="tab-button" data-tab="relatorios">Relatórios</button>
+            </nav>
+        </div>
+
+        <main>
+            <!-- ABA DASHBOARD -->
+            <div id="dashboard" class="tab-content space-y-6">
+                <!-- Filtros do Dashboard -->
+                <div class="bg-card-bg text-primary p-4 rounded-xl shadow-lg flex flex-wrap justify-center items-center gap-4" id="dashboardFiltersContainer">
+                    <!-- Conteúdo dos filtros será gerado via JS -->
+                </div>
+
+                <!-- Cards Principais -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                        <h3 class="text-gray-600 font-medium">Entradas</h3>
+                        <p id="totalEntradasPeriodo" class="text-3xl font-bold text-positive">R$ 0,00</p>
+                    </div>
+                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                        <h3 class="text-gray-600 font-medium">Pagamentos Realizados</h3>
+                        <p id="totalSaidasPagasPeriodo" class="text-3xl font-bold text-yellow-500">R$ 0,00</p>
+                    </div>
+                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                        <h3 class="text-gray-600 font-medium">Valores em Aberto</h3>
+                        <p id="totalSaidasAbertoPeriodo" class="text-3xl font-bold text-negative">R$ 0,00</p>
+                    </div>
+                     <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                        <h3 class="text-gray-600 font-medium">Saldo Atual</h3>
+                        <p id="saldoAtualGeral" class="text-3xl font-bold">R$ 0,00</p>
+                    </div>
+                </div>
+                
+                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                         <h3 class="text-lg font-semibold mb-4">Balanço do Período (<span class="periodo-label"></span>)</h3>
+                        <div class="h-80"><canvas id="comparativoChart"></canvas></div>
+                    </div>
+                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                        <h3 class="text-lg font-semibold mb-4">Resumo e Metas (<span class="periodo-label"></span>)</h3>
+                        <div id="resumoMetasContainer" class="space-y-4">
+                            <!-- Conteúdo gerado via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                        <h3 class="text-lg font-semibold mb-4">Fontes de Renda (<span class="periodo-label"></span>)</h3>
+                        <div class="h-80"><canvas id="entradasChart"></canvas></div>
+                    </div>
+                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                        <h3 class="text-lg font-semibold mb-4">Categorias de Saídas (Total) (<span class="periodo-label"></span>)</h3>
+                        <div class="h-80"><canvas id="saidasChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="entradas" class="tab-content hidden"></div>
+            <div id="saidas" class="tab-content hidden"></div>
+            <div id="relatorios" class="tab-content hidden"></div>
+            
+            <!-- MODAIS -->
+            <div id="editEntradaModal" class="modal fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50"></div>
+            <div id="editSaidaModal" class="modal fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50"></div>
+            <div id="deleteConfirmModal" class="modal fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50"></div>
+            <div id="detalhesFuturosModal" class="modal fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50"></div>
+        </main>
+    </div>
+
+    <script>
+        // --- ESTADO GLOBAL ---
+        let entradas = [];
+        let saidas = [];
+        const hoje = new Date();
+        let filtroDashboardState = { month: hoje.getMonth(), year: hoje.getFullYear() };
+        let filtroEntradasState = { month: hoje.getMonth(), year: hoje.getFullYear(), source: 'todos' };
+        let filtroSaidasState = { month: hoje.getMonth(), year: hoje.getFullYear(), category: 'todas', status: 'todos' };
+        let selectedEntradas = new Set();
+        let selectedSaidas = new Set();
+       
+        const tabs = {
+            dashboard: document.getElementById('dashboard'),
+            entradas: document.getElementById('entradas'),
+            saidas: document.getElementById('saidas'),
+            relatorios: document.getElementById('relatorios'),
+        };
+        const modals = {
+            editEntrada: document.getElementById('editEntradaModal'),
+            editSaida: document.getElementById('editSaidaModal'),
+            deleteConfirm: document.getElementById('deleteConfirmModal'),
+            detalhesFuturos: document.getElementById('detalhesFuturosModal'),
+        };
+
+        // --- FUNÇÕES UTILITÁRIAS ---
+        const formatarDinheiro = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const formatarData = (dataStr) => new Date(dataStr).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+        const hojeISO = () => new Date().toISOString().split('T')[0];
+        
+        Chart.register(ChartDataLabels);
+
+        const getContrastColor = (hexcolor) => {
+            if (!hexcolor) return '#000000';
+            if (hexcolor.startsWith('#')) hexcolor = hexcolor.slice(1);
+            if (hexcolor.length === 3) hexcolor = hexcolor.split('').map(char => char + char).join('');
+            
+            const r = parseInt(hexcolor.substr(0, 2), 16);
+            const g = parseInt(hexcolor.substr(2, 2), 16);
+            const b = parseInt(hexcolor.substr(4, 2), 16);
+            const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            return (yiq >= 128) ? '#000000' : '#ffffff';
+        };
+
+        // --- LÓGICA DE API (CRUD) ---
+        const API_URL = '/api';
+
+        async function carregarDados() {
+            try {
+                const [resEntradas, resSaidas] = await Promise.all([
+                    fetch(`${API_URL}/entradas`),
+                    fetch(`${API_URL}/saidas`)
+                ]);
+                entradas = await resEntradas.json();
+                saidas = await resSaidas.json();
+                renderizarFiltrosDashboard();
+                atualizarTudo();
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                alert("Não foi possível carregar os dados do servidor.");
+            }
+        }
+        
+        async function adicionarEntrada(data) {
+            try {
+                const resEntrada = await fetch(`${API_URL}/entradas`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+                });
+                if (!resEntrada.ok) throw new Error('Falha ao adicionar entrada');
+                carregarDados();
+            } catch (error) { console.error("Erro ao adicionar entrada:", error); }
+        }
+
+        async function adicionarSaida(formData) {
+            try {
+                const valorTotal = parseFloat(String(formData.valor).replace(',', '.'));
+                const numParcelas = parseInt(formData.numParcelas) || 1;
+                const valorParcela = valorTotal / numParcelas;
+                const dataInicial = new Date(formData.data + 'T00:00:00');
+
+                for (let i = 0; i < numParcelas; i++) {
+                    const dataParcela = new Date(dataInicial);
+                    dataParcela.setUTCMonth(dataInicial.getUTCMonth() + i);
+                    
+                    const novaSaida = {
+                        descricao: `${formData.descricao} ${numParcelas > 1 ? `(${i+1}/${numParcelas})` : ''}`,
+                        categoria: formData.categoria, valor: valorParcela,
+                        data: dataParcela.toISOString().split('T')[0],
+                        isCustoNegocio: formData.isCustoNegocio || false,
+                        status: formData.status
+                    };
+                    await fetch(`${API_URL}/saidas`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(novaSaida)
+                    });
+                }
+                carregarDados();
+            } catch (error) { console.error("Erro ao adicionar saída:", error); }
+        }
+
+        async function editarEntrada(id, newData) {
+             try {
+                await fetch(`${API_URL}/entradas/${id}`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newData)
+                });
+                carregarDados();
+            } catch (error) { console.error("Erro ao editar entrada:", error); }
+        }
+
+        async function editarSaida(id, newData) {
+             try {
+                await fetch(`${API_URL}/saidas/${id}`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newData)
+                });
+                carregarDados();
+            } catch (error) { console.error("Erro ao editar saída:", error); }
+        }
+
+        async function removerItem(type, id) {
+             try {
+                await fetch(`${API_URL}/${type}s/${id}`, { method: 'DELETE' });
+                carregarDados();
+            } catch (error) { console.error(`Erro ao remover ${type}:`, error); }
+        }
+        
+        // --- NOVAS FUNÇÕES PARA AÇÕES EM LOTE ---
+        async function removerItensSelecionados(type) {
+            const ids = Array.from(type === 'entrada' ? selectedEntradas : selectedSaidas);
+            if (ids.length === 0) return;
+            
+            const message = type === 'entrada'
+                ? `Tem certeza que deseja excluir os ${ids.length} itens selecionados? Os dízimos associados também serão excluídos.`
+                : `Tem certeza que deseja excluir os ${ids.length} itens selecionados? (Dízimos automáticos não podem ser excluídos por aqui).`;
+
+            if (confirm(message)) {
+                try {
+                    await fetch(`${API_URL}/${type}s`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids })
+                    });
+                    if (type === 'entrada') selectedEntradas.clear();
+                    else selectedSaidas.clear();
+                    carregarDados();
+                } catch (error) {
+                    console.error(`Erro ao remover ${type}s em lote:`, error);
+                }
+            }
+        }
+
+        async function atualizarStatusSelecionados(type, status) {
+            const ids = Array.from(type === 'entrada' ? selectedEntradas : selectedSaidas);
+            if (ids.length === 0) return;
+
+            if (confirm(`Tem certeza que deseja alterar o status de ${ids.length} itens para "${status}"?`)) {
+                 try {
+                    await fetch(`${API_URL}/${type}s/bulk-status`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids, status })
+                    });
+                    if (type === 'entrada') selectedEntradas.clear();
+                    else selectedSaidas.clear();
+                    carregarDados();
+                } catch (error) {
+                    console.error(`Erro ao atualizar status em lote de ${type}s:`, error);
+                }
+            }
+        }
+
+        async function alterarStatusEntrada(id) {
+            const entrada = entradas.find(en => en._id === id);
+            if(entrada){
+                const novoStatus = entrada.status === 'pendente' ? 'repassado' : 'pendente';
+                await editarEntrada(id, { status: novoStatus });
+            }
+        }
+
+        async function alterarStatusSaida(id) {
+            const saida = saidas.find(s => s._id === id);
+            if(saida){
+                const novoStatus = saida.status === 'pago' ? 'em aberto' : 'pago';
+                await editarSaida(id, { status: novoStatus });
+            }
+        }
+        
+        // --- LÓGICA DE CÁLCULO E FILTRAGEM ---
+        function calcularTotais() {
+            const { month, year } = filtroDashboardState;
+            const inicioMes = new Date(Date.UTC(year, month, 1));
+            const fimMes = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+
+            // Cálculos para o período selecionado
+            const entradasPeriodo = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; });
+            const saidasPeriodo = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes; });
+            
+            const saidasPagasPeriodo = saidasPeriodo.filter(s => s.status === 'pago');
+            const saidasAbertoPeriodo = saidasPeriodo.filter(s => s.status === 'em aberto');
+
+            const totalEntradas = entradasPeriodo.reduce((acc, e) => acc + e.valor, 0);
+            const totalSaidasPagas = saidasPagasPeriodo.reduce((acc, s) => acc + s.valor, 0);
+            const totalSaidasAberto = saidasAbertoPeriodo.reduce((acc, s) => acc + s.valor, 0);
+            
+            // Cálculo para o Saldo Atual Geral (independente do período)
+            const hojeUTC = new Date();
+            hojeUTC.setUTCHours(23, 59, 59, 999);
+            const saldoAtualGeral = entradas.filter(e => e.status === 'repassado' && new Date(e.data) <= hojeUTC).reduce((acc, e) => acc + e.valor, 0) -
+                                   saidas.filter(s => s.status === 'pago' && new Date(s.data) <= hojeUTC).reduce((acc, s) => acc + s.valor, 0);
+            
+            return { 
+                totalEntradas, 
+                totalSaidasPagas,
+                totalSaidasAberto,
+                saldoAtualGeral,
+                entradasPeriodo, 
+                saidasPeriodo
+            };
+        }
+
+        // --- LÓGICA DE RENDERIZAÇÃO ---
+        let entradasChart, saidasChart, comparativoChart, evolucaoChart;
+        function renderizarDashboard(data) {
+            document.getElementById('totalEntradasPeriodo').textContent = formatarDinheiro(data.totalEntradas);
+            document.getElementById('totalSaidasPagasPeriodo').textContent = formatarDinheiro(data.totalSaidasPagas);
+            document.getElementById('totalSaidasAbertoPeriodo').textContent = formatarDinheiro(data.totalSaidasAberto);
+            
+            const saldoAtualEl = document.getElementById('saldoAtualGeral');
+            saldoAtualEl.textContent = formatarDinheiro(data.saldoAtualGeral);
+            saldoAtualEl.classList.remove('text-positive', 'text-negative', 'text-gray-500');
+            if (data.saldoAtualGeral > 0) {
+                saldoAtualEl.classList.add('text-positive');
+            } else if (data.saldoAtualGeral < 0) {
+                saldoAtualEl.classList.add('text-negative');
+            } else {
+                saldoAtualEl.classList.add('text-gray-500');
+            }
+            
+            const nomeFiltro = `${MESES_NOME[filtroDashboardState.month]}/${filtroDashboardState.year}`;
+            document.querySelectorAll('.periodo-label').forEach(el => el.textContent = nomeFiltro);
+
+            renderizarResumoMetas(data);
+        }
+
+        function renderizarResumoMetas(data){
+             const container = document.getElementById('resumoMetasContainer');
+             const hojeUTC = new Date();
+             let diasRestantes = 0;
+             if(hojeUTC.getFullYear() === filtroDashboardState.year && hojeUTC.getMonth() === filtroDashboardState.month) {
+                const ultimoDiaDoMes = new Date(Date.UTC(hojeUTC.getUTCFullYear(), hojeUTC.getUTCMonth() + 1, 0));
+                diasRestantes = Math.ceil((ultimoDiaDoMes - hojeUTC) / (1000 * 60 * 60 * 24));
+                if (diasRestantes < 0) diasRestantes = 0;
+             } else if (new Date(filtroDashboardState.year, filtroDashboardState.month, 1) > hojeUTC) {
+                // Se o mês selecionado for no futuro, considera todos os dias do mês
+                const ultimoDiaDoMes = new Date(Date.UTC(filtroDashboardState.year, filtroDashboardState.month + 1, 0));
+                diasRestantes = ultimoDiaDoMes.getUTCDate();
+             }
+             
+             const valorNecessario = data.totalSaidasAberto - data.entradasPeriodo.filter(e => e.status === 'pendente').reduce((a,c) => a+c.valor, 0);
+             const metaDiaria = valorNecessario > 0 && diasRestantes > 0 ? valorNecessario / diasRestantes : 0;
+             
+             container.innerHTML = `
+                <div class="bg-blue-50 border-l-4 border-neutral text-blue-800 p-4 rounded-md text-sm">
+                    <p><strong>Entradas:</strong> ${formatarDinheiro(data.totalEntradas)}</p>
+                    <p><strong>Pagamentos:</strong> ${formatarDinheiro(data.totalSaidasPagas)}</p>
+                    <p><strong>A Pagar:</strong> ${formatarDinheiro(data.totalSaidasAberto)}</p>
+                </div>
+                 <div class="bg-green-50 border-l-4 border-positive text-green-800 p-4 rounded-md">
+                    <h4 class="font-bold">Meta Diária (p/ quitar o mês)</h4>
+                    <p id="metaDiaria" class="text-xl">${formatarDinheiro(metaDiaria)}</p>
+                    <span class="text-xs">(${diasRestantes} dias restantes no mês)</span>
+                </div>
+             `;
+        }
+
+        function renderizarGraficos({ entradasPeriodo, saidasPeriodo }){
+            Chart.defaults.color = '#1F2937';
+            Chart.defaults.font.weight = '600';
+
+            const totalEntradas = entradasPeriodo.reduce((acc, e) => acc + e.valor, 0);
+            const totalSaidasPagas = saidasPeriodo.filter(s=>s.status === 'pago').reduce((acc, s) => acc + s.valor, 0);
+            const totalSaidasAberto = saidasPeriodo.filter(s=>s.status === 'em aberto').reduce((acc, s) => acc + s.valor, 0);
+
+            if (entradasChart) entradasChart.destroy();
+            const ctxEntradas = document.getElementById('entradasChart').getContext('2d');
+            const dadosEntradas = {};
+            entradasPeriodo.forEach(e => { if(!dadosEntradas[e.fonte]) dadosEntradas[e.fonte] = 0; dadosEntradas[e.fonte] += e.valor; });
+            const CORES_FONTES = { 'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Outro': '#6B7280' };
+            const labelsEntradas = Object.keys(dadosEntradas);
+            const coresEntradas = labelsEntradas.map(label => CORES_FONTES[label] || '#CCCCCC');
+
+            entradasChart = new Chart(ctxEntradas, {
+                type: 'doughnut', data: { labels: labelsEntradas, datasets: [{ data: Object.values(dadosEntradas), backgroundColor: coresEntradas }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
+            });
+
+            if (saidasChart) saidasChart.destroy();
+            const ctxSaidas = document.getElementById('saidasChart').getContext('2d');
+            const dadosSaidas = {};
+            // Alterado para incluir todas as saídas (pagas e em aberto)
+            saidasPeriodo.forEach(s => { 
+                if (!dadosSaidas[s.categoria]) dadosSaidas[s.categoria] = 0; 
+                dadosSaidas[s.categoria] += s.valor; 
+            });
+            saidasChart = new Chart(ctxSaidas, {
+                type: 'doughnut', data: { labels: Object.keys(dadosSaidas), datasets: [{ data: Object.values(dadosSaidas), backgroundColor: ['#F59E0B', '#6366F1', '#EC4899', '#84CC16', '#14B8A6', '#EF4444', '#f59e0b', '#10b981'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
+            });
+            
+            if (comparativoChart) comparativoChart.destroy();
+            const ctxComp = document.getElementById('comparativoChart').getContext('2d');
+            comparativoChart = new Chart(ctxComp, {
+                type: 'bar', 
+                data: { 
+                    labels: ['Movimentações'], 
+                    datasets: [ 
+                        { label: 'Entradas', data: [totalEntradas], backgroundColor: '#16A34A' },      // Verde
+                        { label: 'Pagos', data: [totalSaidasPagas], backgroundColor: '#F59E0B' },   // Amarelo
+                        { label: 'Em Aberto', data: [totalSaidasAberto], backgroundColor: '#DC2626' } // Vermelho
+                    ] 
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    scales: { y: { beginAtZero: true, grace: '10%' } }, 
+                    plugins: { 
+                        legend: { position: 'bottom' }, 
+                        datalabels: { anchor: 'end', align: 'end', formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: '#1f2937', font: { weight: 'bold' }, offset: -5 } 
+                    } 
+                }
+            });
+        }
+        
+        function showModal(modal, content) {
+            modal.innerHTML = content;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modal.querySelector('.close-modal-btn')?.addEventListener('click', () => hideModal(modal));
+            modal.addEventListener('click', (e) => { if(e.target === modal) hideModal(modal) });
+        }
+        function hideModal(modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            modal.innerHTML = '';
+        }
+        
+        function atualizarTudo() {
+            const totais = calcularTotais();
+            renderizarDashboard(totais);
+            renderizarGraficos(totais);
+            renderizarConteudoDasAbas();
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('nav').addEventListener('click', (e) => {
+                if (e.target.matches('.tab-button')) {
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    Object.values(tabs).forEach(t => t.classList.add('hidden'));
+                    tabs[e.target.dataset.tab].classList.remove('hidden');
+                }
+            });
+            carregarDados();
+        });
+
+        function renderizarConteudoDasAbas() {
+            renderizarAbaEntradas();
+            renderizarAbaSaidas();
+            renderizarAbaRelatorios();
+        }
+        
+        const MESES_NOME = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+        function getAnosDisponiveis() {
+            const todosAnos = new Set([...entradas, ...saidas].map(item => new Date(item.data).getUTCFullYear()));
+            const anoAtual = new Date().getFullYear();
+            todosAnos.add(anoAtual);
+            for(let i = 1; i <= 5; i++) todosAnos.add(anoAtual + i);
+            return Array.from(todosAnos).sort((a,b) => b - a);
+        }
+
+        function renderizarFiltrosDashboard() {
+            const container = document.getElementById('dashboardFiltersContainer');
+            const anos = getAnosDisponiveis();
+            container.innerHTML = `
+                <div class="flex flex-wrap gap-2 items-center">
+                    <select id="filtroMesDashboard" class="rounded-md border-gray-300 shadow-sm text-sm text-primary bg-white py-2 px-3 font-semibold">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroDashboardState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
+                    <select id="filtroAnoDashboard" class="rounded-md border-gray-300 shadow-sm text-sm text-primary bg-white py-2 px-3 font-semibold">${anos.map(ano => `<option value="${ano}" ${ano === filtroDashboardState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                </div>
+            `;
+            document.getElementById('filtroMesDashboard').addEventListener('change', e => {
+                filtroDashboardState.month = parseInt(e.target.value);
+                atualizarTudo();
+            });
+            document.getElementById('filtroAnoDashboard').addEventListener('change', e => {
+                filtroDashboardState.year = parseInt(e.target.value);
+                atualizarTudo();
+            });
+        }
+
+        // --- ABA DE ENTRADAS ---
+        function renderizarAbaEntradas() {
+            const anos = getAnosDisponiveis();
+            tabs.entradas.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-1 bg-card-bg text-primary p-6 rounded-xl shadow-lg self-start">
+                        <h3 class="text-lg font-semibold mb-4">Adicionar Nova Entrada</h3>
+                        <form id="formEntrada" class="space-y-4">
+                             <div><label for="fonteEntrada" class="block text-sm font-medium">Fonte</label><select id="fonteEntrada" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select></div>
+                            <div><label for="valorEntrada" class="block text-sm font-medium">Valor Bruto</label><input type="text" inputmode="decimal" id="valorEntrada" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="150,00" required></div>
+                            <div><label for="dataEntrada" class="block text-sm font-medium">Data</label><input type="date" id="dataEntrada" value="${hojeISO()}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required></div>
+                            <div><label for="statusRepasse" class="block text-sm font-medium">Status</label><select id="statusRepasse" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="pendente">Pendente</option><option value="repassado">Repassado/Resgatado</option></select></div>
+                            <button type="submit" class="w-full bg-secondary hover:bg-yellow-600 text-primary font-bold py-2 px-4 rounded-md">Adicionar Entrada</button>
+                        </form>
+                    </div>
+                    <div class="md:col-span-2 bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                        <div class="flex flex-wrap gap-4 items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">Histórico de Entradas</h3>
+                            <div class="flex flex-wrap gap-2 items-center" id="filtrosEntradas">
+                                <select id="filtroMesEntradas" class="rounded-md border-gray-300 shadow-sm text-sm">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroEntradasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
+                                <select id="filtroAnoEntradas" class="rounded-md border-gray-300 shadow-sm text-sm">${anos.map(ano => `<option value="${ano}" ${ano === filtroEntradasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                                <select id="filtroFonteEntradas" class="rounded-md border-gray-300 shadow-sm text-sm"><option value="todos">Todas</option><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select>
+                            </div>
+                        </div>
+                        <div id="bulkActionsEntradas" class="hidden bg-gray-100 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
+                        <div id="totalEntradasFiltrado" class="text-right font-bold text-lg mb-4 flex justify-between items-center">
+                             <div class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" id="selectAllEntradas" class="item-checkbox">
+                                <label for="selectAllEntradas">Selecionar Tudo</label>
+                             </div>
+                             <span id="totalValorEntradas"></span>
+                        </div>
+                        <div id="listaEntradas" class="overflow-auto max-h-[32rem]"></div>
+                    </div>
+                </div>`;
+            
+            document.getElementById('formEntrada').addEventListener('submit', e => {
+                e.preventDefault(); const form = e.target;
+                const valorString = form.valorEntrada.value.replace(',', '.');
+                const valor = parseFloat(valorString);
+                if(isNaN(valor)) { alert('Valor inválido!'); return; }
+                adicionarEntrada({ fonte: form.fonteEntrada.value, valor: valor, data: form.dataEntrada.value, status: form.statusRepasse.value });
+                form.reset(); form.dataEntrada.value = hojeISO();
+            });
+
+            document.getElementById('filtroMesEntradas').addEventListener('change', e => { filtroEntradasState.month = parseInt(e.target.value); renderizarListaEntradas(); });
+            document.getElementById('filtroAnoEntradas').addEventListener('change', e => { filtroEntradasState.year = parseInt(e.target.value); renderizarListaEntradas(); });
+            document.getElementById('filtroFonteEntradas').addEventListener('change', e => { filtroEntradasState.source = e.target.value; renderizarListaEntradas(); });
+            
+            document.getElementById('selectAllEntradas').addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                document.querySelectorAll('#listaEntradas .item-checkbox').forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                    handleEntradaSelection(checkbox);
+                });
+            });
+
+            tabs.entradas.addEventListener('click', e => {
+                 const target = e.target.closest('.status-toggle, .edit-btn, .delete-btn');
+                 if(!target) return;
+                 const id = target.dataset.id;
+                 if(target.classList.contains('status-toggle')) alterarStatusEntrada(id);
+                 if(target.classList.contains('edit-btn')) mostrarModalEditarEntrada(id);
+                 if(target.classList.contains('delete-btn')) { if(confirm('Tem certeza? Isso também excluirá o dízimo associado.')) removerItem('entrada', id); }
+            });
+
+            renderizarListaEntradas();
+        }
+
+        function handleEntradaSelection(checkbox) {
+            const id = checkbox.dataset.id;
+            if (checkbox.checked) {
+                selectedEntradas.add(id);
+            } else {
+                selectedEntradas.delete(id);
+            }
+            renderBulkActionsEntradas();
+        }
+
+        function renderBulkActionsEntradas() {
+            const container = document.getElementById('bulkActionsEntradas');
+            if (selectedEntradas.size > 0) {
+                 const totalSelecionado = entradas
+                    .filter(e => selectedEntradas.has(e._id))
+                    .reduce((acc, e) => acc + e.valor, 0);
+
+                container.innerHTML = `
+                    <span class="font-semibold text-sm mr-4">${selectedEntradas.size} selecionado(s) | Total: ${formatarDinheiro(totalSelecionado)}</span>
+                    <button onclick="atualizarStatusSelecionados('entrada', 'repassado')" class="text-xs bg-positive text-white font-bold py-1 px-2 rounded">Marcar como Repassado</button>
+                    <button onclick="atualizarStatusSelecionados('entrada', 'pendente')" class="text-xs bg-yellow-500 text-white font-bold py-1 px-2 rounded">Marcar como Pendente</button>
+                    <button onclick="removerItensSelecionados('entrada')" class="text-xs bg-negative text-white font-bold py-1 px-2 rounded">Excluir Selecionados</button>
+                `;
+                container.classList.remove('hidden');
+                container.classList.add('flex');
+            } else {
+                container.classList.add('hidden');
+                container.classList.remove('flex');
+                container.innerHTML = '';
+            }
+        }
+
+        function renderizarListaEntradas() {
+            const listaEl = document.getElementById('listaEntradas');
+            if (!listaEl) return;
+            
+            const { month, year, source } = filtroEntradasState;
+            const inicio = new Date(Date.UTC(year, month, 1));
+            const fim = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+
+            const entradasFiltradas = entradas.filter(e => {
+                const dataEntrada = new Date(e.data);
+                return dataEntrada >= inicio && dataEntrada <= fim && (source === 'todos' || e.fonte === source);
+            });
+            
+            const totalFiltrado = entradasFiltradas.reduce((acc, e) => acc + e.valor, 0);
+            document.getElementById('totalValorEntradas').textContent = `Total: ${formatarDinheiro(totalFiltrado)}`;
+
+            if (entradasFiltradas.length === 0) {
+                listaEl.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma entrada encontrada.</p>';
+                return;
+            }
+
+            let html = '<ul class="space-y-3">';
+            entradasFiltradas.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(e => {
+                const statusPendente = e.status === 'pendente';
+                html += `<li class="flex justify-between items-center p-3 rounded-md border border-gray-200">
+                    <div class="flex items-center flex-grow">
+                        <input type="checkbox" data-id="${e._id}" onchange="handleEntradaSelection(this)" class="item-checkbox mr-4" ${selectedEntradas.has(e._id) ? 'checked' : ''}>
+                        <span class="w-3 h-3 rounded-full mr-3" style="background-color: ${ {'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Outro': '#6B7280'}[e.fonte] }"></span>
+                        <div><p class="font-semibold">${e.fonte}</p><p class="text-sm text-gray-500">${formatarData(e.data)}</p></div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                       <div>
+                            <p class="font-semibold text-right text-positive">${formatarDinheiro(e.valor)}</p>
+                            <button data-id="${e._id}" class="status-toggle text-sm font-medium ${statusPendente ? 'text-yellow-600' : 'text-positive'}">${e.status}</button>
+                       </div>
+                       <button class="edit-btn text-gray-400 hover:text-secondary p-1" data-id="${e._id}">✏️</button>
+                       <button class="delete-btn text-gray-400 hover:text-negative p-1" data-id="${e._id}">🗑️</button>
+                    </div>
+                </li>`;
+            });
+            html += '</ul>';
+            listaEl.innerHTML = html;
+        }
+        
+        // --- ABA DE SAÍDAS ---
+        function renderizarAbaSaidas() {
+            const anos = getAnosDisponiveis();
+
+            tabs.saidas.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-1 bg-card-bg text-primary p-6 rounded-xl shadow-lg self-start">
+                        <h3 class="text-lg font-semibold mb-4">Adicionar Nova Saída</h3>
+                        <form id="formSaida" class="space-y-4">
+                            <div><label for="descricaoSaida" class="block text-sm font-medium">Descrição</label><input type="text" id="descricaoSaida" class="mt-1 block w-full rounded-md border-gray-300" required></div>
+                            <div><label for="categoriaSaida" class="block text-sm font-medium">Categoria</label><select id="categoriaSaida" class="mt-1 block w-full rounded-md border-gray-300"><option>Custo Fixo</option><option>Cartão de Crédito</option><option>Débito</option><option>Saque</option><option>Dízimo</option><option>Outro</option></select></div>
+                            <div><label for="valorSaida" class="block text-sm font-medium">Valor Total</label><input type="text" inputmode="decimal" id="valorSaida" class="mt-1 block w-full rounded-md border-gray-300" placeholder="150,00" required></div>
+                            <div><label for="dataSaida" class="block text-sm font-medium">Data</label><input type="date" id="dataSaida" value="${hojeISO()}" class="mt-1 block w-full rounded-md border-gray-300" required></div>
+                            <div><label for="statusSaida" class="block text-sm font-medium">Status</label><select id="statusSaida" class="mt-1 block w-full rounded-md border-gray-300"><option value="em aberto">Em Aberto</option><option value="pago">Pago</option></select></div>
+                            <div id="parcelasContainer" class="hidden"><label for="numParcelas" class="block text-sm font-medium">Nº de Parcelas</label><input type="number" id="numParcelas" class="mt-1 block w-full rounded-md border-gray-300" value="1" min="1"></div>
+                            <div id="custoNegocioContainer" class="hidden"><div class="flex items-center"><input id="isCustoNegocio" type="checkbox" class="h-4 w-4 rounded border-gray-300"><label for="isCustoNegocio" class="ml-2 block text-sm">Custo do negócio</label></div></div>
+                            <button type="submit" class="w-full bg-secondary hover:bg-yellow-600 text-primary font-bold py-2 px-4 rounded-md">Adicionar Saída</button>
+                        </form>
+                    </div>
+                    <div class="md:col-span-2 bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                        <div class="flex flex-wrap gap-2 items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">Histórico de Saídas</h3>
+                            <div class="flex flex-wrap gap-2 items-center" id="filtrosSaidas">
+                                <select id="filtroStatusSaidas" class="rounded-md border-gray-300 shadow-sm text-sm"><option value="todos">Todos</option><option value="em aberto">Em Aberto</option><option value="pago">Pago</option></select>
+                                <select id="filtroCategoriaSaidas" class="rounded-md border-gray-300 shadow-sm text-sm"><option value="todas">Categorias</option><option>Custo Fixo</option><option>Cartão de Crédito</option><option>Débito</option><option>Saque</option><option>Dízimo</option><option>Outro</option></select>
+                                <select id="filtroMesSaidas" class="rounded-md border-gray-300 shadow-sm text-sm">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroSaidasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
+                                <select id="filtroAnoSaidas" class="rounded-md border-gray-300 shadow-sm text-sm">${anos.map(ano => `<option value="${ano}" ${ano === filtroSaidasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                            </div>
+                        </div>
+                        <div id="bulkActionsSaidas" class="hidden bg-gray-100 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
+                        <div id="totalSaidasFiltrado" class="text-right font-bold text-lg mb-4 flex justify-between items-center">
+                            <div class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" id="selectAllSaidas" class="item-checkbox">
+                                <label for="selectAllSaidas">Selecionar Tudo</label>
+                             </div>
+                             <span id="totalValorSaidas"></span>
+                        </div>
+                        <div id="listaSaidas" class="overflow-auto max-h-[28rem]"></div>
+                    </div>
+                </div>`;
+            
+            document.getElementById('categoriaSaida').addEventListener('change', (e) => {
+                const isCartao = e.target.value === 'Cartão de Crédito';
+                document.getElementById('parcelasContainer').classList.toggle('hidden', !isCartao);
+                document.getElementById('custoNegocioContainer').classList.toggle('hidden', !isCartao);
+            });
+            document.getElementById('formSaida').addEventListener('submit', e => {
+                e.preventDefault(); const form = e.target; const isCartao = form.categoriaSaida.value === 'Cartão de Crédito';
+                const valorString = form.valorSaida.value.replace(',', '.');
+                const valor = parseFloat(valorString);
+                if(isNaN(valor)) { alert('Valor inválido!'); return; }
+                adicionarSaida({ descricao: form.descricaoSaida.value, categoria: form.categoriaSaida.value, valor: valor, data: form.dataSaida.value, numParcelas: isCartao ? form.numParcelas.value : 1, isCustoNegocio: isCartao ? form.isCustoNegocio.checked : false, status: form.statusSaida.value });
+                form.reset(); form.dataSaida.value = hojeISO();
+                document.getElementById('parcelasContainer').classList.add('hidden'); document.getElementById('custoNegocioContainer').classList.add('hidden');
+            });
+
+            document.getElementById('filtroMesSaidas').addEventListener('change', e => { filtroSaidasState.month = parseInt(e.target.value); renderizarListaSaidas(); });
+            document.getElementById('filtroAnoSaidas').addEventListener('change', e => { filtroSaidasState.year = parseInt(e.target.value); renderizarListaSaidas(); });
+            document.getElementById('filtroCategoriaSaidas').addEventListener('change', e => { filtroSaidasState.category = e.target.value; renderizarListaSaidas(); });
+            document.getElementById('filtroStatusSaidas').addEventListener('change', e => { filtroSaidasState.status = e.target.value; renderizarListaSaidas(); });
+            
+            document.getElementById('selectAllSaidas').addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                document.querySelectorAll('#listaSaidas .item-checkbox').forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                    handleSaidaSelection(checkbox);
+                });
+            });
+
+            tabs.saidas.addEventListener('click', e => {
+                 const target = e.target.closest('.status-toggle-saida, .edit-btn, .delete-btn');
+                 if(!target) return;
+                 const id = target.dataset.id;
+                 const saida = saidas.find(s => s._id === id);
+                 if (saida && saida.entradaId && !target.classList.contains('status-toggle-saida')) {
+                     alert('Este dízimo não pode ser alterado ou excluído diretamente. Altere a entrada original.');
+                     return;
+                 }
+                 if(target.classList.contains('status-toggle-saida')) alterarStatusSaida(id);
+                 if(target.classList.contains('edit-btn')) mostrarModalEditarSaida(id);
+                 if(target.classList.contains('delete-btn')) { if(confirm('Tem certeza?')) removerItem('saida', id); }
+            });
+            renderizarListaSaidas();
+        }
+
+        function handleSaidaSelection(checkbox) {
+            const id = checkbox.dataset.id;
+            const isDisabled = checkbox.disabled;
+
+            if (isDisabled) return;
+
+            if (checkbox.checked) {
+                selectedSaidas.add(id);
+            } else {
+                selectedSaidas.delete(id);
+            }
+            renderBulkActionsSaidas();
+        }
+
+        function renderBulkActionsSaidas() {
+            const container = document.getElementById('bulkActionsSaidas');
+            if (selectedSaidas.size > 0) {
+                 const totalSelecionado = saidas
+                    .filter(s => selectedSaidas.has(s._id))
+                    .reduce((acc, s) => acc + s.valor, 0);
+
+                container.innerHTML = `
+                    <span class="font-semibold text-sm mr-4">${selectedSaidas.size} selecionado(s) | Total: ${formatarDinheiro(totalSelecionado)}</span>
+                    <button onclick="atualizarStatusSelecionados('saida', 'pago')" class="text-xs bg-positive text-white font-bold py-1 px-2 rounded">Marcar como Pago</button>
+                    <button onclick="atualizarStatusSelecionados('saida', 'em aberto')" class="text-xs bg-yellow-500 text-white font-bold py-1 px-2 rounded">Marcar como Em Aberto</button>
+                    <button onclick="removerItensSelecionados('saida')" class="text-xs bg-negative text-white font-bold py-1 px-2 rounded">Excluir Selecionados</button>
+                `;
+                container.classList.remove('hidden');
+                container.classList.add('flex');
+            } else {
+                container.classList.add('hidden');
+                container.classList.remove('flex');
+                container.innerHTML = '';
+            }
+        }
+
+        function renderizarListaSaidas() {
+            const listaEl = document.getElementById('listaSaidas');
+            if (!listaEl) return;
+            
+            const { month, year, category, status } = filtroSaidasState;
+            const inicio = new Date(Date.UTC(year, month, 1));
+            const fim = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+
+            const saidasFiltradas = saidas.filter(s => { 
+                const dataSaida = new Date(s.data);
+                const noPeriodo = dataSaida >= inicio && dataSaida <= fim;
+                const categoriaCorreta = category === 'todas' || s.categoria === category;
+                const statusCorreto = status === 'todos' || s.status === status;
+                return noPeriodo && categoriaCorreta && statusCorreto;
+            });
+
+            const totalFiltrado = saidasFiltradas.reduce((acc, s) => acc + s.valor, 0);
+            document.getElementById('totalValorSaidas').textContent = `Total: ${formatarDinheiro(totalFiltrado)}`;
+
+            if (saidasFiltradas.length === 0) {
+                listaEl.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma saída encontrada.</p>';
+                return;
+            }
+            let html = '<ul class="space-y-3">';
+            saidasFiltradas.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(s => {
+                const isPago = s.status === 'pago';
+                const isDizimo = !!s.entradaId;
+                html += `<li class="flex justify-between items-center p-3 rounded-md border border-gray-200 ${isDizimo ? 'opacity-70' : ''}">
+                    <div class="flex items-center flex-grow">
+                        <input type="checkbox" data-id="${s._id}" onchange="handleSaidaSelection(this)" class="item-checkbox mr-4" ${selectedSaidas.has(s._id) ? 'checked' : ''} ${isDizimo ? 'disabled' : ''}>
+                        <div>
+                            <p class="font-semibold">${s.descricao}</p>
+                            <p class="text-sm text-gray-500">${s.categoria} - ${formatarData(s.data)}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div>
+                            <p class="font-semibold text-negative text-right">${formatarDinheiro(s.valor)}</p>
+                            <button data-id="${s._id}" class="status-toggle-saida text-sm font-medium ${isPago ? 'text-positive' : 'text-yellow-600'}">${s.status}</button>
+                        </div>
+                       <button class="edit-btn text-gray-400 hover:text-secondary p-1" data-id="${s._id}" ${isDizimo ? 'disabled' : ''}>✏️</button>
+                       <button class="delete-btn text-gray-400 hover:text-negative p-1" data-id="${s._id}" ${isDizimo ? 'disabled' : ''}>🗑️</button>
+                    </div>
+                </li>`;
+            });
+            html += '</ul>';
+            listaEl.innerHTML = html;
+        }
+
+        function renderizarAbaRelatorios() {
+            tabs.relatorios.innerHTML = `<div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg space-y-8">
+                <div id="evolucaoMensalContainer" class="p-6 border border-gray-200 rounded-lg">
+                    <h4 class="font-bold text-xl mb-4 border-b border-gray-200 pb-2">Evolução Mensal (Últimos 12 Meses)</h4>
+                    <div class="h-96"><canvas id="evolucaoChart"></canvas></div>
+                </div>
+            </div>`;
+            renderizarGraficoEvolucao();
+        }
+
+        function renderizarGraficoEvolucao() {
+            if(evolucaoChart) evolucaoChart.destroy();
+
+            const labels = [];
+            const dataEntradas = [];
+            const dataSaidas = [];
+            const dataSaldo = [];
+            
+            const dataAtual = new Date();
+            for(let i = 11; i >= 0; i--) {
+                const dataRef = new Date(dataAtual.getFullYear(), dataAtual.getMonth() - i, 1);
+                const ano = dataRef.getFullYear();
+                const mes = dataRef.getMonth();
+                
+                labels.push(`${MESES_NOME[mes].substring(0,3)}/${ano.toString().substring(2,4)}`);
+
+                const inicioMes = new Date(Date.UTC(ano, mes, 1));
+                const fimMes = new Date(Date.UTC(ano, mes + 1, 0, 23, 59, 59, 999));
+                
+                const totalEntradasMes = entradas
+                    .filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; })
+                    .reduce((acc, e) => acc + e.valor, 0);
+                
+                const totalSaidasPagasMes = saidas
+                    .filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes && s.status === 'pago'; })
+                    .reduce((acc, s) => acc + s.valor, 0);
+
+                dataEntradas.push(totalEntradasMes);
+                dataSaidas.push(totalSaidasPagasMes);
+                dataSaldo.push(totalEntradasMes - totalSaidasPagasMes);
+            }
+
+            const ctx = document.getElementById('evolucaoChart').getContext('2d');
+            evolucaoChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Saldo Líquido', type: 'line', data: dataSaldo, borderColor: '#3B82F6', tension: 0.1, fill: false, borderWidth: 3 },
+                        { label: 'Entradas', data: dataEntradas, backgroundColor: '#16A34A' },
+                        { label: 'Saídas (Pagas)', data: dataSaidas, backgroundColor: '#DC2626' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { datalabels: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function mostrarModalEditarEntrada(id) {
+            const entrada = entradas.find(e => e._id === id); if (!entrada) return;
+            showModal(modals.editEntrada, `<div class="bg-card-bg text-primary rounded-lg shadow-xl w-full max-w-md m-4"><div class="p-4 border-b flex justify-between items-center"><h3 class="text-xl font-semibold">Editar Entrada</h3><button class="close-modal-btn text-2xl">&times;</button></div><form id="formEditEntrada" class="p-4 space-y-4"><input type="hidden" name="id" value="${entrada._id}"><div><label class="block text-sm font-medium">Fonte</label><select name="fonte" class="mt-1 block w-full rounded-md border-gray-300" required><option ${entrada.fonte === 'iFood' ? 'selected' : ''}>iFood</option><option ${entrada.fonte === 'Uber' ? 'selected' : ''}>Uber</option><option ${entrada.fonte === '99' ? 'selected' : ''}>99</option><option ${entrada.fonte === 'Outro' ? 'selected' : ''}>Outro</option></select></div><div><label class="block text-sm font-medium">Valor Bruto</label><input type="text" inputmode="decimal" name="valor" value="${String(entrada.valor).replace('.', ',')}" class="mt-1 block w-full rounded-md border-gray-300" required></div><div><label class="block text-sm font-medium">Data</label><input type="date" name="data" value="${new Date(entrada.data).toISOString().split('T')[0]}" class="mt-1 block w-full rounded-md border-gray-300" required></div><div><label class="block text-sm font-medium">Status</label><select name="status" class="mt-1 block w-full rounded-md border-gray-300" required><option value="pendente" ${entrada.status === 'pendente' ? 'selected' : ''}>Pendente</option><option value="repassado" ${entrada.status === 'repassado' ? 'selected' : ''}>Repassado</option></select></div><div class="flex justify-end gap-2 pt-4"><button type="button" class="close-modal-btn py-2 px-4 rounded-md border">Cancelar</button><button type="submit" class="py-2 px-4 rounded-md bg-secondary text-primary font-bold">Salvar</button></div></form></div>`);
+            document.getElementById('formEditEntrada').addEventListener('submit', (e) => { e.preventDefault(); const form = e.target; const valorString = form.valor.value.replace(',', '.'); const valor = parseFloat(valorString); if(isNaN(valor)) { alert('Valor inválido!'); return; } editarEntrada(form.id.value, { fonte: form.fonte.value, valor: valor, data: form.data.value, status: form.status.value }); hideModal(modals.editEntrada); });
+        }
+
+        function mostrarModalEditarSaida(id) {
+            const saida = saidas.find(s => s._id === id); if (!saida) return;
+            showModal(modals.editSaida, `<div class="bg-card-bg text-primary rounded-lg shadow-xl w-full max-w-md m-4"><div class="p-4 border-b flex justify-between items-center"><h3 class="text-xl font-semibold">Editar Saída</h3><button class="close-modal-btn text-2xl">&times;</button></div><form id="formEditSaida" class="p-4 space-y-4"><input type="hidden" name="id" value="${saida._id}"><div><label class="block text-sm font-medium">Descrição</label><input type="text" name="descricao" value="${saida.descricao}" class="mt-1 block w-full rounded-md border-gray-300" required></div><div><label class="block text-sm font-medium">Categoria</label><select name="categoria" class="mt-1 block w-full rounded-md border-gray-300"><option ${saida.categoria === 'Custo Fixo' ? 'selected' : ''}>Custo Fixo</option><option ${saida.categoria === 'Cartão de Crédito' ? 'selected' : ''}>Cartão de Crédito</option><option ${saida.categoria === 'Débito' ? 'selected' : ''}>Débito</option><option ${saida.categoria === 'Saque' ? 'selected' : ''}>Saque</option><option ${saida.categoria === 'Dízimo' ? 'selected' : ''}>Dízimo</option><option ${saida.categoria === 'Outro' ? 'selected' : ''}>Outro</option></select></div><div><label class="block text-sm font-medium">Valor</label><input type="text" inputmode="decimal" name="valor" value="${String(saida.valor).replace('.', ',')}" class="mt-1 block w-full rounded-md border-gray-300" required></div><div><label class="block text-sm font-medium">Data</label><input type="date" name="data" value="${new Date(saida.data).toISOString().split('T')[0]}" class="mt-1 block w-full rounded-md border-gray-300" required></div><div><label class="block text-sm font-medium">Status</label><select name="status" class="mt-1 block w-full rounded-md border-gray-300"><option value="em aberto" ${saida.status === 'em aberto' ? 'selected' : ''}>Em Aberto</option><option value="pago" ${saida.status === 'pago' ? 'selected' : ''}>Pago</option></select></div><div class="flex items-center" ${saida.categoria !== 'Cartão de Crédito' ? 'style="display:none;"' : ''}><input id="editIsCustoNegocio" type="checkbox" name="isCustoNegocio" ${saida.isCustoNegocio ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300"><label for="editIsCustoNegocio" class="ml-2 block text-sm">Custo do negócio</label></div><div class="flex justify-end gap-2 pt-4"><button type="button" class="close-modal-btn py-2 px-4 rounded-md border">Cancelar</button><button type="submit" class="py-2 px-4 rounded-md bg-secondary text-primary font-bold">Salvar</button></div></form></div>`);
+            document.getElementById('formEditSaida').addEventListener('submit', (e) => { e.preventDefault(); const form = e.target; const valorString = form.valor.value.replace(',', '.'); const valor = parseFloat(valorString); if(isNaN(valor)) { alert('Valor inválido!'); return; } editarSaida(form.id.value, { descricao: form.descricao.value, categoria: form.categoria.value, valor: valor, data: form.data.value, isCustoNegocio: form.isCustoNegocio ? form.isCustoNegocio.checked : false, status: form.status.value }); hideModal(modals.editSaida); });
+        }
+    </script>
+
+</body>
+</html>
+
+
