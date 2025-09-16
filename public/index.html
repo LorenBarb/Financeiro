@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Controle Financeiro</title>
-    <!-- FAVICON ADICIONADO AQUI.... -->
+    <!-- FAVICON ADICIONADO AQUI -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2215%22 fill=%22%23111827%22/><text x=%2250%22 y=%2255%22 font-size=%2250%22 fill=%22%23F59E0B%22 font-family=%22Inter, sans-serif%22 font-weight=%22bold%22 text-anchor=%22middle%22>CF</text></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -51,8 +51,30 @@
             font-weight: 600; 
         }
         .modal { transition: opacity 0.25s ease; }
-        .item-checkbox {
-            transform: scale(1.2);
+        .calc-btn {
+            background-color: #374151; /* bg-gray-700 */
+            color: #F9FAFB; /* text-light-text */
+            border-radius: 0.375rem; /* rounded-md */
+            padding: 0.75rem 0;
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600; /* font-semibold */
+            transition: background-color 0.2s;
+        }
+        .calc-btn:hover {
+            background-color: #4B5563; /* bg-gray-600 */
+        }
+        .calc-btn.operator {
+            background-color: #4f46e5; /* bg-indigo-600 */
+        }
+        .calc-btn.operator:hover {
+            background-color: #4338ca; /* bg-indigo-700 */
+        }
+         .calc-btn.equal {
+            background-color: #F59E0B; /* bg-secondary */
+            color: #1F2937; /* text-primary */
+        }
+         .calc-btn.equal:hover {
+            background-color: #d97706; /* bg-amber-600 */
         }
     </style>
 </head>
@@ -91,11 +113,11 @@
                     </div>
                     <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
                         <h3 class="text-gray-600 font-medium">Pagamentos Realizados</h3>
-                        <p id="totalSaidasPagasPeriodo" class="text-3xl font-bold text-yellow-500">R$ 0,00</p>
+                        <p id="totalSaidasPagasPeriodo" class="text-3xl font-bold text-negative">R$ 0,00</p>
                     </div>
                     <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
                         <h3 class="text-gray-600 font-medium">Valores em Aberto</h3>
-                        <p id="totalSaidasAbertoPeriodo" class="text-3xl font-bold text-negative">R$ 0,00</p>
+                        <p id="totalSaidasAbertoPeriodo" class="text-3xl font-bold text-secondary">R$ 0,00</p>
                     </div>
                      <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
                         <h3 class="text-gray-600 font-medium">Saldo Atual</h3>
@@ -146,10 +168,8 @@
         let saidas = [];
         const hoje = new Date();
         let filtroDashboardState = { month: hoje.getMonth(), year: hoje.getFullYear() };
-        let filtroEntradasState = { month: hoje.getMonth(), year: hoje.getFullYear(), source: 'todos' };
+        let filtroEntradasState = { month: hoje.getMonth(), year: hoje.getFullYear(), source: 'todos', status: 'todos' };
         let filtroSaidasState = { month: hoje.getMonth(), year: hoje.getFullYear(), category: 'todas', status: 'todos' };
-        let selectedEntradas = new Set();
-        let selectedSaidas = new Set();
        
         const tabs = {
             dashboard: document.getElementById('dashboard'),
@@ -263,51 +283,6 @@
             } catch (error) { console.error(`Erro ao remover ${type}:`, error); }
         }
         
-        // --- NOVAS FUNÇÕES PARA AÇÕES EM LOTE ---
-        async function removerItensSelecionados(type) {
-            const ids = Array.from(type === 'entrada' ? selectedEntradas : selectedSaidas);
-            if (ids.length === 0) return;
-            
-            const message = type === 'entrada'
-                ? `Tem certeza que deseja excluir os ${ids.length} itens selecionados? Os dízimos associados também serão excluídos.`
-                : `Tem certeza que deseja excluir os ${ids.length} itens selecionados? (Dízimos automáticos não podem ser excluídos por aqui).`;
-
-            if (confirm(message)) {
-                try {
-                    await fetch(`${API_URL}/${type}s`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ids })
-                    });
-                    if (type === 'entrada') selectedEntradas.clear();
-                    else selectedSaidas.clear();
-                    carregarDados();
-                } catch (error) {
-                    console.error(`Erro ao remover ${type}s em lote:`, error);
-                }
-            }
-        }
-
-        async function atualizarStatusSelecionados(type, status) {
-            const ids = Array.from(type === 'entrada' ? selectedEntradas : selectedSaidas);
-            if (ids.length === 0) return;
-
-            if (confirm(`Tem certeza que deseja alterar o status de ${ids.length} itens para "${status}"?`)) {
-                 try {
-                    await fetch(`${API_URL}/${type}s/bulk-status`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ids, status })
-                    });
-                    if (type === 'entrada') selectedEntradas.clear();
-                    else selectedSaidas.clear();
-                    carregarDados();
-                } catch (error) {
-                    console.error(`Erro ao atualizar status em lote de ${type}s:`, error);
-                }
-            }
-        }
-
         async function alterarStatusEntrada(id) {
             const entrada = entradas.find(en => en._id === id);
             if(entrada){
@@ -366,13 +341,11 @@
             
             const saldoAtualEl = document.getElementById('saldoAtualGeral');
             saldoAtualEl.textContent = formatarDinheiro(data.saldoAtualGeral);
-            saldoAtualEl.classList.remove('text-positive', 'text-negative', 'text-gray-500');
-            if (data.saldoAtualGeral > 0) {
+            saldoAtualEl.classList.remove('text-positive', 'text-negative');
+            if (data.saldoAtualGeral >= 0) {
                 saldoAtualEl.classList.add('text-positive');
-            } else if (data.saldoAtualGeral < 0) {
-                saldoAtualEl.classList.add('text-negative');
             } else {
-                saldoAtualEl.classList.add('text-gray-500');
+                saldoAtualEl.classList.add('text-negative');
             }
             
             const nomeFiltro = `${MESES_NOME[filtroDashboardState.month]}/${filtroDashboardState.year}`;
@@ -389,10 +362,6 @@
                 const ultimoDiaDoMes = new Date(Date.UTC(hojeUTC.getUTCFullYear(), hojeUTC.getUTCMonth() + 1, 0));
                 diasRestantes = Math.ceil((ultimoDiaDoMes - hojeUTC) / (1000 * 60 * 60 * 24));
                 if (diasRestantes < 0) diasRestantes = 0;
-             } else if (new Date(filtroDashboardState.year, filtroDashboardState.month, 1) > hojeUTC) {
-                // Se o mês selecionado for no futuro, considera todos os dias do mês
-                const ultimoDiaDoMes = new Date(Date.UTC(filtroDashboardState.year, filtroDashboardState.month + 1, 0));
-                diasRestantes = ultimoDiaDoMes.getUTCDate();
              }
              
              const valorNecessario = data.totalSaidasAberto - data.entradasPeriodo.filter(e => e.status === 'pendente').reduce((a,c) => a+c.valor, 0);
@@ -407,9 +376,45 @@
                  <div class="bg-green-50 border-l-4 border-positive text-green-800 p-4 rounded-md">
                     <h4 class="font-bold">Meta Diária (p/ quitar o mês)</h4>
                     <p id="metaDiaria" class="text-xl">${formatarDinheiro(metaDiaria)}</p>
-                    <span class="text-xs">(${diasRestantes} dias restantes no mês)</span>
+                    <span class="text-xs">(${diasRestantes} dias restantes)</span>
+                </div>
+                <div id="calculator" class="bg-gray-200 p-3 rounded-md mt-4 text-primary">
+                    <h4 class="font-bold text-sm mb-2 text-center text-primary">Calculadora Rápida</h4>
+                    <input type="text" id="calcDisplay" class="w-full bg-dark-bg text-light-text text-right rounded-md p-2 mb-2 text-xl font-mono" readonly>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button class="calc-btn">7</button><button class="calc-btn">8</button><button class="calc-btn">9</button><button class="calc-btn operator">/</button>
+                        <button class="calc-btn">4</button><button class="calc-btn">5</button><button class="calc-btn">6</button><button class="calc-btn operator">*</button>
+                        <button class="calc-btn">1</button><button class="calc-btn">2</button><button class="calc-btn">3</button><button class="calc-btn operator">-</button>
+                        <button class="calc-btn">0</button><button class="calc-btn">.</button><button class="calc-btn operator">C</button><button class="calc-btn operator">+</button>
+                        <button class="calc-btn equal col-span-4">=</button>
+                    </div>
                 </div>
              `;
+             
+             // Adicionar lógica da calculadora
+             const calculator = document.getElementById('calculator');
+             const display = document.getElementById('calcDisplay');
+             calculator.addEventListener('click', e => {
+                if(!e.target.matches('.calc-btn')) return;
+
+                const value = e.target.textContent;
+
+                if(value === 'C') {
+                    display.value = '';
+                } else if (value === '=') {
+                    try {
+                        if (display.value) {
+                             // Use uma função segura para avaliar a expressão
+                            const result = Function(`'use strict'; return (${display.value})`)();
+                            display.value = result;
+                        }
+                    } catch {
+                        display.value = 'Erro';
+                    }
+                } else {
+                    display.value += value;
+                }
+             });
         }
 
         function renderizarGraficos({ entradasPeriodo, saidasPeriodo }){
@@ -436,7 +441,7 @@
             if (saidasChart) saidasChart.destroy();
             const ctxSaidas = document.getElementById('saidasChart').getContext('2d');
             const dadosSaidas = {};
-            // Alterado para incluir todas as saídas (pagas e em aberto)
+            // Alteração: Considerar todas as saídas (pagas e em aberto)
             saidasPeriodo.forEach(s => { 
                 if (!dadosSaidas[s.categoria]) dadosSaidas[s.categoria] = 0; 
                 dadosSaidas[s.categoria] += s.valor; 
@@ -453,9 +458,9 @@
                 data: { 
                     labels: ['Movimentações'], 
                     datasets: [ 
-                        { label: 'Entradas', data: [totalEntradas], backgroundColor: '#16A34A' },      // Verde
-                        { label: 'Pagos', data: [totalSaidasPagas], backgroundColor: '#F59E0B' },   // Amarelo
-                        { label: 'Em Aberto', data: [totalSaidasAberto], backgroundColor: '#DC2626' } // Vermelho
+                        { label: 'Entradas', data: [totalEntradas], backgroundColor: '#16A34A' }, 
+                        { label: 'Pagos', data: [totalSaidasPagas], backgroundColor: '#DC2626' },
+                        { label: 'Em Aberto', data: [totalSaidasAberto], backgroundColor: '#F59E0B' } 
                     ] 
                 },
                 options: { 
@@ -555,19 +560,13 @@
                         <div class="flex flex-wrap gap-4 items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold">Histórico de Entradas</h3>
                             <div class="flex flex-wrap gap-2 items-center" id="filtrosEntradas">
+                                <select id="filtroStatusEntradas" class="rounded-md border-gray-300 shadow-sm text-sm"><option value="todos">Todos</option><option value="pendente">Pendente</option><option value="repassado">Repassado</option></select>
+                                <select id="filtroFonteEntradas" class="rounded-md border-gray-300 shadow-sm text-sm"><option value="todos">Todas</option><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select>
                                 <select id="filtroMesEntradas" class="rounded-md border-gray-300 shadow-sm text-sm">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroEntradasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
                                 <select id="filtroAnoEntradas" class="rounded-md border-gray-300 shadow-sm text-sm">${anos.map(ano => `<option value="${ano}" ${ano === filtroEntradasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
-                                <select id="filtroFonteEntradas" class="rounded-md border-gray-300 shadow-sm text-sm"><option value="todos">Todas</option><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select>
                             </div>
                         </div>
-                        <div id="bulkActionsEntradas" class="hidden bg-gray-100 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
-                        <div id="totalEntradasFiltrado" class="text-right font-bold text-lg mb-4 flex justify-between items-center">
-                             <div class="flex items-center gap-2 text-sm">
-                                <input type="checkbox" id="selectAllEntradas" class="item-checkbox">
-                                <label for="selectAllEntradas">Selecionar Tudo</label>
-                             </div>
-                             <span id="totalValorEntradas"></span>
-                        </div>
+                        <div id="totalEntradasFiltrado" class="text-right font-bold text-lg mb-4"></div>
                         <div id="listaEntradas" class="overflow-auto max-h-[32rem]"></div>
                     </div>
                 </div>`;
@@ -584,15 +583,8 @@
             document.getElementById('filtroMesEntradas').addEventListener('change', e => { filtroEntradasState.month = parseInt(e.target.value); renderizarListaEntradas(); });
             document.getElementById('filtroAnoEntradas').addEventListener('change', e => { filtroEntradasState.year = parseInt(e.target.value); renderizarListaEntradas(); });
             document.getElementById('filtroFonteEntradas').addEventListener('change', e => { filtroEntradasState.source = e.target.value; renderizarListaEntradas(); });
+            document.getElementById('filtroStatusEntradas').addEventListener('change', e => { filtroEntradasState.status = e.target.value; renderizarListaEntradas(); });
             
-            document.getElementById('selectAllEntradas').addEventListener('change', (e) => {
-                const isChecked = e.target.checked;
-                document.querySelectorAll('#listaEntradas .item-checkbox').forEach(checkbox => {
-                    checkbox.checked = isChecked;
-                    handleEntradaSelection(checkbox);
-                });
-            });
-
             tabs.entradas.addEventListener('click', e => {
                  const target = e.target.closest('.status-toggle, .edit-btn, .delete-btn');
                  if(!target) return;
@@ -604,54 +596,25 @@
 
             renderizarListaEntradas();
         }
-
-        function handleEntradaSelection(checkbox) {
-            const id = checkbox.dataset.id;
-            if (checkbox.checked) {
-                selectedEntradas.add(id);
-            } else {
-                selectedEntradas.delete(id);
-            }
-            renderBulkActionsEntradas();
-        }
-
-        function renderBulkActionsEntradas() {
-            const container = document.getElementById('bulkActionsEntradas');
-            if (selectedEntradas.size > 0) {
-                 const totalSelecionado = entradas
-                    .filter(e => selectedEntradas.has(e._id))
-                    .reduce((acc, e) => acc + e.valor, 0);
-
-                container.innerHTML = `
-                    <span class="font-semibold text-sm mr-4">${selectedEntradas.size} selecionado(s) | Total: ${formatarDinheiro(totalSelecionado)}</span>
-                    <button onclick="atualizarStatusSelecionados('entrada', 'repassado')" class="text-xs bg-positive text-white font-bold py-1 px-2 rounded">Marcar como Repassado</button>
-                    <button onclick="atualizarStatusSelecionados('entrada', 'pendente')" class="text-xs bg-yellow-500 text-white font-bold py-1 px-2 rounded">Marcar como Pendente</button>
-                    <button onclick="removerItensSelecionados('entrada')" class="text-xs bg-negative text-white font-bold py-1 px-2 rounded">Excluir Selecionados</button>
-                `;
-                container.classList.remove('hidden');
-                container.classList.add('flex');
-            } else {
-                container.classList.add('hidden');
-                container.classList.remove('flex');
-                container.innerHTML = '';
-            }
-        }
-
+        
         function renderizarListaEntradas() {
             const listaEl = document.getElementById('listaEntradas');
             if (!listaEl) return;
             
-            const { month, year, source } = filtroEntradasState;
+            const { month, year, source, status } = filtroEntradasState;
             const inicio = new Date(Date.UTC(year, month, 1));
             const fim = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
 
             const entradasFiltradas = entradas.filter(e => {
                 const dataEntrada = new Date(e.data);
-                return dataEntrada >= inicio && dataEntrada <= fim && (source === 'todos' || e.fonte === source);
+                const noPeriodo = dataEntrada >= inicio && dataEntrada <= fim;
+                const fonteCorreta = source === 'todos' || e.fonte === source;
+                const statusCorreto = status === 'todos' || e.status === status;
+                return noPeriodo && fonteCorreta && statusCorreto;
             });
             
             const totalFiltrado = entradasFiltradas.reduce((acc, e) => acc + e.valor, 0);
-            document.getElementById('totalValorEntradas').textContent = `Total: ${formatarDinheiro(totalFiltrado)}`;
+            document.getElementById('totalEntradasFiltrado').textContent = `Total: ${formatarDinheiro(totalFiltrado)}`;
 
             if (entradasFiltradas.length === 0) {
                 listaEl.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma entrada encontrada.</p>';
@@ -662,8 +625,7 @@
             entradasFiltradas.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(e => {
                 const statusPendente = e.status === 'pendente';
                 html += `<li class="flex justify-between items-center p-3 rounded-md border border-gray-200">
-                    <div class="flex items-center flex-grow">
-                        <input type="checkbox" data-id="${e._id}" onchange="handleEntradaSelection(this)" class="item-checkbox mr-4" ${selectedEntradas.has(e._id) ? 'checked' : ''}>
+                    <div class="flex items-center">
                         <span class="w-3 h-3 rounded-full mr-3" style="background-color: ${ {'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Outro': '#6B7280'}[e.fonte] }"></span>
                         <div><p class="font-semibold">${e.fonte}</p><p class="text-sm text-gray-500">${formatarData(e.data)}</p></div>
                     </div>
@@ -680,7 +642,7 @@
             html += '</ul>';
             listaEl.innerHTML = html;
         }
-        
+
         // --- ABA DE SAÍDAS ---
         function renderizarAbaSaidas() {
             const anos = getAnosDisponiveis();
@@ -710,14 +672,7 @@
                                 <select id="filtroAnoSaidas" class="rounded-md border-gray-300 shadow-sm text-sm">${anos.map(ano => `<option value="${ano}" ${ano === filtroSaidasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
                             </div>
                         </div>
-                        <div id="bulkActionsSaidas" class="hidden bg-gray-100 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
-                        <div id="totalSaidasFiltrado" class="text-right font-bold text-lg mb-4 flex justify-between items-center">
-                            <div class="flex items-center gap-2 text-sm">
-                                <input type="checkbox" id="selectAllSaidas" class="item-checkbox">
-                                <label for="selectAllSaidas">Selecionar Tudo</label>
-                             </div>
-                             <span id="totalValorSaidas"></span>
-                        </div>
+                        <div id="totalSaidasFiltrado" class="text-right font-bold text-lg mb-4"></div>
                         <div id="listaSaidas" class="overflow-auto max-h-[28rem]"></div>
                     </div>
                 </div>`;
@@ -742,20 +697,12 @@
             document.getElementById('filtroCategoriaSaidas').addEventListener('change', e => { filtroSaidasState.category = e.target.value; renderizarListaSaidas(); });
             document.getElementById('filtroStatusSaidas').addEventListener('change', e => { filtroSaidasState.status = e.target.value; renderizarListaSaidas(); });
             
-            document.getElementById('selectAllSaidas').addEventListener('change', (e) => {
-                const isChecked = e.target.checked;
-                document.querySelectorAll('#listaSaidas .item-checkbox').forEach(checkbox => {
-                    checkbox.checked = isChecked;
-                    handleSaidaSelection(checkbox);
-                });
-            });
-
             tabs.saidas.addEventListener('click', e => {
                  const target = e.target.closest('.status-toggle-saida, .edit-btn, .delete-btn');
                  if(!target) return;
                  const id = target.dataset.id;
                  const saida = saidas.find(s => s._id === id);
-                 if (saida && saida.entradaId && !target.classList.contains('status-toggle-saida')) {
+                 if (saida && saida.entradaId) {
                      alert('Este dízimo não pode ser alterado ou excluído diretamente. Altere a entrada original.');
                      return;
                  }
@@ -764,42 +711,6 @@
                  if(target.classList.contains('delete-btn')) { if(confirm('Tem certeza?')) removerItem('saida', id); }
             });
             renderizarListaSaidas();
-        }
-
-        function handleSaidaSelection(checkbox) {
-            const id = checkbox.dataset.id;
-            const isDisabled = checkbox.disabled;
-
-            if (isDisabled) return;
-
-            if (checkbox.checked) {
-                selectedSaidas.add(id);
-            } else {
-                selectedSaidas.delete(id);
-            }
-            renderBulkActionsSaidas();
-        }
-
-        function renderBulkActionsSaidas() {
-            const container = document.getElementById('bulkActionsSaidas');
-            if (selectedSaidas.size > 0) {
-                 const totalSelecionado = saidas
-                    .filter(s => selectedSaidas.has(s._id))
-                    .reduce((acc, s) => acc + s.valor, 0);
-
-                container.innerHTML = `
-                    <span class="font-semibold text-sm mr-4">${selectedSaidas.size} selecionado(s) | Total: ${formatarDinheiro(totalSelecionado)}</span>
-                    <button onclick="atualizarStatusSelecionados('saida', 'pago')" class="text-xs bg-positive text-white font-bold py-1 px-2 rounded">Marcar como Pago</button>
-                    <button onclick="atualizarStatusSelecionados('saida', 'em aberto')" class="text-xs bg-yellow-500 text-white font-bold py-1 px-2 rounded">Marcar como Em Aberto</button>
-                    <button onclick="removerItensSelecionados('saida')" class="text-xs bg-negative text-white font-bold py-1 px-2 rounded">Excluir Selecionados</button>
-                `;
-                container.classList.remove('hidden');
-                container.classList.add('flex');
-            } else {
-                container.classList.add('hidden');
-                container.classList.remove('flex');
-                container.innerHTML = '';
-            }
         }
 
         function renderizarListaSaidas() {
@@ -819,7 +730,7 @@
             });
 
             const totalFiltrado = saidasFiltradas.reduce((acc, s) => acc + s.valor, 0);
-            document.getElementById('totalValorSaidas').textContent = `Total: ${formatarDinheiro(totalFiltrado)}`;
+            document.getElementById('totalSaidasFiltrado').textContent = `Total: ${formatarDinheiro(totalFiltrado)}`;
 
             if (saidasFiltradas.length === 0) {
                 listaEl.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma saída encontrada.</p>';
@@ -830,8 +741,7 @@
                 const isPago = s.status === 'pago';
                 const isDizimo = !!s.entradaId;
                 html += `<li class="flex justify-between items-center p-3 rounded-md border border-gray-200 ${isDizimo ? 'opacity-70' : ''}">
-                    <div class="flex items-center flex-grow">
-                        <input type="checkbox" data-id="${s._id}" onchange="handleSaidaSelection(this)" class="item-checkbox mr-4" ${selectedSaidas.has(s._id) ? 'checked' : ''} ${isDizimo ? 'disabled' : ''}>
+                    <div class="flex items-center">
                         <div>
                             <p class="font-semibold">${s.descricao}</p>
                             <p class="text-sm text-gray-500">${s.categoria} - ${formatarData(s.data)}</p>
@@ -927,5 +837,4 @@
 
 </body>
 </html>
-
 
