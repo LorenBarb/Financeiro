@@ -168,7 +168,7 @@ router.delete('/saidas/:id', async (req, res) => {
   }
 });
 
-// --- NOVAS ROTAS PARA AÇÕES EM LOTE ---
+// --- ROTAS PARA AÇÕES EM LOTE ---
 
 // DELETE: Deletar múltiplas entradas ou saídas
 router.delete('/:type', async (req, res) => {
@@ -183,12 +183,10 @@ router.delete('/:type', async (req, res) => {
             throw new Error('IDs inválidos');
         }
 
-        // Se estiver deletando entradas, também deleta os dízimos associados
         if (type === 'entradas') {
             await Saida.deleteMany({ entradaId: { $in: ids } }, { session });
         }
         
-        // Garante que dízimos automáticos não sejam deletados diretamente em lote
         if (type === 'saidas') {
              const saidasParaDeletar = await Saida.find({ _id: { $in: ids } });
              const idsValidos = saidasParaDeletar.filter(s => !s.entradaId).map(s => s._id);
