@@ -54,31 +54,6 @@
         .item-checkbox {
             transform: scale(1.2);
         }
-        .calc-btn {
-            background-color: #374151; /* bg-gray-700 */
-            color: #F9FAFB; /* text-light-text */
-            border-radius: 0.375rem; /* rounded-md */
-            padding: 0.75rem 0;
-            font-size: 1.125rem; /* text-lg */
-            font-weight: 600; /* font-semibold */
-            transition: background-color 0.2s;
-        }
-        .calc-btn:hover {
-            background-color: #4B5563; /* bg-gray-600 */
-        }
-        .calc-btn.operator {
-            background-color: #4f46e5; /* bg-indigo-600 */
-        }
-        .calc-btn.operator:hover {
-            background-color: #4338ca; /* bg-indigo-700 */
-        }
-         .calc-btn.equal {
-            background-color: #F59E0B; /* bg-secondary */
-            color: #1F2937; /* text-primary */
-        }
-         .calc-btn.equal:hover {
-            background-color: #d97706; /* bg-amber-600 */
-        }
     </style>
 </head>
 <body class="bg-dark-bg text-light-text">
@@ -563,14 +538,7 @@
                                 <select id="filtroAnoEntradas" class="rounded-md border-gray-300 shadow-sm text-sm">${anos.map(ano => `<option value="${ano}" ${ano === filtroEntradasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
                             </div>
                         </div>
-                        <div id="bulkActionsEntradas" class="hidden bg-gray-100 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
-                        <div id="totalEntradasFiltrado" class="text-right font-bold text-lg mb-4 flex justify-between items-center">
-                             <div class="flex items-center gap-2 text-sm">
-                                <input type="checkbox" id="selectAllEntradas" class="item-checkbox">
-                                <label for="selectAllEntradas">Selecionar Tudo</label>
-                             </div>
-                             <span id="totalValorEntradas"></span>
-                        </div>
+                        <div id="totalEntradasFiltrado" class="text-right font-bold text-lg mb-4"></div>
                         <div id="listaEntradas" class="overflow-auto max-h-[32rem]"></div>
                     </div>
                 </div>`;
@@ -588,14 +556,6 @@
             document.getElementById('filtroAnoEntradas').addEventListener('change', e => { filtroEntradasState.year = parseInt(e.target.value); renderizarListaEntradas(); });
             document.getElementById('filtroFonteEntradas').addEventListener('change', e => { filtroEntradasState.source = e.target.value; renderizarListaEntradas(); });
             document.getElementById('filtroStatusEntradas').addEventListener('change', e => { filtroEntradasState.status = e.target.value; renderizarListaEntradas(); });
-
-            document.getElementById('selectAllEntradas').addEventListener('change', (e) => {
-                const isChecked = e.target.checked;
-                document.querySelectorAll('#listaEntradas .item-checkbox').forEach(checkbox => {
-                    checkbox.checked = isChecked;
-                    handleEntradaSelection(checkbox);
-                });
-            });
             
             tabs.entradas.addEventListener('click', e => {
                  const target = e.target.closest('.status-toggle, .edit-btn, .delete-btn');
@@ -607,38 +567,6 @@
             });
 
             renderizarListaEntradas();
-        }
-
-        function handleEntradaSelection(checkbox) {
-            const id = checkbox.dataset.id;
-            if (checkbox.checked) {
-                selectedEntradas.add(id);
-            } else {
-                selectedEntradas.delete(id);
-            }
-            renderBulkActionsEntradas();
-        }
-
-        function renderBulkActionsEntradas() {
-            const container = document.getElementById('bulkActionsEntradas');
-            if (selectedEntradas.size > 0) {
-                 const totalSelecionado = entradas
-                    .filter(e => selectedEntradas.has(e._id))
-                    .reduce((acc, e) => acc + e.valor, 0);
-
-                container.innerHTML = `
-                    <span class="font-semibold text-sm mr-4">${selectedEntradas.size} selecionado(s) | Total: ${formatarDinheiro(totalSelecionado)}</span>
-                    <button onclick="atualizarStatusSelecionados('entradas', 'resgatado')" class="text-xs bg-positive text-white font-bold py-1 px-2 rounded">Marcar como Resgatado</button>
-                    <button onclick="atualizarStatusSelecionados('entradas', 'pendente')" class="text-xs bg-yellow-500 text-white font-bold py-1 px-2 rounded">Marcar como Pendente</button>
-                    <button onclick="removerItensSelecionados('entradas')" class="text-xs bg-negative text-white font-bold py-1 px-2 rounded">Excluir</button>
-                `;
-                container.classList.remove('hidden');
-                container.classList.add('flex');
-            } else {
-                container.classList.add('hidden');
-                container.classList.remove('flex');
-                container.innerHTML = '';
-            }
         }
         
         function renderizarListaEntradas() {
@@ -658,7 +586,7 @@
             });
             
             const totalFiltrado = entradasFiltradas.reduce((acc, e) => acc + e.valor, 0);
-            document.getElementById('totalValorEntradas').textContent = `Total: ${formatarDinheiro(totalFiltrado)}`;
+            document.getElementById('totalEntradasFiltrado').textContent = `Total: ${formatarDinheiro(totalFiltrado)}`;
 
             if (entradasFiltradas.length === 0) {
                 listaEl.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma entrada encontrada.</p>';
@@ -669,8 +597,7 @@
             entradasFiltradas.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(e => {
                 const statusPendente = e.status === 'pendente';
                 html += `<li class="flex justify-between items-center p-3 rounded-md border border-gray-200">
-                    <div class="flex items-center flex-grow">
-                        <input type="checkbox" data-id="${e._id}" onchange="handleEntradaSelection(this)" class="item-checkbox mr-4" ${selectedEntradas.has(e._id) ? 'checked' : ''}>
+                    <div class="flex items-center">
                         <span class="w-3 h-3 rounded-full mr-3" style="background-color: ${ {'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Outro': '#6B7280'}[e.fonte] }"></span>
                         <div><p class="font-semibold">${e.fonte}</p><p class="text-sm text-gray-500">${formatarData(e.data)}</p></div>
                     </div>
@@ -717,14 +644,7 @@
                                 <select id="filtroAnoSaidas" class="rounded-md border-gray-300 shadow-sm text-sm">${anos.map(ano => `<option value="${ano}" ${ano === filtroSaidasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
                             </div>
                         </div>
-                         <div id="bulkActionsSaidas" class="hidden bg-gray-100 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
-                        <div id="totalSaidasFiltrado" class="text-right font-bold text-lg mb-4 flex justify-between items-center">
-                            <div class="flex items-center gap-2 text-sm">
-                                <input type="checkbox" id="selectAllSaidas" class="item-checkbox">
-                                <label for="selectAllSaidas">Selecionar Tudo</label>
-                             </div>
-                             <span id="totalValorSaidas"></span>
-                        </div>
+                        <div id="totalSaidasFiltrado" class="text-right font-bold text-lg mb-4"></div>
                         <div id="listaSaidas" class="overflow-auto max-h-[28rem]"></div>
                     </div>
                 </div>`;
@@ -748,14 +668,6 @@
             document.getElementById('filtroAnoSaidas').addEventListener('change', e => { filtroSaidasState.year = parseInt(e.target.value); renderizarListaSaidas(); });
             document.getElementById('filtroCategoriaSaidas').addEventListener('change', e => { filtroSaidasState.category = e.target.value; renderizarListaSaidas(); });
             document.getElementById('filtroStatusSaidas').addEventListener('change', e => { filtroSaidasState.status = e.target.value; renderizarListaSaidas(); });
-
-             document.getElementById('selectAllSaidas').addEventListener('change', (e) => {
-                const isChecked = e.target.checked;
-                document.querySelectorAll('#listaSaidas .item-checkbox').forEach(checkbox => {
-                    checkbox.checked = isChecked;
-                    handleSaidaSelection(checkbox);
-                });
-            });
             
             tabs.saidas.addEventListener('click', e => {
                  const target = e.target.closest('.status-toggle-saida, .edit-btn, .delete-btn');
@@ -771,42 +683,6 @@
                  if(target.classList.contains('delete-btn')) { if(confirm('Tem certeza?')) removerItem('saidas', id); }
             });
             renderizarListaSaidas();
-        }
-
-        function handleSaidaSelection(checkbox) {
-            const id = checkbox.dataset.id;
-            const isDisabled = checkbox.disabled;
-
-            if (isDisabled) return;
-
-            if (checkbox.checked) {
-                selectedSaidas.add(id);
-            } else {
-                selectedSaidas.delete(id);
-            }
-            renderBulkActionsSaidas();
-        }
-
-        function renderBulkActionsSaidas() {
-            const container = document.getElementById('bulkActionsSaidas');
-            if (selectedSaidas.size > 0) {
-                 const totalSelecionado = saidas
-                    .filter(s => selectedSaidas.has(s._id))
-                    .reduce((acc, s) => acc + s.valor, 0);
-
-                container.innerHTML = `
-                    <span class="font-semibold text-sm mr-4">${selectedSaidas.size} selecionado(s) | Total: ${formatarDinheiro(totalSelecionado)}</span>
-                    <button onclick="atualizarStatusSelecionados('saidas', 'pago')" class="text-xs bg-positive text-white font-bold py-1 px-2 rounded">Marcar como Pago</button>
-                    <button onclick="atualizarStatusSelecionados('saidas', 'em aberto')" class="text-xs bg-yellow-500 text-white font-bold py-1 px-2 rounded">Marcar como Em Aberto</button>
-                    <button onclick="removerItensSelecionados('saidas')" class="text-xs bg-negative text-white font-bold py-1 px-2 rounded">Excluir</button>
-                `;
-                container.classList.remove('hidden');
-                container.classList.add('flex');
-            } else {
-                container.classList.add('hidden');
-                container.classList.remove('flex');
-                container.innerHTML = '';
-            }
         }
 
         function renderizarListaSaidas() {
@@ -826,7 +702,7 @@
             });
 
             const totalFiltrado = saidasFiltradas.reduce((acc, s) => acc + s.valor, 0);
-            document.getElementById('totalValorSaidas').textContent = `Total: ${formatarDinheiro(totalFiltrado)}`;
+            document.getElementById('totalSaidasFiltrado').textContent = `Total: ${formatarDinheiro(totalFiltrado)}`;
 
             if (saidasFiltradas.length === 0) {
                 listaEl.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma saída encontrada.</p>';
@@ -837,8 +713,7 @@
                 const isPago = s.status === 'pago';
                 const isDizimo = !!s.entradaId;
                 html += `<li class="flex justify-between items-center p-3 rounded-md border border-gray-200 ${isDizimo ? 'opacity-70' : ''}">
-                    <div class="flex items-center flex-grow">
-                         <input type="checkbox" data-id="${s._id}" onchange="handleSaidaSelection(this)" class="item-checkbox mr-4" ${selectedSaidas.has(s._id) ? 'checked' : ''} ${isDizimo ? 'disabled' : ''}>
+                    <div class="flex items-center">
                         <div>
                             <p class="font-semibold">${s.descricao}</p>
                             <p class="text-sm text-gray-500">${s.categoria} - ${formatarData(s.data)}</p>
@@ -861,26 +736,76 @@
         function renderizarAbaRelatorios() {
             tabs.relatorios.innerHTML = `<div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg space-y-8">
                 <div id="evolucaoMensalContainer" class="p-6 border border-gray-200 rounded-lg">
-                    <h4 class="font-bold text-xl mb-4 border-b border-gray-200 pb-2">Evolução Mensal (Últimos 12 Meses)</h4>
+                    <div class="flex flex-wrap gap-4 items-center justify-between mb-4">
+                        <h4 class="font-bold text-xl">Evolução Mensal</h4>
+                        <div class="flex flex-wrap gap-2 items-center">
+                            <label for="filtroAnoInicial" class="text-sm font-medium">De:</label>
+                            <select id="filtroAnoInicial" class="rounded-md border-gray-300 shadow-sm text-sm"></select>
+                            <label for="filtroAnoFinal" class="text-sm font-medium">Até:</label>
+                            <select id="filtroAnoFinal" class="rounded-md border-gray-300 shadow-sm text-sm"></select>
+                        </div>
+                    </div>
                     <div class="h-96"><canvas id="evolucaoChart"></canvas></div>
                 </div>
             </div>`;
+            
+            const anos = getAnosDisponiveis().sort((a,b) => a - b);
+            const anoInicialEl = document.getElementById('filtroAnoInicial');
+            const anoFinalEl = document.getElementById('filtroAnoFinal');
+            
+            if(anos.length > 0) {
+                anoInicialEl.innerHTML = anos.map(ano => `<option value="${ano}">${ano}</option>`).join('');
+                anoFinalEl.innerHTML = anos.map(ano => `<option value="${ano}">${ano}</option>`).join('');
+                anoInicialEl.value = anos[0];
+                anoFinalEl.value = anos[anos.length - 1];
+            }
+
+            anoInicialEl.addEventListener('change', renderizarGraficoEvolucao);
+            anoFinalEl.addEventListener('change', renderizarGraficoEvolucao);
+
             renderizarGraficoEvolucao();
         }
 
         function renderizarGraficoEvolucao() {
             if(evolucaoChart) evolucaoChart.destroy();
 
+            const anoInicialEl = document.getElementById('filtroAnoInicial');
+            const anoFinalEl = document.getElementById('filtroAnoFinal');
+
+            if (!anoInicialEl || !anoFinalEl || !anoInicialEl.value || !anoFinalEl.value) {
+                const ctx = document.getElementById('evolucaoChart').getContext('2d');
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.font = "16px Inter";
+                ctx.fillStyle = "#4B5563";
+                ctx.textAlign = "center";
+                ctx.fillText("Nenhum dado para exibir.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            };
+
+            const anoInicial = parseInt(anoInicialEl.value);
+            const anoFinal = parseInt(anoFinalEl.value);
+
+            if (anoInicial > anoFinal) {
+                const ctx = document.getElementById('evolucaoChart').getContext('2d');
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.font = "16px Inter";
+                ctx.fillStyle = "#4B5563";
+                ctx.textAlign = "center";
+                ctx.fillText("O ano inicial não pode ser maior que o ano final.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+
             const labels = [];
             const dataEntradas = [];
             const dataSaidas = [];
             const dataSaldo = [];
             
-            const dataAtual = new Date();
-            for(let i = 11; i >= 0; i--) {
-                const dataRef = new Date(dataAtual.getFullYear(), dataAtual.getMonth() - i, 1);
-                const ano = dataRef.getFullYear();
-                const mes = dataRef.getMonth();
+            let currentDate = new Date(Date.UTC(anoInicial, 0, 1));
+            const finalDate = new Date(Date.UTC(anoFinal, 11, 1));
+
+            while (currentDate <= finalDate) {
+                const ano = currentDate.getUTCFullYear();
+                const mes = currentDate.getUTCMonth();
                 
                 labels.push(`${MESES_NOME[mes].substring(0,3)}/${ano.toString().substring(2,4)}`);
 
@@ -898,6 +823,8 @@
                 dataEntradas.push(totalEntradasMes);
                 dataSaidas.push(totalSaidasPagasMes);
                 dataSaldo.push(totalEntradasMes - totalSaidasPagasMes);
+
+                currentDate.setUTCMonth(currentDate.getUTCMonth() + 1);
             }
 
             const ctx = document.getElementById('evolucaoChart').getContext('2d');
