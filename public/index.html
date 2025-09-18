@@ -173,8 +173,6 @@
         let filtroDashboardState = { month: hoje.getMonth(), year: hoje.getFullYear() };
         let filtroEntradasState = { month: hoje.getMonth(), year: hoje.getFullYear(), source: 'todos', status: 'todos' };
         let filtroSaidasState = { month: hoje.getMonth(), year: hoje.getFullYear(), category: 'todas', status: 'todos' };
-        let selectedEntradas = new Set();
-        let selectedSaidas = new Set();
        
         const tabs = {
             dashboard: document.getElementById('dashboard'),
@@ -288,51 +286,6 @@
             } catch (error) { console.error(`Erro ao remover ${type}:`, error); }
         }
         
-        // --- FUNÇÕES PARA AÇÕES EM LOTE ---
-        async function removerItensSelecionados(type) {
-            const ids = Array.from(type === 'entradas' ? selectedEntradas : selectedSaidas);
-            if (ids.length === 0) return;
-            
-            const message = type === 'entradas'
-                ? `Tem certeza que deseja excluir os ${ids.length} itens selecionados? Os dízimos associados também serão excluídos.`
-                : `Tem certeza que deseja excluir os ${ids.length} itens selecionados? (Dízimos automáticos não podem ser excluídos por aqui).`;
-
-            if (confirm(message)) {
-                try {
-                    await fetch(`${API_URL}/${type}`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ids })
-                    });
-                    if (type === 'entradas') selectedEntradas.clear();
-                    else selectedSaidas.clear();
-                    carregarDados();
-                } catch (error) {
-                    console.error(`Erro ao remover ${type}s em lote:`, error);
-                }
-            }
-        }
-
-        async function atualizarStatusSelecionados(type, status) {
-            const ids = Array.from(type === 'entradas' ? selectedEntradas : selectedSaidas);
-            if (ids.length === 0) return;
-
-            if (confirm(`Tem certeza que deseja alterar o status de ${ids.length} itens para "${status}"?`)) {
-                 try {
-                    await fetch(`${API_URL}/${type}/bulk-status`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ids, status })
-                    });
-                    if (type === 'entradas') selectedEntradas.clear();
-                    else selectedSaidas.clear();
-                    carregarDados();
-                } catch (error) {
-                    console.error(`Erro ao atualizar status em lote de ${type}s:`, error);
-                }
-            }
-        }
-
         async function alterarStatusEntrada(id) {
             const entrada = entradas.find(en => en._id === id);
             if(entrada){
@@ -355,6 +308,7 @@
             const inicioMes = new Date(Date.UTC(year, month, 1));
             const fimMes = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
 
+            // Cálculos para o período selecionado
             const entradasPeriodo = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; });
             const saidasPeriodo = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes; });
             
@@ -365,6 +319,7 @@
             const totalSaidasPagas = saidasPagasPeriodo.reduce((acc, s) => acc + s.valor, 0);
             const totalSaidasAberto = saidasAbertoPeriodo.reduce((acc, s) => acc + s.valor, 0);
             
+            // Cálculo para o Saldo Atual Geral (independente do período)
             const hojeUTC = new Date();
             hojeUTC.setUTCHours(23, 59, 59, 999);
             const saldoAtualGeral = entradas.filter(e => e.status === 'resgatado' && new Date(e.data) <= hojeUTC).reduce((acc, e) => acc + e.valor, 0) -
