@@ -84,35 +84,35 @@
                 </div>
 
                 <!-- Cards Principais -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
-                        <h3 class="text-gray-600 font-medium">Entradas (do Mês)</h3>
-                        <p id="cardEntradas" class="text-3xl font-bold text-positive">R$ 0,00</p>
+                        <h3 class="text-gray-600 font-medium">Entradas</h3>
+                        <p id="totalEntradasPeriodo" class="text-3xl font-bold text-positive">R$ 0,00</p>
                     </div>
                     <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
                         <h3 class="text-gray-600 font-medium">Pagamentos Realizados</h3>
-                        <p id="cardPagamentosRealizados" class="text-3xl font-bold text-negative">R$ 0,00</p>
+                        <p id="totalSaidasPagasPeriodo" class="text-3xl font-bold text-negative">R$ 0,00</p>
                     </div>
                     <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
                         <h3 class="text-gray-600 font-medium">Valores em Aberto</h3>
-                        <p id="cardValoresEmAberto" class="text-3xl font-bold text-secondary">R$ 0,00</p>
+                        <p id="totalSaidasAbertoPeriodo" class="text-3xl font-bold text-secondary">R$ 0,00</p>
                     </div>
-                </div>
-                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
-                        <h3 class="text-gray-600 font-medium">Saldo Previsto (do Mês)</h3>
-                        <p id="cardSaldoPrevistoMes" class="text-3xl font-bold">R$ 0,00</p>
-                    </div>
-                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
-                        <h3 class="text-gray-600 font-medium">Gastos Previstos (Futuros)</h3>
-                        <p id="cardGastosPrevistos" class="text-3xl font-bold text-purple-600">R$ 0,00</p>
+                        <h3 class="text-gray-600 font-medium">Saldo Atual</h3>
+                        <p id="saldoAtualGeral" class="text-3xl font-bold">R$ 0,00</p>
                     </div>
                 </div>
                 
-                 <div class="grid grid-cols-1 lg:grid-cols-1 gap-6">
-                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-card-bg text-primary p-6 rounded-xl shadow-lg">
                          <h3 class="text-lg font-semibold mb-4">Balanço do Período (<span class="periodo-label"></span>)</h3>
                         <div class="h-80"><canvas id="comparativoChart"></canvas></div>
+                    </div>
+                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                        <h3 class="text-lg font-semibold mb-4">Resumo e Metas (<span class="periodo-label"></span>)</h3>
+                        <div id="resumoMetasContainer" class="space-y-4">
+                            <!-- Conteúdo gerado via JS -->
+                        </div>
                     </div>
                 </div>
 
@@ -148,6 +148,8 @@
         let filtroDashboardState = { month: hoje.getMonth(), year: hoje.getFullYear() };
         let filtroEntradasState = { month: hoje.getMonth(), year: hoje.getFullYear(), source: 'todos', status: 'todos' };
         let filtroSaidasState = { month: hoje.getMonth(), year: hoje.getFullYear(), category: 'todas', status: 'todos' };
+        let selectedEntradas = new Set();
+        let selectedSaidas = new Set();
        
         const tabs = {
             dashboard: document.getElementById('dashboard'),
@@ -261,6 +263,51 @@
             } catch (error) { console.error(`Erro ao remover ${type}:`, error); }
         }
         
+        // --- FUNÇÕES PARA AÇÕES EM LOTE ---
+        async function removerItensSelecionados(type) {
+            const ids = Array.from(type === 'entradas' ? selectedEntradas : selectedSaidas);
+            if (ids.length === 0) return;
+            
+            const message = type === 'entradas'
+                ? `Tem certeza que deseja excluir os ${ids.length} itens selecionados? Os dízimos associados também serão excluídos.`
+                : `Tem certeza que deseja excluir os ${ids.length} itens selecionados? (Dízimos automáticos não podem ser excluídos por aqui).`;
+
+            if (confirm(message)) {
+                try {
+                    await fetch(`${API_URL}/${type}`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids })
+                    });
+                    if (type === 'entradas') selectedEntradas.clear();
+                    else selectedSaidas.clear();
+                    carregarDados();
+                } catch (error) {
+                    console.error(`Erro ao remover ${type}s em lote:`, error);
+                }
+            }
+        }
+
+        async function atualizarStatusSelecionados(type, status) {
+            const ids = Array.from(type === 'entradas' ? selectedEntradas : selectedSaidas);
+            if (ids.length === 0) return;
+
+            if (confirm(`Tem certeza que deseja alterar o status de ${ids.length} itens para "${status}"?`)) {
+                 try {
+                    await fetch(`${API_URL}/${type}/bulk-status`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids, status })
+                    });
+                    if (type === 'entradas') selectedEntradas.clear();
+                    else selectedSaidas.clear();
+                    carregarDados();
+                } catch (error) {
+                    console.error(`Erro ao atualizar status em lote de ${type}s:`, error);
+                }
+            }
+        }
+
         async function alterarStatusEntrada(id) {
             const entrada = entradas.find(en => en._id === id);
             if(entrada){
@@ -288,24 +335,21 @@
             const saidasPeriodo = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes; });
             
             // Cards do Mês
-            const totalEntradasMes = entradasPeriodo.filter(e => e.status === 'resgatado').reduce((acc, e) => acc + e.valor, 0);
+            const totalEntradasMes = entradasPeriodo.reduce((acc, e) => acc + e.valor, 0);
             const totalPagamentosRealizadosMes = saidasPeriodo.filter(s => s.status === 'pago').reduce((acc, s) => acc + s.valor, 0);
             const totalValoresEmAbertoMes = saidasPeriodo.filter(s => s.status === 'em aberto').reduce((acc, s) => acc + s.valor, 0);
-            const totalEntradasPendentesMes = entradasPeriodo.filter(e => e.status === 'pendente').reduce((acc, e) => acc + e.valor, 0);
-            const saldoPrevistoMes = (totalEntradasMes + totalEntradasPendentesMes) - (totalPagamentosRealizadosMes + totalValoresEmAbertoMes);
-
-            // Card Futuro
-            const gastosPrevistosFuturos = saidas.filter(s => {
-                const dataSaida = new Date(s.data);
-                return dataSaida > fimMes && s.status === 'em aberto';
-            }).reduce((acc, s) => acc + s.valor, 0);
+            
+            // Saldo Atual Geral
+            const hojeUTC = new Date();
+            hojeUTC.setUTCHours(23, 59, 59, 999);
+            const saldoAtualGeral = entradas.filter(e => e.status === 'resgatado' && new Date(e.data) <= hojeUTC).reduce((acc, e) => acc + e.valor, 0) -
+                                   saidas.filter(s => s.status === 'pago' && new Date(s.data) <= hojeUTC).reduce((acc, s) => acc + s.valor, 0);
             
             return { 
                 totalEntradas: totalEntradasMes, 
                 totalPagamentosRealizados: totalPagamentosRealizadosMes,
                 totalValoresEmAberto: totalValoresEmAbertoMes,
-                saldoPrevistoMes,
-                gastosPrevistosFuturos,
+                saldoAtualGeral,
                 entradasPeriodo, 
                 saidasPeriodo
             };
@@ -314,21 +358,82 @@
         // --- LÓGICA DE RENDERIZAÇÃO ---
         let entradasChart, saidasChart, comparativoChart, evolucaoChart;
         function renderizarDashboard(data) {
-            document.getElementById('cardEntradas').textContent = formatarDinheiro(data.totalEntradas);
-            document.getElementById('cardPagamentosRealizados').textContent = formatarDinheiro(data.totalPagamentosRealizados);
-            document.getElementById('cardValoresEmAberto').textContent = formatarDinheiro(data.totalValoresEmAberto);
+            document.getElementById('totalEntradasPeriodo').textContent = formatarDinheiro(data.totalEntradas);
+            document.getElementById('totalSaidasPagasPeriodo').textContent = formatarDinheiro(data.totalPagamentosRealizados);
+            document.getElementById('totalSaidasAbertoPeriodo').textContent = formatarDinheiro(data.totalValoresEmAberto);
             
-            const saldoPrevistoEl = document.getElementById('cardSaldoPrevistoMes');
-            saldoPrevistoEl.textContent = formatarDinheiro(data.saldoPrevistoMes);
-            saldoPrevistoEl.classList.remove('text-positive', 'text-negative');
-            saldoPrevistoEl.classList.add(data.saldoPrevistoMes >= 0 ? 'text-positive' : 'text-negative');
-            
-            document.getElementById('cardGastosPrevistos').textContent = formatarDinheiro(data.gastosPrevistosFuturos);
+            const saldoAtualEl = document.getElementById('saldoAtualGeral');
+            saldoAtualEl.textContent = formatarDinheiro(data.saldoAtualGeral);
+            saldoAtualEl.classList.remove('text-positive', 'text-negative');
+            if (data.saldoAtualGeral >= 0) {
+                saldoAtualEl.classList.add('text-positive');
+            } else {
+                saldoAtualEl.classList.add('text-negative');
+            }
             
             const nomeFiltro = `${MESES_NOME[filtroDashboardState.month]}/${filtroDashboardState.year}`;
             document.querySelectorAll('.periodo-label').forEach(el => el.textContent = nomeFiltro);
 
+            renderizarResumoMetas(data);
             renderizarGraficos(data);
+        }
+
+        function renderizarResumoMetas(data){
+             const container = document.getElementById('resumoMetasContainer');
+             
+             // Card Resumo do Mês
+             const resumoMesHtml = `
+                <div class="bg-blue-50 border-l-4 border-neutral text-blue-800 p-4 rounded-md text-sm">
+                    <p><strong>Entradas:</strong> ${formatarDinheiro(data.totalEntradas)}</p>
+                    <p><strong>Pagamentos:</strong> ${formatarDinheiro(data.totalPagamentosRealizados)}</p>
+                    <p><strong>A Pagar:</strong> ${formatarDinheiro(data.totalValoresEmAberto)}</p>
+                </div>
+             `;
+
+             // Card Meta Diária
+             const hojeUTC = new Date();
+             let metaDiariaHtml = '';
+             if(hojeUTC.getFullYear() === filtroDashboardState.year && hojeUTC.getMonth() === filtroDashboardState.month) {
+                const ultimoDiaDoMes = new Date(Date.UTC(hojeUTC.getUTCFullYear(), hojeUTC.getUTCMonth() + 1, 0));
+                let diasRestantes = Math.ceil((ultimoDiaDoMes - hojeUTC) / (1000 * 60 * 60 * 24));
+                if (diasRestantes < 0) diasRestantes = 0;
+             
+                const valorNecessario = data.totalValoresEmAberto - data.entradasPeriodo.filter(e => e.status === 'pendente').reduce((a,c) => a+c.valor, 0);
+                const metaDiaria = valorNecessario > 0 && diasRestantes > 0 ? valorNecessario / diasRestantes : 0;
+                
+                metaDiariaHtml = `
+                    <div class="bg-green-50 border-l-4 border-positive text-green-800 p-4 rounded-md">
+                        <h4 class="font-bold">Meta Diária (p/ quitar o mês)</h4>
+                        <p class="text-xl">${formatarDinheiro(metaDiaria)}</p>
+                        <span class="text-xs">(${diasRestantes} dias restantes)</span>
+                    </div>
+                `;
+             }
+
+             // Card Previsão Futura
+             const proximosMeses = {};
+             const dataLimite = new Date();
+             dataLimite.setMonth(dataLimite.getMonth() + 4); 
+             saidas.filter(s => s.status === 'em aberto' && new Date(s.data) > hoje && new Date(s.data) < dataLimite).forEach(s => {
+                const dataSaida = new Date(s.data);
+                const mesAno = `${MESES_NOME[dataSaida.getUTCMonth()].substring(0,3)}/${dataSaida.getUTCFullYear()}`;
+                if(!proximosMeses[mesAno]) proximosMeses[mesAno] = 0;
+                proximosMeses[mesAno] += s.valor;
+             });
+
+             const previsaoHtml = `
+                <div class="bg-purple-50 border-l-4 border-purple-500 text-purple-800 p-4 rounded-md">
+                    <h4 class="font-bold">Gastos Futuros (Próximos 3 meses)</h4>
+                    <ul class="text-sm mt-2">
+                        ${Object.keys(proximosMeses).length > 0 ? 
+                            Object.entries(proximosMeses).map(([mes, valor]) => `<li><strong>${mes}:</strong> ${formatarDinheiro(valor)}</li>`).join('') :
+                            '<li>Nenhuma conta em aberto nos próximos 3 meses.</li>'
+                        }
+                    </ul>
+                </div>
+             `;
+             
+             container.innerHTML = resumoMesHtml + metaDiariaHtml + previsaoHtml;
         }
 
         function renderizarGraficos({ entradasPeriodo, saidasPeriodo }){
