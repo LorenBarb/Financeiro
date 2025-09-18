@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Controle Financeiro</title>
-    <!-- FAVICON ADICIONADO AQUI... -->
+    <!-- FAVICON ADICIONADO AQUI -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2215%22 fill=%22%23111827%22/><text x=%2250%22 y=%2255%22 font-size=%2250%22 fill=%22%23F59E0B%22 font-family=%22Inter, sans-serif%22 font-weight=%22bold%22 text-anchor=%22middle%22>CF</text></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -322,11 +322,17 @@
             const saldoAtualGeral = entradas.filter(e => e.status === 'repassado' && new Date(e.data) <= hojeUTC).reduce((acc, e) => acc + e.valor, 0) -
                                    saidas.filter(s => s.status === 'pago' && new Date(s.data) <= hojeUTC).reduce((acc, s) => acc + s.valor, 0);
             
+            // NOVO CÁLCULO: Balanço Final
+            const totalGeralEmAberto = saidas.filter(s => s.status === 'em aberto').reduce((acc, s) => acc + s.valor, 0);
+            const balancoFinal = saldoAtualGeral - totalGeralEmAberto;
+
             return { 
                 totalEntradas, 
                 totalSaidasPagas,
                 totalSaidasAberto,
                 saldoAtualGeral,
+                balancoFinal, // Adicionado
+                totalGeralEmAberto, // Adicionado
                 entradasPeriodo, 
                 saidasPeriodo
             };
@@ -356,65 +362,20 @@
 
         function renderizarResumoMetas(data){
              const container = document.getElementById('resumoMetasContainer');
-             const hojeUTC = new Date();
-             let diasRestantes = 0;
-             if(hojeUTC.getFullYear() === filtroDashboardState.year && hojeUTC.getMonth() === filtroDashboardState.month) {
-                const ultimoDiaDoMes = new Date(Date.UTC(hojeUTC.getUTCFullYear(), hojeUTC.getUTCMonth() + 1, 0));
-                diasRestantes = Math.ceil((ultimoDiaDoMes - hojeUTC) / (1000 * 60 * 60 * 24));
-                if (diasRestantes < 0) diasRestantes = 0;
-             }
              
-             const valorNecessario = data.totalSaidasAberto - data.entradasPeriodo.filter(e => e.status === 'pendente').reduce((a,c) => a+c.valor, 0);
-             const metaDiaria = valorNecessario > 0 && diasRestantes > 0 ? valorNecessario / diasRestantes : 0;
-             
-             container.innerHTML = `
-                <div class="bg-blue-50 border-l-4 border-neutral text-blue-800 p-4 rounded-md text-sm">
-                    <p><strong>Entradas:</strong> ${formatarDinheiro(data.totalEntradas)}</p>
-                    <p><strong>Pagamentos:</strong> ${formatarDinheiro(data.totalSaidasPagas)}</p>
-                    <p><strong>A Pagar:</strong> ${formatarDinheiro(data.totalSaidasAberto)}</p>
-                </div>
-                 <div class="bg-green-50 border-l-4 border-positive text-green-800 p-4 rounded-md">
-                    <h4 class="font-bold">Meta Diária (p/ quitar o mês)</h4>
-                    <p id="metaDiaria" class="text-xl">${formatarDinheiro(metaDiaria)}</p>
-                    <span class="text-xs">(${diasRestantes} dias restantes)</span>
-                </div>
-                <div id="calculator" class="bg-gray-200 p-3 rounded-md mt-4 text-primary">
-                    <h4 class="font-bold text-sm mb-2 text-center text-primary">Calculadora Rápida</h4>
-                    <input type="text" id="calcDisplay" class="w-full bg-dark-bg text-light-text text-right rounded-md p-2 mb-2 text-xl font-mono" readonly>
-                    <div class="grid grid-cols-4 gap-2">
-                        <button class="calc-btn">7</button><button class="calc-btn">8</button><button class="calc-btn">9</button><button class="calc-btn operator">/</button>
-                        <button class="calc-btn">4</button><button class="calc-btn">5</button><button class="calc-btn">6</button><button class="calc-btn operator">*</button>
-                        <button class="calc-btn">1</button><button class="calc-btn">2</button><button class="calc-btn">3</button><button class="calc-btn operator">-</button>
-                        <button class="calc-btn">0</button><button class="calc-btn">.</button><button class="calc-btn operator">C</button><button class="calc-btn operator">+</button>
-                        <button class="calc-btn equal col-span-4">=</button>
-                    </div>
-                </div>
+             // NOVO INDICADOR: Balanço Final
+             const balancoFinalEl = document.createElement('div');
+             balancoFinalEl.className = 'bg-indigo-50 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-md';
+             const balancoFinalLabel = data.balancoFinal >= 0 ? 'Resultado Pós-Dívidas:' : 'Falta para Quitar Tudo:';
+             const balancoFinalColor = data.balancoFinal >= 0 ? 'text-positive' : 'text-negative';
+             balancoFinalEl.innerHTML = `
+                <h4 class="font-bold">${balancoFinalLabel}</h4>
+                <p class="text-xl ${balancoFinalColor}">${formatarDinheiro(Math.abs(data.balancoFinal))}</p>
+                <span class="text-xs">(Saldo Atual: ${formatarDinheiro(data.saldoAtualGeral)} - Total em Aberto: ${formatarDinheiro(data.totalGeralEmAberto)})</span>
              `;
-             
-             // Adicionar lógica da calculadora
-             const calculator = document.getElementById('calculator');
-             const display = document.getElementById('calcDisplay');
-             calculator.addEventListener('click', e => {
-                if(!e.target.matches('.calc-btn')) return;
 
-                const value = e.target.textContent;
-
-                if(value === 'C') {
-                    display.value = '';
-                } else if (value === '=') {
-                    try {
-                        if (display.value) {
-                             // Use uma função segura para avaliar a expressão
-                            const result = Function(`'use strict'; return (${display.value})`)();
-                            display.value = result;
-                        }
-                    } catch {
-                        display.value = 'Erro';
-                    }
-                } else {
-                    display.value += value;
-                }
-             });
+             container.innerHTML = ''; // Limpa o container
+             container.appendChild(balancoFinalEl); // Adiciona o novo card
         }
 
         function renderizarGraficos({ entradasPeriodo, saidasPeriodo }){
@@ -837,6 +798,4 @@
 
 </body>
 </html>
-
-
 
