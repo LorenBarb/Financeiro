@@ -18,7 +18,7 @@ const entradaSchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    enum: ['pendente', 'resgatado'], // Alterado de 'repassado' para 'resgatado'
+    enum: ['pendente', 'resgatado'], // Corrigido de 'repassado' para 'resgatado'
     default: 'pendente'
   }
 }, { timestamps: true }); // timestamps adiciona createdAt e updatedAt automaticamente
