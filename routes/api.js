@@ -1,207 +1,235 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
+
+// Importa os modelos do banco de dados
 const Entrada = require('../models/entradaModel');
 const Saida = require('../models/saidaModel');
 
-// --- ROTAS DE ENTRADAS ---
+// --- ROTAS PARA ENTRADAS ---
 
-// GET all entradas
+// GET: Buscar todas as entradas
 router.get('/entradas', async (req, res) => {
-    try {
-        const entradas = await Entrada.find().sort({ data: -1 });
-        res.json(entradas);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+  try {
+    const entradas = await Entrada.find().sort({ data: -1 });
+    res.json(entradas);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-// POST a new entrada
+// POST: Criar uma nova entrada
 router.post('/entradas', async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
     const entrada = new Entrada({
-        fonte: req.body.fonte,
-        valor: req.body.valor,
-        data: req.body.data,
-        status: req.body.status
+      fonte: req.body.fonte,
+      valor: req.body.valor,
+      data: req.body.data,
+      status: req.body.status
     });
+    const newEntrada = await entrada.save({ session });
 
-    try {
-        const novaEntrada = await entrada.save();
-        
-        // Criar dízimo associado
-        const dizimo = new Saida({
-            descricao: `Dízimo - ${novaEntrada.fonte}`,
-            categoria: 'Dízimo',
-            valor: novaEntrada.valor * 0.10,
-            data: novaEntrada.data,
-            status: 'pago',
-            entradaId: novaEntrada._id // Link para a entrada original
-        });
-        await dizimo.save();
-
-        res.status(201).json(novaEntrada);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
+    // Se houver valor, cria o dízimo associado
+    if (newEntrada.valor > 0) {
+      const dizimo = new Saida({
+        descricao: `Dízimo sobre ${newEntrada.fonte}`,
+        categoria: 'Dízimo',
+        valor: newEntrada.valor * 0.1,
+        data: newEntrada.data,
+        isCustoNegocio: false,
+        status: 'pago', // Dízimo já sai como pago
+        entradaId: newEntrada._id // Vincula o dízimo à entrada
+      });
+      await dizimo.save({ session });
     }
+
+    await session.commitTransaction();
+    res.status(201).json(newEntrada);
+  } catch (err) {
+    await session.abortTransaction();
+    res.status(400).json({ message: err.message });
+  } finally {
+    session.endSession();
+  }
 });
 
-
-// PUT (update) an entrada
+// PUT: Atualizar uma entrada existente
 router.put('/entradas/:id', async (req, res) => {
-    try {
-        const entradaOriginal = await Entrada.findById(req.params.id);
-        if (!entradaOriginal) return res.status(404).json({ message: 'Entrada não encontrada' });
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { id } = req.params;
+    const updatedEntrada = await Entrada.findByIdAndUpdate(id, req.body, { new: true, session });
 
-        const updatedEntrada = await Entrada.findByIdAndUpdate(req.params.id, req.body, { new: true });
-
-        // Se o valor ou a data da entrada mudou, atualize o dízimo
-        if (req.body.valor !== undefined || req.body.data !== undefined) {
-             const novoValorDizimo = (req.body.valor !== undefined ? req.body.valor : updatedEntrada.valor) * 0.10;
-             const novaDataDizimo = req.body.data !== undefined ? req.body.data : updatedEntrada.data;
-            await Saida.findOneAndUpdate(
-                { entradaId: updatedEntrada._id },
-                { valor: novoValorDizimo, data: novaDataDizimo, descricao: `Dízimo - ${updatedEntrada.fonte}` },
-                { new: true, sort: { createdAt: -1 } } // Garante que atualize o mais recente, se houver múltiplos por erro
-            );
-        }
-        
-        res.json(updatedEntrada);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
+    if (!updatedEntrada) {
+      throw new Error('Entrada não encontrada');
     }
+
+    // Atualiza o dízimo correspondente
+    const novoValorDizimo = updatedEntrada.valor * 0.1;
+    await Saida.findOneAndUpdate(
+      { entradaId: updatedEntrada._id },
+      { 
+        $set: { 
+          valor: novoValorDizimo,
+          data: updatedEntrada.data,
+          descricao: `Dízimo sobre ${updatedEntrada.fonte}`
+        } 
+      },
+      { session }
+    );
+
+    await session.commitTransaction();
+    res.json(updatedEntrada);
+  } catch (err) {
+    await session.abortTransaction();
+    res.status(400).json({ message: err.message });
+  } finally {
+    session.endSession();
+  }
 });
 
-// DELETE an entrada
+// DELETE: Deletar uma entrada
 router.delete('/entradas/:id', async (req, res) => {
-    try {
-        const deletedEntrada = await Entrada.findByIdAndDelete(req.params.id);
-        if (!deletedEntrada) return res.status(404).json({ message: 'Entrada não encontrada' });
-        
-        // Excluir dízimo associado
-        await Saida.deleteMany({ entradaId: req.params.id });
-
-        res.json({ message: 'Entrada e dízimo associado foram deletados' });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { id } = req.params;
+    const deletedEntrada = await Entrada.findByIdAndDelete(id, { session });
+    
+    if (!deletedEntrada) {
+        throw new Error('Entrada não encontrada');
     }
-});
 
-// DELETE multiple entradas
-router.delete('/entradas', async (req, res) => {
-    try {
-        const { ids } = req.body;
-        if (!ids || ids.length === 0) {
-            return res.status(400).json({ message: 'Nenhum ID fornecido para exclusão.' });
-        }
-        await Saida.deleteMany({ entradaId: { $in: ids } });
-        await Entrada.deleteMany({ _id: { $in: ids } });
+    // Deleta o dízimo associado
+    await Saida.findOneAndDelete({ entradaId: id }, { session });
 
-        res.json({ message: `${ids.length} entradas e dízimos associados foram deletados.` });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+    await session.commitTransaction();
+    res.json({ message: 'Entrada e dízimo associado deletados com sucesso' });
+  } catch (err) {
+    await session.abortTransaction();
+    res.status(500).json({ message: err.message });
+  } finally {
+    session.endSession();
+  }
 });
 
 
-// PUT (update) status of multiple entradas
-router.put('/entradas/bulk-status', async (req, res) => {
-    try {
-        const { ids, status } = req.body;
-        await Entrada.updateMany({ _id: { $in: ids } }, { $set: { status: status } });
-        res.json({ message: `Status de ${ids.length} entradas atualizado para ${status}.` });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
+// --- ROTAS PARA SAÍDAS ---
 
-
-// --- ROTAS DE SAÍDAS ---
-
-// GET all saidas
+// GET: Buscar todas as saídas
 router.get('/saidas', async (req, res) => {
-    try {
-        const saidas = await Saida.find().sort({ data: -1 });
-        res.json(saidas);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+  try {
+    const saidas = await Saida.find().sort({ data: -1 });
+    res.json(saidas);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-// POST a new saida
+// POST: Criar uma nova saída
 router.post('/saidas', async (req, res) => {
-    const saida = new Saida({
-        descricao: req.body.descricao,
-        categoria: req.body.categoria,
-        valor: req.body.valor,
-        data: req.body.data,
-        isCustoNegocio: req.body.isCustoNegocio,
-        status: req.body.status
-    });
+  const saida = new Saida({
+    descricao: req.body.descricao,
+    categoria: req.body.categoria,
+    valor: req.body.valor,
+    data: req.body.data,
+    isCustoNegocio: req.body.isCustoNegocio,
+    status: req.body.status
+  });
 
-    try {
-        const novaSaida = await saida.save();
-        res.status(201).json(novaSaida);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
+  try {
+    const newSaida = await saida.save();
+    res.status(201).json(newSaida);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 });
 
-// PUT (update) a saida
+// PUT: Atualizar uma saída existente
 router.put('/saidas/:id', async (req, res) => {
-    try {
-        const updatedSaida = await Saida.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updatedSaida) return res.status(404).json({ message: 'Saída não encontrada' });
-        res.json(updatedSaida);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
+  try {
+    const updatedSaida = await Saida.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updatedSaida);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 });
 
-// DELETE a saida
+// DELETE: Deletar uma saída
 router.delete('/saidas/:id', async (req, res) => {
+  try {
+    await Saida.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Saída deletada com sucesso' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- ROTAS PARA AÇÕES EM LOTE ---
+
+// DELETE: Deletar múltiplas entradas ou saídas
+router.delete('/:type', async (req, res) => {
+    const { type } = req.params;
+    const { ids } = req.body;
+    const Model = type === 'entradas' ? Entrada : Saida;
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-        const saida = await Saida.findById(req.params.id);
-        if (!saida) return res.status(404).json({ message: 'Saída não encontrada' });
+        if (!ids || !Array.isArray(ids)) {
+            throw new Error('IDs inválidos');
+        }
+
+        if (type === 'entradas') {
+            await Saida.deleteMany({ entradaId: { $in: ids } }, { session });
+        }
         
-        // Impede a exclusão de dízimos automáticos
-        if (saida.entradaId) {
-            return res.status(403).json({ message: 'Dízimos automáticos não podem ser excluídos diretamente.' });
+        if (type === 'saidas') {
+             const saidasParaDeletar = await Saida.find({ _id: { $in: ids } });
+             const idsValidos = saidasParaDeletar.filter(s => !s.entradaId).map(s => s._id);
+             await Saida.deleteMany({ _id: { $in: idsValidos } }, { session });
+        } else {
+             await Model.deleteMany({ _id: { $in: ids } }, { session });
         }
 
-        await Saida.findByIdAndDelete(req.params.id);
-
-        res.json({ message: 'Saída deletada' });
+        await session.commitTransaction();
+        res.json({ message: `${ids.length} itens deletados com sucesso.` });
     } catch (err) {
+        await session.abortTransaction();
         res.status(500).json({ message: err.message });
+    } finally {
+        session.endSession();
     }
 });
 
-// DELETE multiple saidas
-router.delete('/saidas', async (req, res) => {
+
+// PUT: Atualizar status de múltiplos itens
+router.put('/:type/bulk-status', async (req, res) => {
+    const { type } = req.params;
+    const { ids, status } = req.body;
+    const Model = type === 'entradas' ? Entrada : Saida;
+
     try {
-        const { ids } = req.body;
-        if (!ids || ids.length === 0) {
-            return res.status(400).json({ message: 'Nenhum ID fornecido para exclusão.' });
+        if (!ids || !Array.isArray(ids) || !status) {
+            throw new Error('Dados inválidos');
         }
-        // Garante que dízimos automáticos não sejam excluídos em lote
-        await Saida.deleteMany({ _id: { $in: ids }, entradaId: null });
 
-        res.json({ message: `Saídas selecionadas foram deletadas.` });
+        if (type === 'saidas') {
+            const saidasParaAtualizar = await Saida.find({ _id: { $in: ids } });
+            const idsValidos = saidasParaAtualizar.filter(s => !s.entradaId).map(s => s._id);
+            await Model.updateMany({ _id: { $in: idsValidos } }, { $set: { status: status } });
+        } else {
+            await Model.updateMany({ _id: { $in: ids } }, { $set: { status: status } });
+        }
+        
+        res.json({ message: `${ids.length} itens atualizados para "${status}".` });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
-
-
-// PUT (update) status of multiple saidas
-router.put('/saidas/bulk-status', async (req, res) => {
-    try {
-        const { ids, status } = req.body;
-        await Saida.updateMany({ _id: { $in: ids } }, { $set: { status: status } });
-        res.json({ message: `Status de ${ids.length} saídas atualizado para ${status}.` });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-
 
 module.exports = router;
+
