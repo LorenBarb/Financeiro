@@ -1,83 +1,74 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Controle Financeiro</title>
-    <!-- FAVICON ADICIONADO AQUI -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2215%22 fill=%22%23111827%22/><text x=%2250%22 y=%2255%22 font-size=%2250%22 fill=%22%23F59E0B%22 font-family=%22Inter, sans-serif%22 font-weight=%22bold%22 text-anchor=%22middle%22>CF</text></svg>">
+    <!-- FAVICON -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2215%22 fill=%22%230f172a%22/><text x=%2250%22 y=%2255%22 font-size=%2250%22 fill=%22%23f59e0b%22 font-family=%22Inter, sans-serif%22 font-weight=%22bold%22 text-anchor=%22middle%22>CF</text></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
-        // Configuração de cores customizadas para o Tailwind CSS (Dark Mode)
+        // Configuração de cores customizadas para o Tailwind CSS (Tema Dark Moderno)
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        'primary': '#1F2937',      // Cinza Escuro (Textos nos cards)
-                        'primary-accent': '#FFFFFF', // Branco (Texto nos botões primários)
-                        'secondary': '#F59E0B',    // Dourado (Destaque)
-                        'positive': '#16A34A',    // Verde (Sucesso)
-                        'negative': '#DC2626',    // Vermelho (Negativo)
-                        'neutral': '#3B82F6',     // Azul (Neutro/Informativo)
-                        'dark-bg': '#111827',       // Fundo Escuro
-                        'card-bg': '#FFFFFF',     // Fundo dos Cards
-                        'light-text': '#F9FAFB',    // Texto claro para fundos escuros
+                        // Paleta Principal
+                        'primary': '#e2e8f0',       // slate-200 - Texto principal em cards escuros
+                        'secondary': '#f59e0b',     // amber-500 - Cor de destaque para botões e ênfase
+                        'dark-bg': '#0f172a',        // slate-950 - Fundo principal da aplicação
+                        'card-bg': '#1e293b',        // slate-800 - Fundo dos cards
+                        'border': '#334155',        // slate-700 - Cor das bordas
+                        'input-bg': '#334155',      // slate-700 - Fundo para inputs de formulário
+                        'light-text': '#f1f5f9',     // slate-100 - Texto claro geral
+                        'subtle-text': '#94a3b8',    // slate-400 - Para textos secundários, placeholders
+
+                        // Cores Semânticas
+                        'positive': '#22c55e',     // green-500
+                        'negative': '#ef4444',     // red-500
+                        'neutral': '#3b82f6',      // blue-500
+                        'warning': '#eab308',      // yellow-500
                     }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .tab-button { 
-            padding-top: 1rem; padding-bottom: 1rem; padding-left: 0.25rem; padding-right: 0.25rem; 
-            border-bottom-width: 2px; border-color: transparent; 
-            font-weight: 500; font-size: 0.875rem; line-height: 1.25rem;
-            color: #9CA3AF; /* Tom de cinza mais claro para o texto inativo */
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+        .tab-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* 8px */
+            padding: 0.5rem 1rem; /* 8px 16px */
+            border-radius: 0.5rem; /* 8px */
+            font-weight: 600;
+            color: #94a3b8; /* subtle-text */
+            transition: all 0.2s ease-in-out;
+            border: 2px solid transparent;
         }
-        .tab-button:hover { 
-            border-bottom-color: #4B5563; /* Borda cinza no hover */
-            color: #F9FAFB; /* Texto branco no hover */
+        .tab-button:hover {
+            background-color: #334155; /* border color / slate-700 */
+            color: #f1f5f9; /* light-text */
         }
-        .tab-button.active { 
-            border-bottom-color: #F59E0B; /* Dourado para a aba ativa */
-            color: #F59E0B; 
-            font-weight: 600; 
+        .tab-button.active {
+            background-color: #f59e0b; /* secondary */
+            color: #0f172a; /* dark-bg */
+        }
+        .tab-button svg {
+            width: 1.25rem; /* 20px */
+            height: 1.25rem; /* 20px */
         }
         .modal { transition: opacity 0.25s ease; }
         .item-checkbox {
             transform: scale(1.2);
-        }
-        .calc-btn {
-            background-color: #374151; /* bg-gray-700 */
-            color: #F9FAFB; /* text-light-text */
-            border-radius: 0.375rem; /* rounded-md */
-            padding: 0.75rem 0;
-            font-size: 1.125rem; /* text-lg */
-            font-weight: 600; /* font-semibold */
-            transition: background-color 0.2s;
-        }
-        .calc-btn:hover {
-            background-color: #4B5563; /* bg-gray-600 */
-        }
-        .calc-btn.operator {
-            background-color: #4f46e5; /* bg-indigo-600 */
-        }
-        .calc-btn.operator:hover {
-            background-color: #4338ca; /* bg-indigo-700 */
-        }
-         .calc-btn.equal {
-            background-color: #F59E0B; /* bg-secondary */
-            color: #1F2937; /* text-primary */
-        }
-         .calc-btn.equal:hover {
-            background-color: #d97706; /* bg-amber-600 */
+            accent-color: #f59e0b;
         }
     </style>
 </head>
@@ -85,18 +76,32 @@
 
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
 
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-light-text">Controle Financeiro</h1>
-            <p class="text-gray-400 mt-2">Sua vida financeira organizada em um só lugar.</p>
+        <header class="text-center mb-10">
+            <h1 class="text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-orange-500 pb-2">
+                Controle Financeiro
+            </h1>
+            <p class="text-subtle-text mt-2 text-lg">O poder sobre suas finanças está em suas mãos.</p>
         </header>
 
         <!-- ABAS DE NAVEGAÇÃO -->
-        <div class="mb-6 border-b border-gray-700">
-            <nav class="flex space-x-4" aria-label="Tabs">
-                <button class="tab-button active" data-tab="dashboard">Dashboard</button>
-                <button class="tab-button" data-tab="entradas">Entradas</button>
-                <button class="tab-button" data-tab="saidas">Saídas</button>
-                <button class="tab-button" data-tab="relatorios">Relatórios</button>
+        <div class="mb-8">
+            <nav class="flex flex-wrap justify-center space-x-1 sm:space-x-2 md:space-x-4 bg-card-bg/50 p-2 rounded-xl" aria-label="Tabs">
+                <button class="tab-button active" data-tab="dashboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" /></svg>
+                    <span class="hidden md:inline">Dashboard</span>
+                </button>
+                <button class="tab-button" data-tab="entradas">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    <span class="hidden md:inline">Entradas</span>
+                </button>
+                <button class="tab-button" data-tab="saidas">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    <span class="hidden md:inline">Saídas</span>
+                </button>
+                <button class="tab-button" data-tab="relatorios">
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h12A2.25 2.25 0 0 0 20.25 14.25V3.75M16.5 18.75h-9a2.25 2.25 0 0 0-2.25 2.25v.003c0 .621.504 1.125 1.125 1.125h12.25c.621 0 1.125-.504 1.125-1.125v-.003a2.25 2.25 0 0 0-2.25-2.25Z" /></svg>
+                    <span class="hidden md:inline">Relatórios</span>
+                </button>
             </nav>
         </div>
 
@@ -104,41 +109,56 @@
             <!-- ABA DASHBOARD -->
             <div id="dashboard" class="tab-content space-y-6">
                 <!-- Filtros do Dashboard -->
-                <div class="bg-card-bg text-primary p-4 rounded-xl shadow-lg flex flex-wrap justify-center items-center gap-4" id="dashboardFiltersContainer">
+                <div class="bg-card-bg border border-border p-4 rounded-xl shadow-lg flex flex-wrap justify-center items-center gap-4" id="dashboardFiltersContainer">
                     <!-- Conteúdo dos filtros será gerado via JS -->
                 </div>
 
                 <!-- Cards Principais -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
-                        <h3 class="text-gray-600 font-medium">Entradas Recebidas</h3>
-                        <p id="cardEntradas" class="text-3xl font-bold text-positive">R$ 0,00</p>
+                    <!-- Card Entradas -->
+                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-positive hover:shadow-positive/20">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-positive/10 p-3 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-positive"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" /></svg></div>
+                            <div><h3 class="text-subtle-text font-medium">Entradas Recebidas</h3><p id="cardEntradas" class="text-2xl font-bold text-positive">R$ 0,00</p></div>
+                        </div>
                     </div>
-                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
-                        <h3 class="text-gray-600 font-medium">Pagamentos Realizados</h3>
-                        <p id="cardPagamentosRealizados" class="text-3xl font-bold text-negative">R$ 0,00</p>
+                     <!-- Card Pagamentos -->
+                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-negative hover:shadow-negative/20">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-negative/10 p-3 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-negative"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0-3.182-5.511m3.182 5.51-5.511-3.182" /></svg></div>
+                            <div><h3 class="text-subtle-text font-medium">Pagamentos</h3><p id="cardPagamentosRealizados" class="text-2xl font-bold text-negative">R$ 0,00</p></div>
+                        </div>
                     </div>
-                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
-                        <h3 class="text-gray-600 font-medium">Valores em Aberto</h3>
-                        <p id="cardValoresEmAberto" class="text-3xl font-bold text-secondary">R$ 0,00</p>
+                     <!-- Card Em Aberto -->
+                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-warning hover:shadow-warning/20">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-warning/10 p-3 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-warning"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></div>
+                            <div><h3 class="text-subtle-text font-medium">Em Aberto</h3><p id="cardValoresEmAberto" class="text-2xl font-bold text-warning">R$ 0,00</p></div>
+                        </div>
                     </div>
-                     <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
-                        <h3 class="text-gray-600 font-medium">Saldo Previsto do Mês</h3>
-                        <p id="cardSaldoPrevistoMes" class="text-3xl font-bold">R$ 0,00</p>
+                     <!-- Card Saldo Previsto -->
+                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-neutral hover:shadow-neutral/20">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-neutral/10 p-3 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-neutral"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52v16.5m-13.5-16.5c-1.01.143-2.01.317-3 .52m-3-.52v16.5" /></svg></div>
+                            <div><h3 class="text-subtle-text font-medium">Saldo Previsto</h3><p id="cardSaldoPrevistoMes" class="text-2xl font-bold text-light-text">R$ 0,00</p></div>
+                        </div>
                     </div>
-                     <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
-                        <h3 class="text-gray-600 font-medium">Gastos Previstos (Futuros)</h3>
-                        <p id="cardGastosPrevistos" class="text-3xl font-bold text-purple-600">R$ 0,00</p>
+                     <!-- Card Gastos Futuros -->
+                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-purple-500 hover:shadow-purple-500/20">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-purple-500/10 p-3 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-purple-500"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg></div>
+                            <div><h3 class="text-subtle-text font-medium">Gastos Futuros</h3><p id="cardGastosPrevistos" class="text-2xl font-bold text-purple-500">R$ 0,00</p></div>
+                        </div>
                     </div>
                 </div>
                 
                  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 bg-card-bg text-primary p-6 rounded-xl shadow-lg">
-                         <h3 class="text-lg font-semibold mb-4">Balanço do Período (<span class="periodo-label"></span>)</h3>
+                    <div class="lg:col-span-2 bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
+                         <h3 class="text-lg font-semibold mb-4 text-light-text">Balanço do Período (<span class="periodo-label"></span>)</h3>
                         <div class="h-80"><canvas id="comparativoChart"></canvas></div>
                     </div>
-                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
-                        <h3 class="text-lg font-semibold mb-4">Resumo e Calculadora (<span class="periodo-label"></span>)</h3>
+                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
+                        <h3 class="text-lg font-semibold mb-4 text-light-text">Resumo (<span class="periodo-label"></span>)</h3>
                         <div id="resumoMetasContainer" class="space-y-4">
                             <!-- Conteúdo gerado via JS -->
                         </div>
@@ -146,12 +166,12 @@
                 </div>
 
                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
-                        <h3 class="text-lg font-semibold mb-4">Fontes de Renda (<span class="periodo-label"></span>)</h3>
+                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
+                        <h3 class="text-lg font-semibold mb-4 text-light-text">Fontes de Renda (<span class="periodo-label"></span>)</h3>
                         <div class="h-80"><canvas id="entradasChart"></canvas></div>
                     </div>
-                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg">
-                        <h3 class="text-lg font-semibold mb-4">Categorias de Saídas (Total) (<span class="periodo-label"></span>)</h3>
+                    <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
+                        <h3 class="text-lg font-semibold mb-4 text-light-text">Categorias de Saídas (<span class="periodo-label"></span>)</h3>
                         <div class="h-80"><canvas id="saidasChart"></canvas></div>
                     </div>
                 </div>
@@ -165,7 +185,7 @@
             <div id="editEntradaModal" class="modal fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50"></div>
             <div id="editSaidaModal" class="modal fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50"></div>
             <div id="deleteConfirmModal" class="modal fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50"></div>
-            <div id="detalhesFuturosModal" class="modal fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50"></div>
+            <div id="infoModal" class="modal fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50"></div>
         </main>
     </div>
 
@@ -190,8 +210,14 @@
             editEntrada: document.getElementById('editEntradaModal'),
             editSaida: document.getElementById('editSaidaModal'),
             deleteConfirm: document.getElementById('deleteConfirmModal'),
-            detalhesFuturos: document.getElementById('detalhesFuturosModal'),
+            info: document.getElementById('infoModal'),
         };
+
+        // --- CONSTANTES DE CLASSES CSS ---
+        const inputClasses = "w-full bg-input-bg border border-border text-light-text text-sm rounded-lg focus:ring-secondary focus:border-secondary block p-2.5";
+        const selectClasses = inputClasses;
+        const buttonClasses = "w-full bg-secondary hover:bg-amber-600 text-dark-bg font-bold py-2.5 px-5 rounded-lg transition-colors";
+        const iconButtonClasses = "p-1.5 rounded-md transition-colors duration-200";
 
         // --- FUNÇÕES UTILITÁRIAS ---
         const formatarDinheiro = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -204,12 +230,11 @@
             if (!hexcolor) return '#000000';
             if (hexcolor.startsWith('#')) hexcolor = hexcolor.slice(1);
             if (hexcolor.length === 3) hexcolor = hexcolor.split('').map(char => char + char).join('');
-            
             const r = parseInt(hexcolor.substr(0, 2), 16);
             const g = parseInt(hexcolor.substr(2, 2), 16);
             const b = parseInt(hexcolor.substr(4, 2), 16);
             const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-            return (yiq >= 128) ? '#000000' : '#ffffff';
+            return (yiq >= 128) ? '#0f172a' : '#ffffff';
         };
 
         // --- LÓGICA DE API (CRUD) ---
@@ -217,28 +242,23 @@
 
         async function carregarDados() {
             try {
-                const [resEntradas, resSaidas] = await Promise.all([
-                    fetch(`${API_URL}/entradas`),
-                    fetch(`${API_URL}/saidas`)
-                ]);
+                const [resEntradas, resSaidas] = await Promise.all([ fetch(`${API_URL}/entradas`), fetch(`${API_URL}/saidas`) ]);
                 entradas = await resEntradas.json();
                 saidas = await resSaidas.json();
                 renderizarFiltrosDashboard();
                 atualizarTudo();
             } catch (error) {
                 console.error("Erro ao carregar dados:", error);
-                alert("Não foi possível carregar os dados do servidor.");
+                showInfoModal("Não foi possível carregar os dados do servidor. Tente recarregar a página.");
             }
         }
         
         async function adicionarEntrada(data) {
             try {
-                const resEntrada = await fetch(`${API_URL}/entradas`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
-                });
-                if (!resEntrada.ok) throw new Error('Falha ao adicionar entrada');
-                carregarDados();
-            } catch (error) { console.error("Erro ao adicionar entrada:", error); }
+                const res = await fetch(`${API_URL}/entradas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (!res.ok) throw new Error(await res.json().then(e => e.message));
+                await carregarDados();
+            } catch (error) { console.error("Erro ao adicionar entrada:", error); showInfoModal(`Erro: ${error.message}`) }
         }
 
         async function adicionarSaida(formData) {
@@ -259,41 +279,31 @@
                         isCustoNegocio: formData.isCustoNegocio || false,
                         status: formData.status
                     };
-                    await fetch(`${API_URL}/saidas`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(novaSaida)
-                    });
+                    const res = await fetch(`${API_URL}/saidas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(novaSaida) });
+                    if (!res.ok) throw new Error(await res.json().then(e => e.message));
                 }
-                carregarDados();
-            } catch (error) { console.error("Erro ao adicionar saída:", error); }
+                await carregarDados();
+            } catch (error) { console.error("Erro ao adicionar saída:", error); showInfoModal(`Erro: ${error.message}`) }
         }
 
-        async function editarEntrada(id, newData) {
+        async function editarItem(type, id, newData) {
              try {
-                await fetch(`${API_URL}/entradas/${id}`, {
-                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newData)
-                });
-                carregarDados();
-            } catch (error) { console.error("Erro ao editar entrada:", error); }
-        }
-
-        async function editarSaida(id, newData) {
-             try {
-                await fetch(`${API_URL}/saidas/${id}`, {
-                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newData)
-                });
-                carregarDados();
-            } catch (error) { console.error("Erro ao editar saída:", error); }
+                const res = await fetch(`${API_URL}/${type}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newData) });
+                if (!res.ok) throw new Error(await res.json().then(e => e.message));
+                await carregarDados();
+            } catch (error) { console.error(`Erro ao editar ${type}:`, error); showInfoModal(`Erro: ${error.message}`) }
         }
 
         async function removerItem(type, id) {
              try {
-                await fetch(`${API_URL}/${type}/${id}`, { method: 'DELETE' });
-                carregarDados();
-            } catch (error) { console.error(`Erro ao remover ${type}:`, error); }
+                const res = await fetch(`${API_URL}/${type}/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error(await res.json().then(e => e.message));
+                await carregarDados();
+            } catch (error) { console.error(`Erro ao remover ${type}:`, error); showInfoModal(`Erro: ${error.message}`) }
         }
         
         // --- FUNÇÕES PARA AÇÕES EM LOTE ---
-        async function removerItensSelecionados(type) {
+        function removerItensSelecionados(type) {
             const ids = Array.from(type === 'entradas' ? selectedEntradas : selectedSaidas);
             if (ids.length === 0) return;
             
@@ -301,47 +311,40 @@
                 ? `Tem certeza que deseja excluir os ${ids.length} itens selecionados? Os dízimos associados também serão excluídos.`
                 : `Tem certeza que deseja excluir os ${ids.length} itens selecionados? (Dízimos automáticos não podem ser excluídos por aqui).`;
 
-            if (confirm(message)) {
+            showConfirmModal(message, async () => {
                 try {
-                    await fetch(`${API_URL}/${type}`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ids })
+                    const res = await fetch(`${API_URL}/${type}`, {
+                        method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids })
                     });
-                    if (type === 'entradas') selectedEntradas.clear();
-                    else selectedSaidas.clear();
-                    carregarDados();
-                } catch (error) {
-                    console.error(`Erro ao remover ${type}s em lote:`, error);
-                }
-            }
+                    if (!res.ok) throw new Error(await res.json().then(e => e.message));
+                    if (type === 'entradas') selectedEntradas.clear(); else selectedSaidas.clear();
+                    await carregarDados();
+                } catch (error) { console.error(`Erro ao remover ${type}s em lote:`, error); showInfoModal(`Erro: ${error.message}`); }
+            });
         }
 
-        async function atualizarStatusSelecionados(type, status) {
+        function atualizarStatusSelecionados(type, status) {
             const ids = Array.from(type === 'entradas' ? selectedEntradas : selectedSaidas);
             if (ids.length === 0) return;
 
-            if (confirm(`Tem certeza que deseja alterar o status de ${ids.length} itens para "${status}"?`)) {
+            const message = `Tem certeza que deseja alterar o status de ${ids.length} itens para "${status}"?`;
+            showConfirmModal(message, async () => {
                  try {
-                    await fetch(`${API_URL}/${type}/bulk-status`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ids, status })
+                    const res = await fetch(`${API_URL}/${type}/bulk-status`, {
+                        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, status })
                     });
-                    if (type === 'entradas') selectedEntradas.clear();
-                    else selectedSaidas.clear();
-                    carregarDados();
-                } catch (error) {
-                    console.error(`Erro ao atualizar status em lote de ${type}s:`, error);
-                }
-            }
+                    if (!res.ok) throw new Error(await res.json().then(e => e.message));
+                    if (type === 'entradas') selectedEntradas.clear(); else selectedSaidas.clear();
+                    await carregarDados();
+                } catch (error) { console.error(`Erro ao atualizar status em lote de ${type}s:`, error); showInfoModal(`Erro: ${error.message}`); }
+            });
         }
 
         async function alterarStatusEntrada(id) {
             const entrada = entradas.find(en => en._id === id);
             if(entrada){
                 const novoStatus = entrada.status === 'pendente' ? 'resgatado' : 'pendente';
-                await editarEntrada(id, { status: novoStatus });
+                await editarItem('entradas', id, { status: novoStatus });
             }
         }
 
@@ -349,7 +352,7 @@
             const saida = saidas.find(s => s._id === id);
             if(saida){
                 const novoStatus = saida.status === 'pago' ? 'em aberto' : 'pago';
-                await editarSaida(id, { status: novoStatus });
+                await editarItem('saidas', id, { status: novoStatus });
             }
         }
         
@@ -358,32 +361,14 @@
             const { month, year } = filtroDashboardState;
             const inicioMes = new Date(Date.UTC(year, month, 1));
             const fimMes = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
-
-            // Período
             const entradasPeriodo = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; });
             const saidasPeriodo = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes; });
-            
-            // Cards do Mês
             const totalEntradasMes = entradasPeriodo.reduce((acc, e) => acc + e.valor, 0);
             const totalPagamentosRealizadosMes = saidasPeriodo.filter(s => s.status === 'pago').reduce((acc, s) => acc + s.valor, 0);
             const totalValoresEmAbertoMes = saidasPeriodo.filter(s => s.status === 'em aberto').reduce((acc, s) => acc + s.valor, 0);
             const saldoPrevistoMes = totalEntradasMes - (totalPagamentosRealizadosMes + totalValoresEmAbertoMes);
-
-            // Card Futuro
-             const gastosPrevistosFuturos = saidas.filter(s => {
-                const dataSaida = new Date(s.data);
-                return dataSaida > fimMes && s.status === 'em aberto';
-            }).reduce((acc, s) => acc + s.valor, 0);
-            
-            return { 
-                totalEntradas: totalEntradasMes, 
-                totalPagamentosRealizados: totalPagamentosRealizadosMes,
-                totalValoresEmAberto: totalValoresEmAbertoMes,
-                saldoPrevistoMes,
-                gastosPrevistosFuturos,
-                entradasPeriodo, 
-                saidasPeriodo
-            };
+            const gastosPrevistosFuturos = saidas.filter(s => new Date(s.data) > fimMes && s.status === 'em aberto').reduce((acc, s) => acc + s.valor, 0);
+            return { totalEntradas: totalEntradasMes, totalPagamentosRealizados: totalPagamentosRealizadosMes, totalValoresEmAberto: totalValoresEmAbertoMes, saldoPrevistoMes, gastosPrevistosFuturos, entradasPeriodo, saidasPeriodo };
         }
 
         // --- LÓGICA DE RENDERIZAÇÃO ---
@@ -392,38 +377,28 @@
             document.getElementById('cardEntradas').textContent = formatarDinheiro(data.totalEntradas);
             document.getElementById('cardPagamentosRealizados').textContent = formatarDinheiro(data.totalPagamentosRealizados);
             document.getElementById('cardValoresEmAberto').textContent = formatarDinheiro(data.totalValoresEmAberto);
-            
             const saldoPrevistoEl = document.getElementById('cardSaldoPrevistoMes');
             saldoPrevistoEl.textContent = formatarDinheiro(data.saldoPrevistoMes);
-            saldoPrevistoEl.classList.remove('text-positive', 'text-negative');
+            saldoPrevistoEl.classList.remove('text-positive', 'text-negative', 'text-light-text');
             saldoPrevistoEl.classList.add(data.saldoPrevistoMes >= 0 ? 'text-positive' : 'text-negative');
-            
             document.getElementById('cardGastosPrevistos').textContent = formatarDinheiro(data.gastosPrevistosFuturos);
-            
             const nomeFiltro = `${MESES_NOME[filtroDashboardState.month]}/${filtroDashboardState.year}`;
             document.querySelectorAll('.periodo-label').forEach(el => el.textContent = nomeFiltro);
-
             renderizarResumoMetas(data);
-            renderizarGraficos(data);
         }
 
         function renderizarResumoMetas(data){
              const container = document.getElementById('resumoMetasContainer');
-             
-             // Card Resumo do Mês
-             const resumoMesHtml = `
-                <div class="bg-blue-50 border-l-4 border-neutral text-blue-800 p-4 rounded-md text-sm">
-                    <p><strong>Entradas:</strong> ${formatarDinheiro(data.totalEntradas)}</p>
-                    <p><strong>Pagamentos:</strong> ${formatarDinheiro(data.totalPagamentosRealizados)}</p>
-                    <p><strong>A Pagar:</strong> ${formatarDinheiro(data.totalValoresEmAberto)}</p>
-                </div>
-             `;
-             
-             container.innerHTML = resumoMesHtml;
+             container.innerHTML = `
+                <div class="bg-neutral/10 border-l-4 border-neutral text-primary p-4 rounded-md text-sm space-y-2">
+                    <div class="flex justify-between"><span>Entradas:</span> <strong class="text-positive">${formatarDinheiro(data.totalEntradas)}</strong></div>
+                    <div class="flex justify-between"><span>Pagamentos:</span> <strong class="text-negative">${formatarDinheiro(data.totalPagamentosRealizados)}</strong></div>
+                    <div class="flex justify-between"><span>A Pagar:</span> <strong class="text-warning">${formatarDinheiro(data.totalValoresEmAberto)}</strong></div>
+                </div>`;
         }
 
         function renderizarGraficos({ entradasPeriodo, saidasPeriodo }){
-            Chart.defaults.color = '#1F2937';
+            Chart.defaults.color = tailwind.config.theme.extend.colors.subtle_text;
             Chart.defaults.font.weight = '600';
 
             const totalEntradas = entradasPeriodo.reduce((acc, e) => acc + e.valor, 0);
@@ -436,53 +411,36 @@
             entradasPeriodo.forEach(e => { if(!dadosEntradas[e.fonte]) dadosEntradas[e.fonte] = 0; dadosEntradas[e.fonte] += e.valor; });
             const CORES_FONTES = { 'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Outro': '#6B7280' };
             const labelsEntradas = Object.keys(dadosEntradas);
-            const coresEntradas = labelsEntradas.map(label => CORES_FONTES[label] || '#CCCCCC');
-
             entradasChart = new Chart(ctxEntradas, {
-                type: 'doughnut', data: { labels: labelsEntradas, datasets: [{ data: Object.values(dadosEntradas), backgroundColor: coresEntradas }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
+                type: 'doughnut', data: { labels: labelsEntradas, datasets: [{ data: Object.values(dadosEntradas), backgroundColor: labelsEntradas.map(l => CORES_FONTES[l] || '#CCCCCC'), borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: { legend: { position: 'bottom', labels: {color: '#e2e8f0'} }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
             });
 
             if (saidasChart) saidasChart.destroy();
             const ctxSaidas = document.getElementById('saidasChart').getContext('2d');
             const dadosSaidas = {};
-            saidasPeriodo.forEach(s => { 
-                if (!dadosSaidas[s.categoria]) dadosSaidas[s.categoria] = 0; 
-                dadosSaidas[s.categoria] += s.valor; 
-            });
+            saidasPeriodo.forEach(s => { if (!dadosSaidas[s.categoria]) dadosSaidas[s.categoria] = 0; dadosSaidas[s.categoria] += s.valor; });
             saidasChart = new Chart(ctxSaidas, {
-                type: 'doughnut', data: { labels: Object.keys(dadosSaidas), datasets: [{ data: Object.values(dadosSaidas), backgroundColor: ['#F59E0B', '#6366F1', '#EC4899', '#84CC16', '#14B8A6', '#EF4444', '#f59e0b', '#10b981'] }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
+                type: 'doughnut', data: { labels: Object.keys(dadosSaidas), datasets: [{ data: Object.values(dadosSaidas), backgroundColor: ['#F59E0B', '#6366F1', '#EC4899', '#84CC16', '#14B8A6', '#EF4444', '#f59e0b', '#10b981'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: { legend: { position: 'bottom', labels: {color: '#e2e8f0'} }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
             });
             
             if (comparativoChart) comparativoChart.destroy();
             const ctxComp = document.getElementById('comparativoChart').getContext('2d');
             comparativoChart = new Chart(ctxComp, {
                 type: 'bar', 
-                data: { 
-                    labels: ['Movimentações'], 
-                    datasets: [ 
-                        { label: 'Entradas', data: [totalEntradas], backgroundColor: '#16A34A' }, 
-                        { label: 'Pagos', data: [totalSaidasPagas], backgroundColor: '#DC2626' },
-                        { label: 'Em Aberto', data: [totalSaidasAberto], backgroundColor: '#F59E0B' } 
-                    ] 
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    scales: { y: { beginAtZero: true, grace: '10%' } }, 
-                    plugins: { 
-                        legend: { position: 'bottom' }, 
-                        datalabels: { anchor: 'end', align: 'end', formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: '#1f2d37', font: { weight: 'bold' }, offset: -5 } 
-                    } 
-                }
+                data: { labels: ['Movimentações'], datasets: [ { label: 'Entradas', data: [totalEntradas], backgroundColor: '#22c55e' }, { label: 'Pagos', data: [totalSaidasPagas], backgroundColor: '#ef4444' }, { label: 'Em Aberto', data: [totalSaidasAberto], backgroundColor: '#f59e0b' } ] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: '#334155' } } , x: { grid: { color: 'transparent' } }}, plugins: { legend: { position: 'bottom', labels: {color: '#e2e8f0'} }, datalabels: { anchor: 'end', align: 'end', formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: '#f1f5f9', font: { weight: 'bold' }, offset: -5 } } }
             });
         }
         
+        // --- MODAIS ---
         function showModal(modal, content) {
             modal.innerHTML = content;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            modal.querySelector('.close-modal-btn')?.addEventListener('click', () => hideModal(modal));
+            const closeModalBtn = modal.querySelector('.close-modal-btn');
+            if (closeModalBtn) closeModalBtn.addEventListener('click', () => hideModal(modal));
             modal.addEventListener('click', (e) => { if(e.target === modal) hideModal(modal) });
         }
         function hideModal(modal) {
@@ -490,7 +448,35 @@
             modal.classList.remove('flex');
             modal.innerHTML = '';
         }
-        
+
+        function showConfirmModal(message, onConfirm) {
+            const content = `
+                <div class="bg-card-bg rounded-lg shadow-xl w-full max-w-md m-4 text-primary border border-border">
+                    <div class="p-6 text-center">
+                        <svg class="mx-auto mb-4 h-12 w-12 text-warning" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+                        <p class="mb-5 text-lg font-normal text-subtle-text">${message}</p>
+                        <button id="confirmBtn" class="text-white bg-negative hover:bg-red-700 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center me-2">Sim, tenho certeza</button>
+                        <button id="cancelBtn" class="text-subtle-text bg-transparent hover:bg-border border border-border font-medium rounded-lg text-sm px-5 py-2.5">Não, cancelar</button>
+                    </div>
+                </div>`;
+            showModal(modals.deleteConfirm, content);
+            document.getElementById('confirmBtn').onclick = () => { onConfirm(); hideModal(modals.deleteConfirm); };
+            document.getElementById('cancelBtn').onclick = () => { hideModal(modals.deleteConfirm); };
+        }
+
+        function showInfoModal(message) {
+            const content = `
+                <div class="bg-card-bg rounded-lg shadow-xl w-full max-w-md m-4 text-primary border border-border">
+                    <div class="p-6 text-center">
+                        <svg class="mx-auto mb-4 h-12 w-12 text-neutral" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
+                        <p class="mb-5 text-lg font-normal text-subtle-text">${message}</p>
+                        <button class="close-modal-btn w-full ${buttonClasses}">OK</button>
+                    </div>
+                </div>`;
+            showModal(modals.info, content);
+        }
+
+        // --- INICIALIZAÇÃO E ATUALIZAÇÃO ---
         function atualizarTudo() {
             const totais = calcularTotais();
             renderizarDashboard(totais);
@@ -500,11 +486,12 @@
         
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('nav').addEventListener('click', (e) => {
-                if (e.target.matches('.tab-button')) {
+                const button = e.target.closest('.tab-button');
+                if (button) {
                     document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
+                    button.classList.add('active');
                     Object.values(tabs).forEach(t => t.classList.add('hidden'));
-                    tabs[e.target.dataset.tab].classList.remove('hidden');
+                    tabs[button.dataset.tab].classList.remove('hidden');
                 }
             });
             carregarDados();
@@ -530,19 +517,14 @@
             const container = document.getElementById('dashboardFiltersContainer');
             const anos = getAnosDisponiveis();
             container.innerHTML = `
-                <div class="flex flex-wrap gap-2 items-center">
-                    <select id="filtroMesDashboard" class="rounded-md border-gray-300 shadow-sm text-sm text-primary bg-white py-2 px-3 font-semibold">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroDashboardState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
-                    <select id="filtroAnoDashboard" class="rounded-md border-gray-300 shadow-sm text-sm text-primary bg-white py-2 px-3 font-semibold">${anos.map(ano => `<option value="${ano}" ${ano === filtroDashboardState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
-                </div>
-            `;
-            document.getElementById('filtroMesDashboard').addEventListener('change', e => {
-                filtroDashboardState.month = parseInt(e.target.value);
-                atualizarTudo();
-            });
-            document.getElementById('filtroAnoDashboard').addEventListener('change', e => {
-                filtroDashboardState.year = parseInt(e.target.value);
-                atualizarTudo();
-            });
+                <div class="flex flex-wrap gap-2 sm:gap-4 items-center">
+                    <label for="filtroMesDashboard" class="text-sm font-medium text-subtle-text">Mês:</label>
+                    <select id="filtroMesDashboard" class="${selectClasses}">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroDashboardState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
+                    <label for="filtroAnoDashboard" class="text-sm font-medium text-subtle-text">Ano:</label>
+                    <select id="filtroAnoDashboard" class="${selectClasses}">${anos.map(ano => `<option value="${ano}" ${ano === filtroDashboardState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                </div>`;
+            document.getElementById('filtroMesDashboard').addEventListener('change', e => { filtroDashboardState.month = parseInt(e.target.value); atualizarTudo(); });
+            document.getElementById('filtroAnoDashboard').addEventListener('change', e => { filtroDashboardState.year = parseInt(e.target.value); atualizarTudo(); });
         }
 
         // --- ABA DE ENTRADAS ---
@@ -550,447 +532,256 @@
             const anos = getAnosDisponiveis();
             tabs.entradas.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="md:col-span-1 bg-card-bg text-primary p-6 rounded-xl shadow-lg self-start">
-                        <h3 class="text-lg font-semibold mb-4">Adicionar Nova Entrada</h3>
+                    <div class="md:col-span-1 bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border self-start">
+                        <h3 class="text-lg font-semibold mb-4 text-light-text">Adicionar Nova Entrada</h3>
                         <form id="formEntrada" class="space-y-4">
-                             <div><label for="fonteEntrada" class="block text-sm font-medium">Fonte</label><select id="fonteEntrada" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select></div>
-                            <div><label for="valorEntrada" class="block text-sm font-medium">Valor Bruto</label><input type="text" inputmode="decimal" id="valorEntrada" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="150,00" required></div>
-                            <div><label for="dataEntrada" class="block text-sm font-medium">Data</label><input type="date" id="dataEntrada" value="${hojeISO()}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required></div>
-                            <div><label for="statusRepasse" class="block text-sm font-medium">Status</label><select id="statusRepasse" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="pendente">Pendente</option><option value="resgatado">Resgatado</option></select></div>
-                            <button type="submit" class="w-full bg-secondary hover:bg-yellow-600 text-primary font-bold py-2 px-4 rounded-md">Adicionar Entrada</button>
+                             <div><label for="fonteEntrada" class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select id="fonteEntrada" class="${selectClasses}"><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select></div>
+                            <div><label for="valorEntrada" class="block text-sm font-medium text-subtle-text mb-1">Valor Bruto</label><input type="text" inputmode="decimal" id="valorEntrada" class="${inputClasses}" placeholder="150,00" required></div>
+                            <div><label for="dataEntrada" class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="date" id="dataEntrada" value="${hojeISO()}" class="${inputClasses}" required></div>
+                            <div><label for="statusRepasse" class="block text-sm font-medium text-subtle-text mb-1">Status</label><select id="statusRepasse" class="${selectClasses}"><option value="pendente">Pendente</option><option value="resgatado">Resgatado</option></select></div>
+                            <button type="submit" class="${buttonClasses} mt-2">Adicionar Entrada</button>
                         </form>
                     </div>
-                    <div class="md:col-span-2 bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                    <div class="md:col-span-2 bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                         <div class="flex flex-wrap gap-4 items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold">Histórico de Entradas</h3>
+                            <h3 class="text-lg font-semibold text-light-text">Histórico de Entradas</h3>
                             <div class="flex flex-wrap gap-2 items-center" id="filtrosEntradas">
-                                <select id="filtroStatusEntradas" class="rounded-md border-gray-300 shadow-sm text-sm"><option value="todos">Todos</option><option value="pendente">Pendente</option><option value="resgatado">Resgatado</option></select>
-                                <select id="filtroFonteEntradas" class="rounded-md border-gray-300 shadow-sm text-sm"><option value="todos">Todas</option><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select>
-                                <select id="filtroMesEntradas" class="rounded-md border-gray-300 shadow-sm text-sm">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroEntradasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
-                                <select id="filtroAnoEntradas" class="rounded-md border-gray-300 shadow-sm text-sm">${anos.map(ano => `<option value="${ano}" ${ano === filtroEntradasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                                <select id="filtroStatusEntradas" class="${selectClasses} !p-2 !text-xs"><option value="todos">Todos</option><option value="pendente">Pendente</option><option value="resgatado">Resgatado</option></select>
+                                <select id="filtroFonteEntradas" class="${selectClasses} !p-2 !text-xs"><option value="todos">Todas</option><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select>
+                                <select id="filtroMesEntradas" class="${selectClasses} !p-2 !text-xs">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroEntradasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
+                                <select id="filtroAnoEntradas" class="${selectClasses} !p-2 !text-xs">${anos.map(ano => `<option value="${ano}" ${ano === filtroEntradasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
                             </div>
                         </div>
-                        <div id="bulkActionsEntradas" class="hidden bg-gray-100 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
-                        <div id="totalEntradasFiltrado" class="text-right font-bold text-lg mb-4 flex justify-between items-center">
-                             <div class="flex items-center gap-2 text-sm">
-                                <input type="checkbox" id="selectAllEntradas" class="item-checkbox">
-                                <label for="selectAllEntradas">Selecionar Tudo</label>
-                             </div>
-                             <span id="totalValorEntradas"></span>
+                        <div id="bulkActionsEntradas" class="hidden bg-slate-700/50 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
+                        <div class="text-right font-bold text-lg mb-4 flex justify-between items-center border-b border-border pb-3">
+                             <div class="flex items-center gap-2 text-sm"><input type="checkbox" id="selectAllEntradas" class="item-checkbox"><label for="selectAllEntradas">Selecionar Tudo</label></div>
+                             <span id="totalValorEntradas" class="text-base"></span>
                         </div>
-                        <div id="listaEntradas" class="overflow-auto max-h-[32rem]"></div>
+                        <div id="listaEntradas" class="overflow-auto max-h-[32rem] pr-2"></div>
                     </div>
                 </div>`;
             
-            document.getElementById('formEntrada').addEventListener('submit', e => {
-                e.preventDefault(); const form = e.target;
-                const valorString = form.valorEntrada.value.replace(',', '.');
-                const valor = parseFloat(valorString);
-                if(isNaN(valor)) { alert('Valor inválido!'); return; }
-                adicionarEntrada({ fonte: form.fonteEntrada.value, valor: valor, data: form.dataEntrada.value, status: form.statusRepasse.value });
-                form.reset(); form.dataEntrada.value = hojeISO();
-            });
-
+            document.getElementById('formEntrada').addEventListener('submit', e => { e.preventDefault(); const form = e.target; const valor = parseFloat(form.valorEntrada.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } adicionarEntrada({ fonte: form.fonteEntrada.value, valor: valor, data: form.dataEntrada.value, status: form.statusRepasse.value }); form.reset(); form.dataEntrada.value = hojeISO(); });
             document.getElementById('filtroMesEntradas').addEventListener('change', e => { filtroEntradasState.month = parseInt(e.target.value); renderizarListaEntradas(); });
             document.getElementById('filtroAnoEntradas').addEventListener('change', e => { filtroEntradasState.year = parseInt(e.target.value); renderizarListaEntradas(); });
             document.getElementById('filtroFonteEntradas').addEventListener('change', e => { filtroEntradasState.source = e.target.value; renderizarListaEntradas(); });
             document.getElementById('filtroStatusEntradas').addEventListener('change', e => { filtroEntradasState.status = e.target.value; renderizarListaEntradas(); });
-
-            document.getElementById('selectAllEntradas').addEventListener('change', (e) => {
-                const isChecked = e.target.checked;
-                document.querySelectorAll('#listaEntradas .item-checkbox').forEach(checkbox => {
-                    checkbox.checked = isChecked;
-                    handleEntradaSelection(checkbox);
-                });
-            });
-            
+            document.getElementById('selectAllEntradas').addEventListener('change', (e) => { document.querySelectorAll('#listaEntradas .item-checkbox').forEach(checkbox => { checkbox.checked = e.target.checked; handleEntradaSelection(checkbox); }); });
             tabs.entradas.addEventListener('click', e => {
-                 const target = e.target.closest('.status-toggle, .edit-btn, .delete-btn');
-                 if(!target) return;
-                 const id = target.dataset.id;
+                 const target = e.target.closest('.status-toggle, .edit-btn, .delete-btn'); if(!target) return; const id = target.dataset.id;
                  if(target.classList.contains('status-toggle')) alterarStatusEntrada(id);
                  if(target.classList.contains('edit-btn')) mostrarModalEditarEntrada(id);
-                 if(target.classList.contains('delete-btn')) { if(confirm('Tem certeza? Isso também excluirá o dízimo associado.')) removerItem('entradas', id); }
+                 if(target.classList.contains('delete-btn')) showConfirmModal('Tem certeza? Isso também excluirá o dízimo associado.', () => removerItem('entradas', id));
             });
-
             renderizarListaEntradas();
         }
 
-        function handleEntradaSelection(checkbox) {
-            const id = checkbox.dataset.id;
-            if (checkbox.checked) {
-                selectedEntradas.add(id);
-            } else {
-                selectedEntradas.delete(id);
-            }
-            renderBulkActionsEntradas();
-        }
+        function handleEntradaSelection(checkbox) { if (checkbox.checked) selectedEntradas.add(checkbox.dataset.id); else selectedEntradas.delete(checkbox.dataset.id); renderBulkActionsEntradas(); }
 
         function renderBulkActionsEntradas() {
             const container = document.getElementById('bulkActionsEntradas');
             if (selectedEntradas.size > 0) {
-                 const totalSelecionado = entradas
-                    .filter(e => selectedEntradas.has(e._id))
-                    .reduce((acc, e) => acc + e.valor, 0);
-
+                 const total = entradas.filter(e => selectedEntradas.has(e._id)).reduce((acc, e) => acc + e.valor, 0);
                 container.innerHTML = `
-                    <span class="font-semibold text-sm mr-4">${selectedEntradas.size} selecionado(s) | Total: ${formatarDinheiro(totalSelecionado)}</span>
-                    <button onclick="atualizarStatusSelecionados('entradas', 'resgatado')" class="text-xs bg-positive text-white font-bold py-1 px-2 rounded">Marcar como Resgatado</button>
-                    <button onclick="atualizarStatusSelecionados('entradas', 'pendente')" class="text-xs bg-yellow-500 text-white font-bold py-1 px-2 rounded">Marcar como Pendente</button>
-                    <button onclick="removerItensSelecionados('entradas')" class="text-xs bg-negative text-white font-bold py-1 px-2 rounded">Excluir</button>
-                `;
-                container.classList.remove('hidden');
-                container.classList.add('flex');
-            } else {
-                container.classList.add('hidden');
-                container.classList.remove('flex');
-                container.innerHTML = '';
-            }
+                    <span class="font-semibold text-sm mr-4">${selectedEntradas.size} selecionado(s) | Total: ${formatarDinheiro(total)}</span>
+                    <button onclick="atualizarStatusSelecionados('entradas', 'resgatado')" class="text-xs bg-positive text-white font-bold py-1 px-2 rounded">Marcar Resgatado</button>
+                    <button onclick="atualizarStatusSelecionados('entradas', 'pendente')" class="text-xs bg-warning text-dark-bg font-bold py-1 px-2 rounded">Marcar Pendente</button>
+                    <button onclick="removerItensSelecionados('entradas')" class="text-xs bg-negative text-white font-bold py-1 px-2 rounded">Excluir</button>`;
+                container.classList.remove('hidden'); container.classList.add('flex');
+            } else { container.classList.add('hidden'); container.classList.remove('flex'); container.innerHTML = ''; }
         }
         
         function renderizarListaEntradas() {
-            const listaEl = document.getElementById('listaEntradas');
-            if (!listaEl) return;
-            
+            const listaEl = document.getElementById('listaEntradas'); if (!listaEl) return;
             const { month, year, source, status } = filtroEntradasState;
-            const inicio = new Date(Date.UTC(year, month, 1));
-            const fim = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
-
-            const entradasFiltradas = entradas.filter(e => {
-                const dataEntrada = new Date(e.data);
-                const noPeriodo = dataEntrada >= inicio && dataEntrada <= fim;
-                const fonteCorreta = source === 'todos' || e.fonte === source;
-                const statusCorreto = status === 'todos' || e.status === status;
-                return noPeriodo && fonteCorreta && statusCorreto;
-            });
-            
-            const totalFiltrado = entradasFiltradas.reduce((acc, e) => acc + e.valor, 0);
-            document.getElementById('totalValorEntradas').textContent = `Total: ${formatarDinheiro(totalFiltrado)}`;
-
-            if (entradasFiltradas.length === 0) {
-                listaEl.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma entrada encontrada.</p>';
-                return;
-            }
-
+            const inicio = new Date(Date.UTC(year, month, 1)), fim = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+            const filtradas = entradas.filter(e => { const d = new Date(e.data); return d >= inicio && d <= fim && (source === 'todos' || e.fonte === source) && (status === 'todos' || e.status === status); });
+            document.getElementById('totalValorEntradas').textContent = `Total: ${formatarDinheiro(filtradas.reduce((acc, e) => acc + e.valor, 0))}`;
+            if (filtradas.length === 0) { listaEl.innerHTML = '<p class="text-subtle-text text-center py-4">Nenhuma entrada encontrada.</p>'; return; }
             let html = '<ul class="space-y-3">';
-            entradasFiltradas.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(e => {
-                const statusPendente = e.status === 'pendente';
-                html += `<li class="flex justify-between items-center p-3 rounded-md border border-gray-200">
-                    <div class="flex items-center flex-grow">
-                        <input type="checkbox" data-id="${e._id}" onchange="handleEntradaSelection(this)" class="item-checkbox mr-4" ${selectedEntradas.has(e._id) ? 'checked' : ''}>
-                        <span class="w-3 h-3 rounded-full mr-3" style="background-color: ${ {'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Outro': '#6B7280'}[e.fonte] }"></span>
-                        <div><p class="font-semibold">${e.fonte}</p><p class="text-sm text-gray-500">${formatarData(e.data)}</p></div>
+            filtradas.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(e => {
+                const pendente = e.status === 'pendente';
+                html += `<li class="flex justify-between items-center p-3 rounded-md border border-border bg-slate-900/30 hover:border-secondary/50">
+                    <div class="flex items-center flex-grow gap-4">
+                        <input type="checkbox" data-id="${e._id}" onchange="handleEntradaSelection(this)" class="item-checkbox flex-shrink-0" ${selectedEntradas.has(e._id) ? 'checked' : ''}>
+                        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${ {'iFood': '#EA1D2C', 'Uber': '#333', '99': '#FFC700', 'Outro': '#6B7280'}[e.fonte] }"></span>
+                        <div><p class="font-semibold text-light-text">${e.fonte}</p><p class="text-sm text-subtle-text">${formatarData(e.data)}</p></div>
                     </div>
                     <div class="flex items-center gap-2">
-                       <div>
-                            <p class="font-semibold text-right text-positive">${formatarDinheiro(e.valor)}</p>
-                            <button data-id="${e._id}" class="status-toggle text-sm font-medium ${statusPendente ? 'text-yellow-600' : 'text-positive'}">${e.status}</button>
+                       <div class="text-right">
+                            <p class="font-semibold text-positive">${formatarDinheiro(e.valor)}</p>
+                            <button data-id="${e._id}" class="status-toggle text-sm font-medium ${pendente ? 'text-warning' : 'text-positive'}">${e.status}</button>
                        </div>
-                       <button class="edit-btn text-gray-400 hover:text-secondary p-1" data-id="${e._id}">✏️</button>
-                       <button class="delete-btn text-gray-400 hover:text-negative p-1" data-id="${e._id}">🗑️</button>
-                    </div>
-                </li>`;
+                       <button class="edit-btn text-subtle-text hover:text-secondary hover:bg-secondary/10 ${iconButtonClasses}" data-id="${e._id}"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
+                       <button class="delete-btn text-subtle-text hover:text-negative hover:bg-negative/10 ${iconButtonClasses}" data-id="${e._id}"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg></button>
+                    </div></li>`;
             });
-            html += '</ul>';
-            listaEl.innerHTML = html;
+            listaEl.innerHTML = html + '</ul>';
         }
 
         // --- ABA DE SAÍDAS ---
         function renderizarAbaSaidas() {
             const anos = getAnosDisponiveis();
-
             tabs.saidas.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="md:col-span-1 bg-card-bg text-primary p-6 rounded-xl shadow-lg self-start">
-                        <h3 class="text-lg font-semibold mb-4">Adicionar Nova Saída</h3>
+                    <div class="md:col-span-1 bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border self-start">
+                        <h3 class="text-lg font-semibold mb-4 text-light-text">Adicionar Nova Saída</h3>
                         <form id="formSaida" class="space-y-4">
-                            <div><label for="descricaoSaida" class="block text-sm font-medium">Descrição</label><input type="text" id="descricaoSaida" class="mt-1 block w-full rounded-md border-gray-300" required></div>
-                            <div><label for="categoriaSaida" class="block text-sm font-medium">Categoria</label><select id="categoriaSaida" class="mt-1 block w-full rounded-md border-gray-300"><option>Custo Fixo</option><option>Cartão de Crédito</option><option>Débito</option><option>Saque</option><option>Dízimo</option><option>Outro</option></select></div>
-                            <div><label for="valorSaida" class="block text-sm font-medium">Valor Total</label><input type="text" inputmode="decimal" id="valorSaida" class="mt-1 block w-full rounded-md border-gray-300" placeholder="150,00" required></div>
-                            <div><label for="dataSaida" class="block text-sm font-medium">Data</label><input type="date" id="dataSaida" value="${hojeISO()}" class="mt-1 block w-full rounded-md border-gray-300" required></div>
-                            <div><label for="statusSaida" class="block text-sm font-medium">Status</label><select id="statusSaida" class="mt-1 block w-full rounded-md border-gray-300"><option value="em aberto">Em Aberto</option><option value="pago">Pago</option></select></div>
-                            <div id="parcelasContainer" class="hidden"><label for="numParcelas" class="block text-sm font-medium">Nº de Parcelas</label><input type="number" id="numParcelas" class="mt-1 block w-full rounded-md border-gray-300" value="1" min="1"></div>
-                            <div id="custoNegocioContainer" class="hidden"><div class="flex items-center"><input id="isCustoNegocio" type="checkbox" class="h-4 w-4 rounded border-gray-300"><label for="isCustoNegocio" class="ml-2 block text-sm">Custo do negócio</label></div></div>
-                            <button type="submit" class="w-full bg-secondary hover:bg-yellow-600 text-primary font-bold py-2 px-4 rounded-md">Adicionar Saída</button>
+                            <div><label for="descricaoSaida" class="block text-sm font-medium text-subtle-text mb-1">Descrição</label><input type="text" id="descricaoSaida" class="${inputClasses}" required></div>
+                            <div><label for="categoriaSaida" class="block text-sm font-medium text-subtle-text mb-1">Categoria</label><select id="categoriaSaida" class="${selectClasses}"><option>Custo Fixo</option><option>Cartão de Crédito</option><option>Débito</option><option>Saque</option><option>Dízimo</option><option>Outro</option></select></div>
+                            <div><label for="valorSaida" class="block text-sm font-medium text-subtle-text mb-1">Valor Total</label><input type="text" inputmode="decimal" id="valorSaida" class="${inputClasses}" placeholder="150,00" required></div>
+                            <div><label for="dataSaida" class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="date" id="dataSaida" value="${hojeISO()}" class="${inputClasses}" required></div>
+                            <div><label for="statusSaida" class="block text-sm font-medium text-subtle-text mb-1">Status</label><select id="statusSaida" class="${selectClasses}"><option value="em aberto">Em Aberto</option><option value="pago">Pago</option></select></div>
+                            <div id="parcelasContainer" class="hidden"><label for="numParcelas" class="block text-sm font-medium text-subtle-text mb-1">Nº de Parcelas</label><input type="number" id="numParcelas" class="${inputClasses}" value="1" min="1"></div>
+                            <div id="custoNegocioContainer" class="hidden"><div class="flex items-center"><input id="isCustoNegocio" type="checkbox" class="item-checkbox"><label for="isCustoNegocio" class="ml-2 block text-sm text-subtle-text">Custo do negócio</label></div></div>
+                            <button type="submit" class="${buttonClasses} mt-2">Adicionar Saída</button>
                         </form>
                     </div>
-                    <div class="md:col-span-2 bg-card-bg text-primary p-6 rounded-xl shadow-lg">
+                    <div class="md:col-span-2 bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                         <div class="flex flex-wrap gap-2 items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold">Histórico de Saídas</h3>
+                            <h3 class="text-lg font-semibold text-light-text">Histórico de Saídas</h3>
                             <div class="flex flex-wrap gap-2 items-center" id="filtrosSaidas">
-                                <select id="filtroStatusSaidas" class="rounded-md border-gray-300 shadow-sm text-sm"><option value="todos">Todos</option><option value="em aberto">Em Aberto</option><option value="pago">Pago</option></select>
-                                <select id="filtroCategoriaSaidas" class="rounded-md border-gray-300 shadow-sm text-sm"><option value="todas">Todas as Categorias</option><option>Custo Fixo</option><option>Cartão de Crédito</option><option>Débito</option><option>Saque</option><option>Dízimo</option><option>Outro</option></select>
-                                <select id="filtroMesSaidas" class="rounded-md border-gray-300 shadow-sm text-sm">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroSaidasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
-                                <select id="filtroAnoSaidas" class="rounded-md border-gray-300 shadow-sm text-sm">${anos.map(ano => `<option value="${ano}" ${ano === filtroSaidasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                                <select id="filtroStatusSaidas" class="${selectClasses} !p-2 !text-xs"><option value="todos">Todos</option><option value="em aberto">Em Aberto</option><option value="pago">Pago</option></select>
+                                <select id="filtroCategoriaSaidas" class="${selectClasses} !p-2 !text-xs"><option value="todas">Categorias</option><option>Custo Fixo</option><option>Cartão de Crédito</option><option>Débito</option><option>Saque</option><option>Dízimo</option><option>Outro</option></select>
+                                <select id="filtroMesSaidas" class="${selectClasses} !p-2 !text-xs">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroSaidasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
+                                <select id="filtroAnoSaidas" class="${selectClasses} !p-2 !text-xs">${anos.map(ano => `<option value="${ano}" ${ano === filtroSaidasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
                             </div>
                         </div>
-                         <div id="bulkActionsSaidas" class="hidden bg-gray-100 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
-                        <div id="totalSaidasFiltrado" class="text-right font-bold text-lg mb-4 flex justify-between items-center">
-                            <div class="flex items-center gap-2 text-sm">
-                                <input type="checkbox" id="selectAllSaidas" class="item-checkbox">
-                                <label for="selectAllSaidas">Selecionar Tudo</label>
-                             </div>
-                             <span id="totalValorSaidas"></span>
+                         <div id="bulkActionsSaidas" class="hidden bg-slate-700/50 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
+                        <div class="text-right font-bold text-lg mb-4 flex justify-between items-center border-b border-border pb-3">
+                            <div class="flex items-center gap-2 text-sm"><input type="checkbox" id="selectAllSaidas" class="item-checkbox"><label for="selectAllSaidas">Selecionar Tudo</label></div>
+                             <span id="totalValorSaidas" class="text-base"></span>
                         </div>
-                        <div id="listaSaidas" class="overflow-auto max-h-[28rem]"></div>
+                        <div id="listaSaidas" class="overflow-auto max-h-[28rem] pr-2"></div>
                     </div>
                 </div>`;
             
-            document.getElementById('categoriaSaida').addEventListener('change', (e) => {
-                const isCartao = e.target.value === 'Cartão de Crédito';
-                document.getElementById('parcelasContainer').classList.toggle('hidden', !isCartao);
-                document.getElementById('custoNegocioContainer').classList.toggle('hidden', !isCartao);
-            });
-            document.getElementById('formSaida').addEventListener('submit', e => {
-                e.preventDefault(); const form = e.target; const isCartao = form.categoriaSaida.value === 'Cartão de Crédito';
-                const valorString = form.valorSaida.value.replace(',', '.');
-                const valor = parseFloat(valorString);
-                if(isNaN(valor)) { alert('Valor inválido!'); return; }
-                adicionarSaida({ descricao: form.descricaoSaida.value, categoria: form.categoriaSaida.value, valor: valor, data: form.dataSaida.value, numParcelas: isCartao ? form.numParcelas.value : 1, isCustoNegocio: isCartao ? form.isCustoNegocio.checked : false, status: form.statusSaida.value });
-                form.reset(); form.dataSaida.value = hojeISO();
-                document.getElementById('parcelasContainer').classList.add('hidden'); document.getElementById('custoNegocioContainer').classList.add('hidden');
-            });
-
+            document.getElementById('categoriaSaida').addEventListener('change', (e) => { const isCartao = e.target.value === 'Cartão de Crédito'; document.getElementById('parcelasContainer').classList.toggle('hidden', !isCartao); document.getElementById('custoNegocioContainer').classList.toggle('hidden', !isCartao); });
+            document.getElementById('formSaida').addEventListener('submit', e => { e.preventDefault(); const form = e.target; const isCartao = form.categoriaSaida.value === 'Cartão de Crédito'; const valor = parseFloat(form.valorSaida.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } adicionarSaida({ descricao: form.descricaoSaida.value, categoria: form.categoriaSaida.value, valor: valor, data: form.dataSaida.value, numParcelas: isCartao ? form.numParcelas.value : 1, isCustoNegocio: isCartao ? form.isCustoNegocio.checked : false, status: form.statusSaida.value }); form.reset(); form.dataSaida.value = hojeISO(); document.getElementById('parcelasContainer').classList.add('hidden'); document.getElementById('custoNegocioContainer').classList.add('hidden'); });
             document.getElementById('filtroMesSaidas').addEventListener('change', e => { filtroSaidasState.month = parseInt(e.target.value); renderizarListaSaidas(); });
             document.getElementById('filtroAnoSaidas').addEventListener('change', e => { filtroSaidasState.year = parseInt(e.target.value); renderizarListaSaidas(); });
             document.getElementById('filtroCategoriaSaidas').addEventListener('change', e => { filtroSaidasState.category = e.target.value; renderizarListaSaidas(); });
             document.getElementById('filtroStatusSaidas').addEventListener('change', e => { filtroSaidasState.status = e.target.value; renderizarListaSaidas(); });
-
-             document.getElementById('selectAllSaidas').addEventListener('change', (e) => {
-                const isChecked = e.target.checked;
-                document.querySelectorAll('#listaSaidas .item-checkbox').forEach(checkbox => {
-                    checkbox.checked = isChecked;
-                    handleSaidaSelection(checkbox);
-                });
-            });
-            
+            document.getElementById('selectAllSaidas').addEventListener('change', (e) => { document.querySelectorAll('#listaSaidas .item-checkbox').forEach(checkbox => { if(!checkbox.disabled) { checkbox.checked = e.target.checked; handleSaidaSelection(checkbox); } }); });
             tabs.saidas.addEventListener('click', e => {
-                 const target = e.target.closest('.status-toggle-saida, .edit-btn, .delete-btn');
-                 if(!target) return;
-                 const id = target.dataset.id;
-                 const saida = saidas.find(s => s._id === id);
-                 if (saida && saida.entradaId) {
-                     alert('Este dízimo não pode ser alterado ou excluído diretamente. Altere a entrada original.');
-                     return;
-                 }
+                 const target = e.target.closest('.status-toggle-saida, .edit-btn, .delete-btn'); if(!target) return; const id = target.dataset.id;
+                 const saida = saidas.find(s => s._id === id); if (saida && saida.entradaId) { showInfoModal('Este dízimo não pode ser alterado ou excluído diretamente. Altere a entrada original.'); return; }
                  if(target.classList.contains('status-toggle-saida')) alterarStatusSaida(id);
                  if(target.classList.contains('edit-btn')) mostrarModalEditarSaida(id);
-                 if(target.classList.contains('delete-btn')) { if(confirm('Tem certeza?')) removerItem('saidas', id); }
+                 if(target.classList.contains('delete-btn')) showConfirmModal('Tem certeza que deseja excluir esta saída?', () => removerItem('saidas', id));
             });
             renderizarListaSaidas();
         }
 
-        function handleSaidaSelection(checkbox) {
-            const id = checkbox.dataset.id;
-            const isDisabled = checkbox.disabled;
-
-            if (isDisabled) return;
-
-            if (checkbox.checked) {
-                selectedSaidas.add(id);
-            } else {
-                selectedSaidas.delete(id);
-            }
-            renderBulkActionsSaidas();
-        }
+        function handleSaidaSelection(checkbox) { if (checkbox.disabled) return; if (checkbox.checked) selectedSaidas.add(checkbox.dataset.id); else selectedSaidas.delete(checkbox.dataset.id); renderBulkActionsSaidas(); }
 
         function renderBulkActionsSaidas() {
             const container = document.getElementById('bulkActionsSaidas');
             if (selectedSaidas.size > 0) {
-                 const totalSelecionado = saidas
-                    .filter(s => selectedSaidas.has(s._id))
-                    .reduce((acc, s) => acc + s.valor, 0);
-
+                 const total = saidas.filter(s => selectedSaidas.has(s._id)).reduce((acc, s) => acc + s.valor, 0);
                 container.innerHTML = `
-                    <span class="font-semibold text-sm mr-4">${selectedSaidas.size} selecionado(s) | Total: ${formatarDinheiro(totalSelecionado)}</span>
+                    <span class="font-semibold text-sm mr-4">${selectedSaidas.size} selecionado(s) | Total: ${formatarDinheiro(total)}</span>
                     <button onclick="atualizarStatusSelecionados('saidas', 'pago')" class="text-xs bg-positive text-white font-bold py-1 px-2 rounded">Marcar como Pago</button>
-                    <button onclick="atualizarStatusSelecionados('saidas', 'em aberto')" class="text-xs bg-yellow-500 text-white font-bold py-1 px-2 rounded">Marcar como Em Aberto</button>
-                    <button onclick="removerItensSelecionados('saidas')" class="text-xs bg-negative text-white font-bold py-1 px-2 rounded">Excluir</button>
-                `;
-                container.classList.remove('hidden');
-                container.classList.add('flex');
-            } else {
-                container.classList.add('hidden');
-                container.classList.remove('flex');
-                container.innerHTML = '';
-            }
+                    <button onclick="atualizarStatusSelecionados('saidas', 'em aberto')" class="text-xs bg-warning text-dark-bg font-bold py-1 px-2 rounded">Marcar Em Aberto</button>
+                    <button onclick="removerItensSelecionados('saidas')" class="text-xs bg-negative text-white font-bold py-1 px-2 rounded">Excluir</button>`;
+                container.classList.remove('hidden'); container.classList.add('flex');
+            } else { container.classList.add('hidden'); container.classList.remove('flex'); container.innerHTML = ''; }
         }
 
         function renderizarListaSaidas() {
-            const listaEl = document.getElementById('listaSaidas');
-            if (!listaEl) return;
-            
+            const listaEl = document.getElementById('listaSaidas'); if (!listaEl) return;
             const { month, year, category, status } = filtroSaidasState;
-            const inicio = new Date(Date.UTC(year, month, 1));
-            const fim = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
-
-            const saidasFiltradas = saidas.filter(s => { 
-                const dataSaida = new Date(s.data);
-                const noPeriodo = dataSaida >= inicio && dataSaida <= fim;
-                const categoriaCorreta = category === 'todas' || s.categoria === category;
-                const statusCorreto = status === 'todos' || s.status === status;
-                return noPeriodo && categoriaCorreta && statusCorreto;
-            });
-
-            const totalFiltrado = saidasFiltradas.reduce((acc, s) => acc + s.valor, 0);
-            document.getElementById('totalValorSaidas').textContent = `Total: ${formatarDinheiro(totalFiltrado)}`;
-
-            if (saidasFiltradas.length === 0) {
-                listaEl.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma saída encontrada.</p>';
-                return;
-            }
+            const inicio = new Date(Date.UTC(year, month, 1)), fim = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+            const filtradas = saidas.filter(s => { const d = new Date(s.data); return d >= inicio && d <= fim && (category === 'todas' || s.categoria === category) && (status === 'todos' || s.status === status); });
+            document.getElementById('totalValorSaidas').textContent = `Total: ${formatarDinheiro(filtradas.reduce((acc, s) => acc + s.valor, 0))}`;
+            if (filtradas.length === 0) { listaEl.innerHTML = '<p class="text-subtle-text text-center py-4">Nenhuma saída encontrada.</p>'; return; }
             let html = '<ul class="space-y-3">';
-            saidasFiltradas.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(s => {
-                const isPago = s.status === 'pago';
-                const isDizimo = !!s.entradaId;
-                html += `<li class="flex justify-between items-center p-3 rounded-md border border-gray-200 ${isDizimo ? 'opacity-70' : ''}">
-                    <div class="flex items-center flex-grow">
-                         <input type="checkbox" data-id="${s._id}" onchange="handleSaidaSelection(this)" class="item-checkbox mr-4" ${selectedSaidas.has(s._id) ? 'checked' : ''} ${isDizimo ? 'disabled' : ''}>
-                        <div>
-                            <p class="font-semibold">${s.descricao}</p>
-                            <p class="text-sm text-gray-500">${s.categoria} - ${formatarData(s.data)}</p>
-                        </div>
+            filtradas.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(s => {
+                const isPago = s.status === 'pago', isDizimo = !!s.entradaId;
+                html += `<li class="flex justify-between items-center p-3 rounded-md border border-border bg-slate-900/30 ${isDizimo ? 'opacity-60' : 'hover:border-secondary/50'}">
+                    <div class="flex items-center flex-grow gap-4">
+                         <input type="checkbox" data-id="${s._id}" onchange="handleSaidaSelection(this)" class="item-checkbox flex-shrink-0" ${selectedSaidas.has(s._id) ? 'checked' : ''} ${isDizimo ? 'disabled' : ''}>
+                        <div><p class="font-semibold text-light-text">${s.descricao}</p><p class="text-sm text-subtle-text">${s.categoria} - ${formatarData(s.data)}</p></div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <div>
-                            <p class="font-semibold text-negative text-right">${formatarDinheiro(s.valor)}</p>
-                            <button data-id="${s._id}" class="status-toggle-saida text-sm font-medium ${isPago ? 'text-positive' : 'text-yellow-600'}">${s.status}</button>
+                        <div class="text-right">
+                            <p class="font-semibold text-negative">${formatarDinheiro(s.valor)}</p>
+                            <button data-id="${s._id}" class="status-toggle-saida text-sm font-medium ${isPago ? 'text-positive' : 'text-warning'}">${s.status}</button>
                         </div>
-                       <button class="edit-btn text-gray-400 hover:text-secondary p-1" data-id="${s._id}" ${isDizimo ? 'disabled' : ''}>✏️</button>
-                       <button class="delete-btn text-gray-400 hover:text-negative p-1" data-id="${s._id}" ${isDizimo ? 'disabled' : ''}>🗑️</button>
-                    </div>
-                </li>`;
+                       <button class="edit-btn text-subtle-text hover:text-secondary hover:bg-secondary/10 ${iconButtonClasses}" data-id="${s._id}" ${isDizimo ? 'disabled' : ''}><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
+                       <button class="delete-btn text-subtle-text hover:text-negative hover:bg-negative/10 ${iconButtonClasses}" data-id="${s._id}" ${isDizimo ? 'disabled' : ''}><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg></button>
+                    </div></li>`;
             });
-            html += '</ul>';
-            listaEl.innerHTML = html;
+            listaEl.innerHTML = html + '</ul>';
         }
 
+        // --- ABA DE RELATÓRIOS ---
         function renderizarAbaRelatorios() {
-            tabs.relatorios.innerHTML = `<div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg space-y-8">
-                <div id="evolucaoMensalContainer" class="p-6 border border-gray-200 rounded-lg">
+            tabs.relatorios.innerHTML = `<div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg space-y-8 border border-border">
+                <div id="evolucaoMensalContainer" class="p-6 border border-border rounded-lg">
                     <div class="flex flex-wrap gap-4 items-center justify-between mb-4">
-                        <h4 class="font-bold text-xl">Evolução Mensal</h4>
+                        <h4 class="font-bold text-xl text-light-text">Evolução Mensal</h4>
                         <div class="flex flex-wrap gap-2 items-center">
-                            <label for="filtroAnoInicial" class="text-sm font-medium">De:</label>
-                            <select id="filtroAnoInicial" class="rounded-md border-gray-300 shadow-sm text-sm"></select>
-                            <label for="filtroAnoFinal" class="text-sm font-medium">Até:</label>
-                            <select id="filtroAnoFinal" class="rounded-md border-gray-300 shadow-sm text-sm"></select>
+                            <label for="filtroAnoInicial" class="text-sm font-medium text-subtle-text">De:</label><select id="filtroAnoInicial" class="${selectClasses} !p-2 !text-xs"></select>
+                            <label for="filtroAnoFinal" class="text-sm font-medium text-subtle-text">Até:</label><select id="filtroAnoFinal" class="${selectClasses} !p-2 !text-xs"></select>
                         </div>
                     </div>
                     <div class="h-96"><canvas id="evolucaoChart"></canvas></div>
-                </div>
-            </div>`;
-            
+                </div></div>`;
             const anos = getAnosDisponiveis().sort((a,b) => a - b);
-            const anoInicialEl = document.getElementById('filtroAnoInicial');
-            const anoFinalEl = document.getElementById('filtroAnoFinal');
-            
+            const anoInicialEl = document.getElementById('filtroAnoInicial'), anoFinalEl = document.getElementById('filtroAnoFinal');
             if(anos.length > 0) {
-                anoInicialEl.innerHTML = anos.map(ano => `<option value="${ano}">${ano}</option>`).join('');
-                anoFinalEl.innerHTML = anos.map(ano => `<option value="${ano}">${ano}</option>`).join('');
-                anoInicialEl.value = anos[0];
-                anoFinalEl.value = anos[anos.length - 1];
+                anoInicialEl.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join('');
+                anoFinalEl.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join('');
+                anoInicialEl.value = anos[0]; anoFinalEl.value = anos[anos.length - 1];
             }
-
             anoInicialEl.addEventListener('change', renderizarGraficoEvolucao);
             anoFinalEl.addEventListener('change', renderizarGraficoEvolucao);
-
             renderizarGraficoEvolucao();
         }
 
         function renderizarGraficoEvolucao() {
             if(evolucaoChart) evolucaoChart.destroy();
-
-            const anoInicialEl = document.getElementById('filtroAnoInicial');
-            const anoFinalEl = document.getElementById('filtroAnoFinal');
-
-            if (!anoInicialEl || !anoFinalEl || !anoInicialEl.value || !anoFinalEl.value) {
-                const ctx = document.getElementById('evolucaoChart').getContext('2d');
-                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                ctx.font = "16px Inter";
-                ctx.fillStyle = "#4B5563";
-                ctx.textAlign = "center";
-                ctx.fillText("Nenhum dado para exibir.", ctx.canvas.width / 2, ctx.canvas.height / 2);
-                return;
-            };
-
-            const anoInicial = parseInt(anoInicialEl.value);
-            const anoFinal = parseInt(anoFinalEl.value);
-
-            if (anoInicial > anoFinal) {
-                const ctx = document.getElementById('evolucaoChart').getContext('2d');
-                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                ctx.font = "16px Inter";
-                ctx.fillStyle = "#4B5563";
-                ctx.textAlign = "center";
-                ctx.fillText("O ano inicial não pode ser maior que o ano final.", ctx.canvas.width / 2, ctx.canvas.height / 2);
-                return;
-            }
-
-            const labels = [];
-            const dataEntradas = [];
-            const dataSaidas = [];
-            const dataSaldo = [];
-            
-            let currentDate = new Date(Date.UTC(anoInicial, 0, 1));
-            const finalDate = new Date(Date.UTC(anoFinal, 11, 1));
-
-            while (currentDate <= finalDate) {
-                const ano = currentDate.getUTCFullYear();
-                const mes = currentDate.getUTCMonth();
-                
-                labels.push(`${MESES_NOME[mes].substring(0,3)}/${ano.toString().substring(2,4)}`);
-
-                const inicioMes = new Date(Date.UTC(ano, mes, 1));
-                const fimMes = new Date(Date.UTC(ano, mes + 1, 0, 23, 59, 59, 999));
-                
-                const totalEntradasMes = entradas
-                    .filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; })
-                    .reduce((acc, e) => acc + e.valor, 0);
-                
-                const totalSaidasPagasMes = saidas
-                    .filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes && s.status === 'pago'; })
-                    .reduce((acc, s) => acc + s.valor, 0);
-
-                dataEntradas.push(totalEntradasMes);
-                dataSaidas.push(totalSaidasPagasMes);
-                dataSaldo.push(totalEntradasMes - totalSaidasPagasMes);
-
-                currentDate.setUTCMonth(currentDate.getUTCMonth() + 1);
-            }
-
+            const anoInicialEl = document.getElementById('filtroAnoInicial'), anoFinalEl = document.getElementById('filtroAnoFinal');
             const ctx = document.getElementById('evolucaoChart').getContext('2d');
+            
+            const drawMessage = (message) => { ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height); ctx.font="16px Inter"; ctx.fillStyle="#94a3b8"; ctx.textAlign="center"; ctx.fillText(message,ctx.canvas.width/2,ctx.canvas.height/2); };
+
+            if (!anoInicialEl || !anoFinalEl || !anoInicialEl.value || !anoFinalEl.value) { drawMessage("Nenhum dado para exibir."); return; };
+            const anoInicial = parseInt(anoInicialEl.value), anoFinal = parseInt(anoFinalEl.value);
+            if (anoInicial > anoFinal) { drawMessage("O ano inicial não pode ser maior que o ano final."); return; }
+
+            const labels = [], dataEntradas = [], dataSaidas = [], dataSaldo = [];
+            for (let ano = anoInicial; ano <= anoFinal; ano++) {
+                for (let mes = 0; mes < 12; mes++) {
+                    labels.push(`${MESES_NOME[mes].substring(0,3)}/${String(ano).substring(2)}`);
+                    const inicioMes = new Date(Date.UTC(ano, mes, 1)), fimMes = new Date(Date.UTC(ano, mes + 1, 0, 23, 59, 59, 999));
+                    const totalEntradas = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; }).reduce((acc, e) => acc + e.valor, 0);
+                    const totalSaidas = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes && s.status === 'pago'; }).reduce((acc, s) => acc + s.valor, 0);
+                    dataEntradas.push(totalEntradas); dataSaidas.push(totalSaidas); dataSaldo.push(totalEntradas - totalSaidas);
+                }
+            }
+            
             evolucaoChart = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels,
-                    datasets: [
-                        { label: 'Saldo Líquido', type: 'line', data: dataSaldo, borderColor: '#3B82F6', tension: 0.1, fill: false, borderWidth: 3 },
-                        { label: 'Entradas', data: dataEntradas, backgroundColor: '#16A34A' },
-                        { label: 'Saídas (Pagas)', data: dataSaidas, backgroundColor: '#DC2626' }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { datalabels: { display: false } },
-                    scales: { y: { beginAtZero: true } }
-                }
+                data: { labels, datasets: [ { label: 'Saldo Líquido', type: 'line', data: dataSaldo, borderColor: '#3b82f6', tension: 0.1, fill: false, borderWidth: 3 }, { label: 'Entradas', data: dataEntradas, backgroundColor: '#22c55e' }, { label: 'Saídas (Pagas)', data: dataSaidas, backgroundColor: '#ef4444' } ] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: {labels: {color: '#e2e8f0'}} }, scales: { y: { beginAtZero: true, grid:{color: '#334155'} }, x: { grid:{color:'transparent'} } } }
             });
         }
-
+        
+        // --- MODAIS DE EDIÇÃO ---
         function mostrarModalEditarEntrada(id) {
             const entrada = entradas.find(e => e._id === id); if (!entrada) return;
-            showModal(modals.editEntrada, `<div class="bg-card-bg text-primary rounded-lg shadow-xl w-full max-w-md m-4"><div class="p-4 border-b flex justify-between items-center"><h3 class="text-xl font-semibold">Editar Entrada</h3><button class="close-modal-btn text-2xl">&times;</button></div><form id="formEditEntrada" class="p-4 space-y-4"><input type="hidden" name="id" value="${entrada._id}"><div><label class="block text-sm font-medium">Fonte</label><select name="fonte" class="mt-1 block w-full rounded-md border-gray-300" required><option ${entrada.fonte === 'iFood' ? 'selected' : ''}>iFood</option><option ${entrada.fonte === 'Uber' ? 'selected' : ''}>Uber</option><option ${entrada.fonte === '99' ? 'selected' : ''}>99</option><option ${entrada.fonte === 'Outro' ? 'selected' : ''}>Outro</option></select></div><div><label class="block text-sm font-medium">Valor Bruto</label><input type="text" inputmode="decimal" name="valor" value="${String(entrada.valor).replace('.', ',')}" class="mt-1 block w-full rounded-md border-gray-300" required></div><div><label class="block text-sm font-medium">Data</label><input type="date" name="data" value="${new Date(entrada.data).toISOString().split('T')[0]}" class="mt-1 block w-full rounded-md border-gray-300" required></div><div><label class="block text-sm font-medium">Status</label><select name="status" class="mt-1 block w-full rounded-md border-gray-300" required><option value="pendente" ${entrada.status === 'pendente' ? 'selected' : ''}>Pendente</option><option value="resgatado" ${entrada.status === 'resgatado' ? 'selected' : ''}>Resgatado</option></select></div><div class="flex justify-end gap-2 pt-4"><button type="button" class="close-modal-btn py-2 px-4 rounded-md border">Cancelar</button><button type="submit" class="py-2 px-4 rounded-md bg-secondary text-primary font-bold">Salvar</button></div></form></div>`);
-            document.getElementById('formEditEntrada').addEventListener('submit', (e) => { e.preventDefault(); const form = e.target; const valorString = form.valor.value.replace(',', '.'); const valor = parseFloat(valorString); if(isNaN(valor)) { alert('Valor inválido!'); return; } editarEntrada(form.id.value, { fonte: form.fonte.value, valor: valor, data: form.data.value, status: form.status.value }); hideModal(modals.editEntrada); });
+            showModal(modals.editEntrada, `<div class="bg-card-bg text-primary rounded-lg shadow-xl w-full max-w-md m-4 border border-border"><div class="p-4 border-b border-border flex justify-between items-center"><h3 class="text-xl font-semibold text-light-text">Editar Entrada</h3><button class="close-modal-btn text-3xl text-subtle-text hover:text-light-text">&times;</button></div><form id="formEditEntrada" class="p-6 space-y-4"><input type="hidden" name="id" value="${entrada._id}"><div><label class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select name="fonte" class="${selectClasses}" required><option ${entrada.fonte==='iFood'?'selected':''}>iFood</option><option ${entrada.fonte==='Uber'?'selected':''}>Uber</option><option ${entrada.fonte==='99'?'selected':''}>99</option><option ${entrada.fonte==='Outro'?'selected':''}>Outro</option></select></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Valor Bruto</label><input type="text" inputmode="decimal" name="valor" value="${String(entrada.valor).replace('.',',')}" class="${inputClasses}" required></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="date" name="data" value="${new Date(entrada.data).toISOString().split('T')[0]}" class="${inputClasses}" required></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Status</label><select name="status" class="${selectClasses}" required><option value="pendente" ${entrada.status==='pendente'?'selected':''}>Pendente</option><option value="resgatado" ${entrada.status==='resgatado'?'selected':''}>Resgatado</option></select></div><div class="flex justify-end gap-2 pt-4"><button type="button" class="close-modal-btn py-2 px-4 rounded-md border border-border hover:bg-border">Cancelar</button><button type="submit" class="${buttonClasses} !w-auto">Salvar</button></div></form></div>`);
+            document.getElementById('formEditEntrada').addEventListener('submit', (e) => { e.preventDefault(); const form = e.target; const valor = parseFloat(form.valor.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } editarItem('entradas', form.id.value, { fonte: form.fonte.value, valor: valor, data: form.data.value, status: form.status.value }); hideModal(modals.editEntrada); });
         }
 
         function mostrarModalEditarSaida(id) {
             const saida = saidas.find(s => s._id === id); if (!saida) return;
-            showModal(modals.editSaida, `<div class="bg-card-bg text-primary rounded-lg shadow-xl w-full max-w-md m-4"><div class="p-4 border-b flex justify-between items-center"><h3 class="text-xl font-semibold">Editar Saída</h3><button class="close-modal-btn text-2xl">&times;</button></div><form id="formEditSaida" class="p-4 space-y-4"><input type="hidden" name="id" value="${saida._id}"><div><label class="block text-sm font-medium">Descrição</label><input type="text" name="descricao" value="${saida.descricao}" class="mt-1 block w-full rounded-md border-gray-300" required></div><div><label class="block text-sm font-medium">Categoria</label><select name="categoria" class="mt-1 block w-full rounded-md border-gray-300"><option ${saida.categoria === 'Custo Fixo' ? 'selected' : ''}>Custo Fixo</option><option ${saida.categoria === 'Cartão de Crédito' ? 'selected' : ''}>Cartão de Crédito</option><option ${saida.categoria === 'Débito' ? 'selected' : ''}>Débito</option><option ${saida.categoria === 'Saque' ? 'selected' : ''}>Saque</option><option ${saida.categoria === 'Dízimo' ? 'selected' : ''}>Dízimo</option><option ${saida.categoria === 'Outro' ? 'selected' : ''}>Outro</option></select></div><div><label class="block text-sm font-medium">Valor</label><input type="text" inputmode="decimal" name="valor" value="${String(saida.valor).replace('.', ',')}" class="mt-1 block w-full rounded-md border-gray-300" required></div><div><label class="block text-sm font-medium">Data</label><input type="date" name="data" value="${new Date(saida.data).toISOString().split('T')[0]}" class="mt-1 block w-full rounded-md border-gray-300" required></div><div><label class="block text-sm font-medium">Status</label><select name="status" class="mt-1 block w-full rounded-md border-gray-300"><option value="em aberto" ${saida.status === 'em aberto' ? 'selected' : ''}>Em Aberto</option><option value="pago" ${saida.status === 'pago' ? 'selected' : ''}>Pago</option></select></div><div class="flex items-center" ${saida.categoria !== 'Cartão de Crédito' ? 'style="display:none;"' : ''}><input id="editIsCustoNegocio" type="checkbox" name="isCustoNegocio" ${saida.isCustoNegocio ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300"><label for="editIsCustoNegocio" class="ml-2 block text-sm">Custo do negócio</label></div><div class="flex justify-end gap-2 pt-4"><button type="button" class="close-modal-btn py-2 px-4 rounded-md border">Cancelar</button><button type="submit" class="py-2 px-4 rounded-md bg-secondary text-primary font-bold">Salvar</button></div></form></div>`);
-            document.getElementById('formEditSaida').addEventListener('submit', (e) => { e.preventDefault(); const form = e.target; const valorString = form.valor.value.replace(',', '.'); const valor = parseFloat(valorString); if(isNaN(valor)) { alert('Valor inválido!'); return; } editarSaida(form.id.value, { descricao: form.descricao.value, categoria: form.categoria.value, valor: valor, data: form.data.value, isCustoNegocio: form.isCustoNegocio ? form.isCustoNegocio.checked : false, status: form.status.value }); hideModal(modals.editSaida); });
+            showModal(modals.editSaida, `<div class="bg-card-bg text-primary rounded-lg shadow-xl w-full max-w-md m-4 border border-border"><div class="p-4 border-b border-border flex justify-between items-center"><h3 class="text-xl font-semibold text-light-text">Editar Saída</h3><button class="close-modal-btn text-3xl text-subtle-text hover:text-light-text">&times;</button></div><form id="formEditSaida" class="p-6 space-y-4"><input type="hidden" name="id" value="${saida._id}"><div><label class="block text-sm font-medium text-subtle-text mb-1">Descrição</label><input type="text" name="descricao" value="${saida.descricao}" class="${inputClasses}" required></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Categoria</label><select name="categoria" class="${selectClasses}"><option ${saida.categoria==='Custo Fixo'?'selected':''}>Custo Fixo</option><option ${saida.categoria==='Cartão de Crédito'?'selected':''}>Cartão de Crédito</option><option ${saida.categoria==='Débito'?'selected':''}>Débito</option><option ${saida.categoria==='Saque'?'selected':''}>Saque</option><option ${saida.categoria==='Dízimo'?'selected':''}>Dízimo</option><option ${saida.categoria==='Outro'?'selected':''}>Outro</option></select></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Valor</label><input type="text" inputmode="decimal" name="valor" value="${String(saida.valor).replace('.',',')}" class="${inputClasses}" required></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="date" name="data" value="${new Date(saida.data).toISOString().split('T')[0]}" class="${inputClasses}" required></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Status</label><select name="status" class="${selectClasses}"><option value="em aberto" ${saida.status==='em aberto'?'selected':''}>Em Aberto</option><option value="pago" ${saida.status==='pago'?'selected':''}>Pago</option></select></div><div class="flex items-center" ${saida.categoria!=='Cartão de Crédito'?'style="display:none;"':''}><input id="editIsCustoNegocio" type="checkbox" name="isCustoNegocio" ${saida.isCustoNegocio?'checked':''} class="item-checkbox"><label for="editIsCustoNegocio" class="ml-2 block text-sm text-subtle-text">Custo do negócio</label></div><div class="flex justify-end gap-2 pt-4"><button type="button" class="close-modal-btn py-2 px-4 rounded-md border border-border hover:bg-border">Cancelar</button><button type="submit" class="${buttonClasses} !w-auto">Salvar</button></div></form></div>`);
+            document.getElementById('formEditSaida').addEventListener('submit', (e) => { e.preventDefault(); const form = e.target; const valor = parseFloat(form.valor.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } editarItem('saidas', form.id.value, { descricao: form.descricao.value, categoria: form.categoria.value, valor: valor, data: form.data.value, isCustoNegocio: form.isCustoNegocio?form.isCustoNegocio.checked:false, status: form.status.value }); hideModal(modals.editSaida); });
         }
     </script>
 
 </body>
 </html>
-
