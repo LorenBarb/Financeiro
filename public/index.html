@@ -168,7 +168,8 @@
                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                         <h3 class="text-lg font-semibold mb-4 text-light-text">Fontes de Renda (<span class="periodo-label"></span>)</h3>
-                        <div class="h-80"><canvas id="entradasChart"></canvas></div>
+                        <div class="h-64"><canvas id="entradasChart"></canvas></div>
+                        <div id="entradasSummaryTable" class="mt-4 overflow-y-auto" style="max-height: 100px;"></div>
                     </div>
                     <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                         <h3 class="text-lg font-semibold mb-4 text-light-text">Categorias de Saídas (<span class="periodo-label"></span>)</h3>
@@ -397,6 +398,50 @@
                     <div class="flex justify-between"><span>A Pagar:</span> <strong class="text-warning">${formatarDinheiro(data.totalValoresEmAberto)}</strong></div>
                 </div>`;
         }
+        
+        // NOVA FUNÇÃO: Renderiza a tabela de resumo das fontes de renda
+        function renderizarTabelaResumoEntradas(entradasPeriodo) {
+            const container = document.getElementById('entradasSummaryTable');
+            if (!container) return;
+
+            const dadosEntradas = {};
+            let totalEntradas = 0;
+            entradasPeriodo.forEach(e => {
+                if (!dadosEntradas[e.fonte]) dadosEntradas[e.fonte] = 0;
+                dadosEntradas[e.fonte] += e.valor;
+                totalEntradas += e.valor;
+            });
+
+            if (totalEntradas === 0) {
+                container.innerHTML = '<p class="text-subtle-text text-center text-sm py-2">Nenhuma entrada no período.</p>';
+                return;
+            }
+
+            const CORES_FONTES = { 'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Outro': '#6B7280' };
+            const sortedEntradas = Object.entries(dadosEntradas).sort(([, a], [, b]) => b - a);
+
+            let listHtml = '<ul class="space-y-2 text-sm">';
+            sortedEntradas.forEach(([fonte, valor]) => {
+                const percentual = (valor / totalEntradas * 100).toFixed(1);
+                const cor = CORES_FONTES[fonte] || '#6B7280';
+                listHtml += `
+                    <li class="flex justify-between items-center">
+                        <span class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${cor};"></span>
+                            <span>${fonte}</span>
+                        </span>
+                        <span class="font-semibold text-light-text">
+                            ${formatarDinheiro(valor)}
+                            <span class="text-xs text-subtle-text ml-1">(${percentual}%)</span>
+                        </span>
+                    </li>
+                `;
+            });
+            listHtml += '</ul>';
+
+            container.innerHTML = listHtml;
+        }
+
 
         function renderizarGraficos({ entradasPeriodo, saidasPeriodo }){
             Chart.defaults.color = tailwind.config.theme.extend.colors.subtle_text;
@@ -416,6 +461,9 @@
                 type: 'doughnut', data: { labels: labelsEntradas, datasets: [{ data: Object.values(dadosEntradas), backgroundColor: labelsEntradas.map(l => CORES_FONTES[l] || '#CCCCCC'), borderWidth: 0 }] },
                 options: { responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: { legend: { position: 'bottom', labels: {color: '#e2e8f0'} }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
             });
+
+            // Chama a nova função para renderizar a tabela de resumo
+            renderizarTabelaResumoEntradas(entradasPeriodo);
 
             if (saidasChart) saidasChart.destroy();
             const ctxSaidas = document.getElementById('saidasChart').getContext('2d');
@@ -796,4 +844,3 @@
 
 </body>
 </html>
-
