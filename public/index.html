@@ -109,7 +109,7 @@
             <!-- ABA DASHBOARD -->
             <div id="dashboard" class="tab-content space-y-6">
                 <!-- Filtros do Dashboard -->
-                <div class="bg-card-bg border border-border p-4 rounded-xl shadow-lg flex flex-wrap justify-center items-center gap-4" id="dashboardFiltersContainer">
+                <div class="bg-card-bg border border-border p-4 rounded-xl shadow-lg flex justify-center items-center" id="dashboardFiltersContainer">
                     <!-- Conteúdo dos filtros será gerado via JS -->
                 </div>
 
@@ -215,7 +215,8 @@
 
         // --- CONSTANTES DE CLASSES CSS ---
         const inputClasses = "w-full bg-input-bg border border-border text-light-text text-sm rounded-lg focus:ring-secondary focus:border-secondary block p-2.5";
-        const selectClasses = inputClasses;
+        const selectClasses = "bg-input-bg border border-border text-light-text text-sm rounded-lg focus:ring-secondary focus:border-secondary block p-2.5";
+        const filterSelectClasses = "bg-input-bg border-border text-subtle-text text-xs rounded-md focus:ring-secondary focus:border-secondary block p-2 w-auto border";
         const buttonClasses = "w-full bg-secondary hover:bg-amber-600 text-dark-bg font-bold py-2.5 px-5 rounded-lg transition-colors";
         const iconButtonClasses = "p-1.5 rounded-md transition-colors duration-200";
 
@@ -517,9 +518,15 @@
             const container = document.getElementById('dashboardFiltersContainer');
             const anos = getAnosDisponiveis();
             container.innerHTML = `
-                <div class="flex flex-wrap gap-x-4 gap-y-2 items-center">
-                    <select id="filtroMesDashboard" class="${selectClasses} w-auto">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroDashboardState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
-                    <select id="filtroAnoDashboard" class="${selectClasses} w-auto">${anos.map(ano => `<option value="${ano}" ${ano === filtroDashboardState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                <div class="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-x-6 gap-y-2">
+                     <div class="flex items-center gap-2">
+                        <label for="filtroMesDashboard" class="text-sm font-medium text-subtle-text">Mês:</label>
+                        <select id="filtroMesDashboard" class="${filterSelectClasses}">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroDashboardState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="filtroAnoDashboard" class="text-sm font-medium text-subtle-text">Ano:</label>
+                        <select id="filtroAnoDashboard" class="${filterSelectClasses}">${anos.map(ano => `<option value="${ano}" ${ano === filtroDashboardState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                    </div>
                 </div>`;
             document.getElementById('filtroMesDashboard').addEventListener('change', e => { filtroDashboardState.month = parseInt(e.target.value); atualizarTudo(); });
             document.getElementById('filtroAnoDashboard').addEventListener('change', e => { filtroDashboardState.year = parseInt(e.target.value); atualizarTudo(); });
@@ -541,13 +548,13 @@
                         </form>
                     </div>
                     <div class="md:col-span-2 bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                            <h3 class="text-lg font-semibold text-light-text">Histórico de Entradas</h3>
+                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                            <h3 class="text-lg font-semibold text-light-text flex-shrink-0">Histórico de Entradas</h3>
                             <div class="flex flex-wrap items-center justify-start sm:justify-end gap-2" id="filtrosEntradas">
-                                <select id="filtroStatusEntradas" class="!p-2 !text-xs w-auto"><option value="todos">Todos</option><option value="pendente">Pendente</option><option value="resgatado">Resgatado</option></select>
-                                <select id="filtroFonteEntradas" class="!p-2 !text-xs w-auto"><option value="todos">Todas</option><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select>
-                                <select id="filtroMesEntradas" class="!p-2 !text-xs w-auto">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroEntradasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
-                                <select id="filtroAnoEntradas" class="!p-2 !text-xs w-auto">${anos.map(ano => `<option value="${ano}" ${ano === filtroEntradasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                                <select id="filtroStatusEntradas" class="${filterSelectClasses}"><option value="todos">Todos</option><option value="pendente">Pendente</option><option value="resgatado">Resgatado</option></select>
+                                <select id="filtroFonteEntradas" class="${filterSelectClasses}"><option value="todos">Todas</option><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select>
+                                <select id="filtroMesEntradas" class="${filterSelectClasses}">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroEntradasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
+                                <select id="filtroAnoEntradas" class="${filterSelectClasses}">${anos.map(ano => `<option value="${ano}" ${ano === filtroEntradasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
                             </div>
                         </div>
                         <div id="bulkActionsEntradas" class="hidden bg-slate-700/50 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
@@ -637,12 +644,12 @@
                     </div>
                     <div class="md:col-span-2 bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                            <h3 class="text-lg font-semibold text-light-text">Histórico de Saídas</h3>
+                            <h3 class="text-lg font-semibold text-light-text flex-shrink-0">Histórico de Saídas</h3>
                             <div class="flex flex-wrap items-center justify-start sm:justify-end gap-2" id="filtrosSaidas">
-                                <select id="filtroStatusSaidas" class="!p-2 !text-xs w-auto"><option value="todos">Todos</option><option value="em aberto">Em Aberto</option><option value="pago">Pago</option></select>
-                                <select id="filtroCategoriaSaidas" class="!p-2 !text-xs w-auto"><option value="todas">Categorias</option><option>Custo Fixo</option><option>Cartão de Crédito</option><option>Débito</option><option>Saque</option><option>Dízimo</option><option>Outro</option></select>
-                                <select id="filtroMesSaidas" class="!p-2 !text-xs w-auto">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroSaidasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
-                                <select id="filtroAnoSaidas" class="!p-2 !text-xs w-auto">${anos.map(ano => `<option value="${ano}" ${ano === filtroSaidasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                                <select id="filtroStatusSaidas" class="${filterSelectClasses}"><option value="todos">Todos</option><option value="em aberto">Em Aberto</option><option value="pago">Pago</option></select>
+                                <select id="filtroCategoriaSaidas" class="${filterSelectClasses}"><option value="todas">Categorias</option><option>Custo Fixo</option><option>Cartão de Crédito</option><option>Débito</option><option>Saque</option><option>Dízimo</option><option>Outro</option></select>
+                                <select id="filtroMesSaidas" class="${filterSelectClasses}">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroSaidasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
+                                <select id="filtroAnoSaidas" class="${filterSelectClasses}">${anos.map(ano => `<option value="${ano}" ${ano === filtroSaidasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
                             </div>
                         </div>
                          <div id="bulkActionsSaidas" class="hidden bg-slate-700/50 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
@@ -722,11 +729,11 @@
                         <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
                             <div class="flex items-center gap-2">
                                 <label for="filtroAnoInicial" class="text-sm font-medium text-subtle-text">De:</label>
-                                <select id="filtroAnoInicial" class="${selectClasses} !p-2 !text-xs w-auto"></select>
+                                <select id="filtroAnoInicial" class="${filterSelectClasses}"></select>
                             </div>
                             <div class="flex items-center gap-2">
                                 <label for="filtroAnoFinal" class="text-sm font-medium text-subtle-text">Até:</label>
-                                <select id="filtroAnoFinal" class="${selectClasses} !p-2 !text-xs w-auto"></select>
+                                <select id="filtroAnoFinal" class="${filterSelectClasses}"></select>
                             </div>
                         </div>
                     </div>
@@ -789,5 +796,4 @@
 
 </body>
 </html>
-
 
