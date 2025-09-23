@@ -442,7 +442,6 @@
             container.innerHTML = listHtml;
         }
 
-        // NOVA FUNÇÃO: Renderiza a tabela de resumo das categorias de saídas
         function renderizarTabelaResumoSaidas(saidasPeriodo) {
             const container = document.getElementById('saidasSummaryTable');
             if (!container) return;
@@ -869,21 +868,75 @@
             const anoInicial = parseInt(anoInicialEl.value), anoFinal = parseInt(anoFinalEl.value);
             if (anoInicial > anoFinal) { drawMessage("O ano inicial não pode ser maior que o ano final."); return; }
 
-            const labels = [], dataEntradas = [], dataSaidas = [], dataSaldo = [];
+            const labels = [];
+            const dataEntradas = [], dataSaidasPagas = [], dataSaidasPrevistas = [], dataSaldo = [];
+            
             for (let ano = anoInicial; ano <= anoFinal; ano++) {
                 for (let mes = 0; mes < 12; mes++) {
                     labels.push(`${MESES_NOME[mes].substring(0,3)}/${String(ano).substring(2)}`);
                     const inicioMes = new Date(Date.UTC(ano, mes, 1)), fimMes = new Date(Date.UTC(ano, mes + 1, 0, 23, 59, 59, 999));
-                    const totalEntradas = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; }).reduce((acc, e) => acc + e.valor, 0);
-                    const totalSaidas = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes && s.status === 'pago'; }).reduce((acc, s) => acc + s.valor, 0);
-                    dataEntradas.push(totalEntradas); dataSaidas.push(totalSaidas); dataSaldo.push(totalEntradas - totalSaidas);
+                    
+                    const entradasDoMes = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; });
+                    const saidasDoMes = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes; });
+
+                    const totalEntradas = entradasDoMes.reduce((acc, e) => acc + e.valor, 0);
+                    const totalSaidasPagas = saidasDoMes.filter(s => s.status === 'pago').reduce((acc, s) => acc + s.valor, 0);
+                    const totalSaidasPrevistas = saidasDoMes.filter(s => s.status === 'em aberto').reduce((acc, s) => acc + s.valor, 0);
+                    
+                    dataEntradas.push(totalEntradas);
+                    dataSaidasPagas.push(totalSaidasPagas);
+                    dataSaidasPrevistas.push(totalSaidasPrevistas);
+                    dataSaldo.push(totalEntradas - (totalSaidasPagas + totalSaidasPrevistas));
                 }
             }
             
             evolucaoChart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels, datasets: [ { label: 'Saldo Líquido', type: 'line', data: dataSaldo, borderColor: '#3b82f6', tension: 0.1, fill: false, borderWidth: 3 }, { label: 'Entradas', data: dataEntradas, backgroundColor: '#22c55e' }, { label: 'Saídas (Pagas)', data: dataSaidas, backgroundColor: '#ef4444' } ] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: {labels: {color: '#e2e8f0'}} }, scales: { y: { beginAtZero: true, grid:{color: '#334155'} }, x: { grid:{color:'transparent'} } } }
+                data: { 
+                    labels, 
+                    datasets: [ 
+                        { label: 'Saldo Previsto', type: 'line', data: dataSaldo, borderColor: '#3b82f6', tension: 0.1, fill: false, borderWidth: 3 }, 
+                        { label: 'Entradas', data: dataEntradas, backgroundColor: '#22c55e', stack: 'in' }, 
+                        { label: 'Saídas (Pagas)', data: dataSaidasPagas, backgroundColor: '#ef4444', stack: 'out' },
+                        { label: 'Saídas (Previstas)', data: dataSaidasPrevistas, backgroundColor: '#f59e0b', stack: 'out' } 
+                    ] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        datalabels: { display: false }, 
+                        legend: { labels: { color: '#e2e8f0' } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += formatarDinheiro(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }, 
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: '#334155' },
+                            ticks: {
+                                callback: function(value) {
+                                    return formatarDinheiro(value);
+                                }
+                            }
+                        }, 
+                        x: { 
+                            grid: { color:'transparent' } 
+                        } 
+                    } 
+                }
             });
         }
         
