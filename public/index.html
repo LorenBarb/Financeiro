@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
-        // Configuração de cores customizadas para o Tailwind CSS (Tema Dark Moderno).
+        // Configuração de cores customizadas para o Tailwind CSS (Tema Dark Moderno)
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -173,7 +173,8 @@
                     </div>
                     <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                         <h3 class="text-lg font-semibold mb-4 text-light-text">Categorias de Saídas (<span class="periodo-label"></span>)</h3>
-                        <div class="h-80"><canvas id="saidasChart"></canvas></div>
+                        <div class="h-64"><canvas id="saidasChart"></canvas></div>
+                        <div id="saidasSummaryTable" class="mt-4 overflow-y-auto" style="max-height: 100px;"></div>
                     </div>
                 </div>
             </div>
@@ -399,7 +400,6 @@
                 </div>`;
         }
         
-        // NOVA FUNÇÃO: Renderiza a tabela de resumo das fontes de renda
         function renderizarTabelaResumoEntradas(entradasPeriodo) {
             const container = document.getElementById('entradasSummaryTable');
             if (!container) return;
@@ -442,6 +442,55 @@
             container.innerHTML = listHtml;
         }
 
+        // NOVA FUNÇÃO: Renderiza a tabela de resumo das categorias de saídas
+        function renderizarTabelaResumoSaidas(saidasPeriodo) {
+            const container = document.getElementById('saidasSummaryTable');
+            if (!container) return;
+
+            const dadosSaidas = {};
+            let totalSaidas = 0;
+            saidasPeriodo.forEach(s => {
+                if (!dadosSaidas[s.categoria]) dadosSaidas[s.categoria] = 0;
+                dadosSaidas[s.categoria] += s.valor;
+                totalSaidas += s.valor;
+            });
+
+            if (totalSaidas === 0) {
+                container.innerHTML = '<p class="text-subtle-text text-center text-sm py-2">Nenhuma saída no período.</p>';
+                return;
+            }
+
+            const CORES_SAIDAS = {
+                'Cartão de Crédito': '#ef4444', 
+                'Dízimo': '#FFD700',
+                'Custo Fixo': '#22c55e',
+                'Débito': '#6366F1',
+                'Saque': '#EC4899',
+                'Outro': '#84CC16'
+            };
+            const sortedSaidas = Object.entries(dadosSaidas).sort(([, a], [, b]) => b - a);
+
+            let listHtml = '<ul class="space-y-2 text-sm">';
+            sortedSaidas.forEach(([categoria, valor]) => {
+                const percentual = (valor / totalSaidas * 100).toFixed(1);
+                const cor = CORES_SAIDAS[categoria] || '#A855F7';
+                listHtml += `
+                    <li class="flex justify-between items-center">
+                        <span class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${cor};"></span>
+                            <span>${categoria}</span>
+                        </span>
+                        <span class="font-semibold text-light-text">
+                            ${formatarDinheiro(valor)}
+                            <span class="text-xs text-subtle-text ml-1">(${percentual}%)</span>
+                        </span>
+                    </li>
+                `;
+            });
+            listHtml += '</ul>';
+
+            container.innerHTML = listHtml;
+        }
 
         function renderizarGraficos({ entradasPeriodo, saidasPeriodo }){
             Chart.defaults.color = tailwind.config.theme.extend.colors.subtle_text;
@@ -459,20 +508,30 @@
             const labelsEntradas = Object.keys(dadosEntradas);
             entradasChart = new Chart(ctxEntradas, {
                 type: 'doughnut', data: { labels: labelsEntradas, datasets: [{ data: Object.values(dadosEntradas), backgroundColor: labelsEntradas.map(l => CORES_FONTES[l] || '#CCCCCC'), borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: { legend: { position: 'bottom', labels: {color: '#e2e8f0'} }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
+                options: { responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: { legend: { display: false }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
             });
 
-            // Chama a nova função para renderizar a tabela de resumo
             renderizarTabelaResumoEntradas(entradasPeriodo);
 
             if (saidasChart) saidasChart.destroy();
             const ctxSaidas = document.getElementById('saidasChart').getContext('2d');
             const dadosSaidas = {};
             saidasPeriodo.forEach(s => { if (!dadosSaidas[s.categoria]) dadosSaidas[s.categoria] = 0; dadosSaidas[s.categoria] += s.valor; });
+            const CORES_SAIDAS = {
+                'Cartão de Crédito': '#ef4444', // Vermelho (negative color)
+                'Dízimo': '#FFD700',            // Dourado
+                'Custo Fixo': '#22c55e',       // Verde (positive color)
+                'Débito': '#6366F1',
+                'Saque': '#EC4899',
+                'Outro': '#84CC16'
+            };
+            const labelsSaidas = Object.keys(dadosSaidas);
             saidasChart = new Chart(ctxSaidas, {
-                type: 'doughnut', data: { labels: Object.keys(dadosSaidas), datasets: [{ data: Object.values(dadosSaidas), backgroundColor: ['#F59E0B', '#6366F1', '#EC4899', '#84CC16', '#14B8A6', '#EF4444', '#f59e0b', '#10b981'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: { legend: { position: 'bottom', labels: {color: '#e2e8f0'} }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
+                type: 'doughnut', data: { labels: labelsSaidas, datasets: [{ data: Object.values(dadosSaidas), backgroundColor: labelsSaidas.map(l => CORES_SAIDAS[l] || '#A855F7'), borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: { legend: { display: false }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
             });
+            
+            renderizarTabelaResumoSaidas(saidasPeriodo);
             
             if (comparativoChart) comparativoChart.destroy();
             const ctxComp = document.getElementById('comparativoChart').getContext('2d');
