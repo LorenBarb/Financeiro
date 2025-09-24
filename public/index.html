@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Controle Financeiro</title>
     <!-- FAVICON -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2215%22 fill=%22%230f172a%22/><text x=%2250%22 y=%2255%22 font-size=%2250%22 fill=%22%23f59e0b%22 font-family=%22Inter, sans-serif%22 font-weight=%22bold%22 text-anchor=%22middle%22>CF</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2215%22 fill=%22%230f172a%22/><text x=%2250%22 y=%2255%22 font-size=%2250%22 fill=%22%23f59e0b%22 font-family=%22Inter, sans-serif%22 font-weight=%22bold%22 text-anchor=%22middle%22>CF</text></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -832,10 +832,10 @@
             const anoAtual = new Date().getFullYear();
             const mesAtual = new Date().getMonth();
 
-            tabs.relatorios.innerHTML = `<div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg space-y-8 border border-border">
+            tabs.relatorios.innerHTML = `<div class="space-y-6">
                 
                 <!-- Relatório de Evolução Mensal -->
-                <div id="evolucaoMensalContainer" class="p-6 border border-border rounded-lg">
+                <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                         <h4 class="font-bold text-xl text-light-text">Evolução Mensal</h4>
                         <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
@@ -853,7 +853,7 @@
                 </div>
                 
                 <!-- Novo Relatório de Recebimentos Diários -->
-                <div id="recebimentosDiariosContainer" class="p-6 border border-border rounded-lg">
+                <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                         <h4 class="font-bold text-xl text-light-text">Recebimentos Diários por Fonte</h4>
                         <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
@@ -863,7 +863,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <label for="filtroAnoRecebimentos" class="text-sm font-medium text-subtle-text">Ano:</label>
-                                <select id="filtroAnoRecebimentos" class="${filterSelectClasses}">${anos.map(ano => `<option value="${ano}" ${ano === anoAtual ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                                <select id="filtroAnoRecebimentos" class="${filterSelectClasses}">${getAnosDisponiveis().map(ano => `<option value="${ano}" ${ano === anoAtual ? 'selected' : ''}>${ano}</option>`).join('')}</select>
                             </div>
                         </div>
                     </div>
@@ -916,7 +916,7 @@
             const entradasDoMes = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; });
 
             entradasDoMes.forEach(entrada => {
-                const dia = new Date(entrada.data).getUTCDate() - 1; // getUTCDate para ser consistente
+                const dia = new Date(entrada.data).getUTCDate() - 1; 
                 if (dataPorFonte[entrada.fonte] && dia >= 0 && dia < diasNoMes) {
                     dataPorFonte[entrada.fonte][dia] += entrada.valor;
                 }
