@@ -375,7 +375,7 @@
         }
 
         // --- LÓGICA DE RENDERIZAÇÃO ---
-        let entradasChart, saidasChart, comparativoChart, evolucaoChart;
+        let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart;
         function renderizarDashboard(data) {
             document.getElementById('cardEntradas').textContent = formatarDinheiro(data.totalEntradas);
             document.getElementById('cardPagamentosRealizados').textContent = formatarDinheiro(data.totalPagamentosRealizados);
@@ -828,7 +828,13 @@
 
         // --- ABA DE RELATÓRIOS ---
         function renderizarAbaRelatorios() {
+            const anos = getAnosDisponiveis().sort((a,b) => a - b);
+            const anoAtual = new Date().getFullYear();
+            const mesAtual = new Date().getMonth();
+
             tabs.relatorios.innerHTML = `<div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg space-y-8 border border-border">
+                
+                <!-- Relatório de Evolução Mensal -->
                 <div id="evolucaoMensalContainer" class="p-6 border border-border rounded-lg">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                         <h4 class="font-bold text-xl text-light-text">Evolução Mensal</h4>
@@ -844,17 +850,117 @@
                         </div>
                     </div>
                     <div class="h-96"><canvas id="evolucaoChart"></canvas></div>
-                </div></div>`;
-            const anos = getAnosDisponiveis().sort((a,b) => a - b);
-            const anoInicialEl = document.getElementById('filtroAnoInicial'), anoFinalEl = document.getElementById('filtroAnoFinal');
+                </div>
+                
+                <!-- Novo Relatório de Recebimentos Diários -->
+                <div id="recebimentosDiariosContainer" class="p-6 border border-border rounded-lg">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                        <h4 class="font-bold text-xl text-light-text">Recebimentos Diários por Fonte</h4>
+                        <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
+                            <div class="flex items-center gap-2">
+                                <label for="filtroMesRecebimentos" class="text-sm font-medium text-subtle-text">Mês:</label>
+                                <select id="filtroMesRecebimentos" class="${filterSelectClasses}">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === mesAtual ? 'selected' : ''}>${mes}</option>`).join('')}</select>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label for="filtroAnoRecebimentos" class="text-sm font-medium text-subtle-text">Ano:</label>
+                                <select id="filtroAnoRecebimentos" class="${filterSelectClasses}">${anos.map(ano => `<option value="${ano}" ${ano === anoAtual ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-96"><canvas id="recebimentosDiariosChart"></canvas></div>
+                </div>
+            </div>`;
+
+            const anoInicialEl = document.getElementById('filtroAnoInicial');
+            const anoFinalEl = document.getElementById('filtroAnoFinal');
             if(anos.length > 0) {
                 anoInicialEl.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join('');
                 anoFinalEl.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join('');
-                anoInicialEl.value = anos[0]; anoFinalEl.value = anos[anos.length - 1];
+                anoInicialEl.value = anos[0]; 
+                anoFinalEl.value = anos[anos.length - 1];
             }
             anoInicialEl.addEventListener('change', renderizarGraficoEvolucao);
             anoFinalEl.addEventListener('change', renderizarGraficoEvolucao);
+
+            document.getElementById('filtroMesRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
+            document.getElementById('filtroAnoRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
+            
             renderizarGraficoEvolucao();
+            renderizarGraficoRecebimentosDiarios();
+        }
+        
+        function renderizarGraficoRecebimentosDiarios() {
+            if (recebimentosDiariosChart) recebimentosDiariosChart.destroy();
+            const mesEl = document.getElementById('filtroMesRecebimentos');
+            const anoEl = document.getElementById('filtroAnoRecebimentos');
+            const ctx = document.getElementById('recebimentosDiariosChart').getContext('2d');
+
+            const drawMessage = (message) => { ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); ctx.font="16px Inter"; ctx.fillStyle="#94a3b8"; ctx.textAlign="center"; ctx.fillText(message,ctx.canvas.width/2,ctx.canvas.height/2); };
+
+            if (!mesEl || !anoEl) { drawMessage("Carregando..."); return; }
+            const mes = parseInt(mesEl.value);
+            const ano = parseInt(anoEl.value);
+
+            const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+            const labels = Array.from({length: diasNoMes}, (_, i) => String(i + 1).padStart(2, '0'));
+            
+            const dataPorFonte = {
+                'iFood': new Array(diasNoMes).fill(0),
+                'Uber': new Array(diasNoMes).fill(0),
+                '99': new Array(diasNoMes).fill(0),
+                'Outro': new Array(diasNoMes).fill(0)
+            };
+
+            const inicioMes = new Date(Date.UTC(ano, mes, 1));
+            const fimMes = new Date(Date.UTC(ano, mes + 1, 0, 23, 59, 59, 999));
+            const entradasDoMes = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; });
+
+            entradasDoMes.forEach(entrada => {
+                const dia = new Date(entrada.data).getUTCDate() - 1; // getUTCDate para ser consistente
+                if (dataPorFonte[entrada.fonte] && dia >= 0 && dia < diasNoMes) {
+                    dataPorFonte[entrada.fonte][dia] += entrada.valor;
+                }
+            });
+
+            const CORES_FONTES = { 'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Outro': '#6B7280' };
+            const datasets = Object.keys(dataPorFonte).map(fonte => ({
+                label: fonte,
+                data: dataPorFonte[fonte],
+                backgroundColor: CORES_FONTES[fonte],
+            }));
+
+            recebimentosDiariosChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0' } },
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${formatarDinheiro(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            stacked: true,
+                            grid: { color:'transparent' }
+                        },
+                        y: { 
+                            stacked: true,
+                            grid: { color: '#334155' },
+                            ticks: {
+                                callback: function(value) { return formatarDinheiro(value); }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         function renderizarGraficoEvolucao() {
