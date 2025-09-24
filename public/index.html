@@ -832,10 +832,10 @@
             const anoAtual = new Date().getFullYear();
             const mesAtual = new Date().getMonth();
 
-            tabs.relatorios.innerHTML = `<div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg space-y-8 border border-border">
+            tabs.relatorios.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
                 <!-- Relatório de Evolução Mensal -->
-                <div id="evolucaoMensalContainer" class="p-6 border border-border rounded-lg">
+                <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                         <h4 class="font-bold text-xl text-light-text">Evolução Mensal</h4>
                         <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
@@ -853,7 +853,7 @@
                 </div>
                 
                 <!-- Novo Relatório de Recebimentos Diários -->
-                <div id="recebimentosDiariosContainer" class="p-6 border border-border rounded-lg">
+                <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                         <h4 class="font-bold text-xl text-light-text">Recebimentos Diários por Fonte</h4>
                         <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
