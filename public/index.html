@@ -874,10 +874,13 @@
             const anoInicialEl = document.getElementById('filtroAnoInicial');
             const anoFinalEl = document.getElementById('filtroAnoFinal');
             if(anos.length > 0) {
-                anoInicialEl.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join('');
-                anoFinalEl.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join('');
-                anoInicialEl.value = anos[0]; 
-                anoFinalEl.value = anos[anos.length - 1];
+                const todosAnosHtml = anos.map(a => `<option value="${a}">${a}</option>`).join('');
+                anoInicialEl.innerHTML = todosAnosHtml;
+                anoFinalEl.innerHTML = todosAnosHtml;
+                
+                // Define o ano atual como padrão para ambos os filtros
+                anoInicialEl.value = anoAtual;
+                anoFinalEl.value = anoAtual;
             }
             anoInicialEl.addEventListener('change', renderizarGraficoEvolucao);
             anoFinalEl.addEventListener('change', renderizarGraficoEvolucao);
