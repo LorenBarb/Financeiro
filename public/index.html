@@ -70,6 +70,31 @@
             transform: scale(1.2);
             accent-color: #f59e0b;
         }
+        /* Custom date input styling */
+        .date-input-container {
+            position: relative;
+        }
+        .date-input-display {
+            pointer-events: none;
+            padding-right: 2.5rem; /* Space for icon */
+        }
+        .date-input-native {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .date-input-icon {
+            position: absolute;
+            top: 50%;
+            right: 0.75rem;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #94a3b8; /* subtle-text */
+        }
     </style>
 </head>
 <body class="bg-dark-bg text-light-text">
@@ -224,24 +249,13 @@
 
         // --- FUNÇÕES UTILITÁRIAS ---
         const formatarDinheiro = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        
-        // Converte uma string 'YYYY-MM-DD' para 'DD/MM/YYYY'
-        const formatarData = (isoDateString) => {
-            if (!isoDateString || !isoDateString.includes('-')) return '';
-            const [year, month, day] = isoDateString.split('T')[0].split('-');
-            return `${day}/${month}/${year}`;
-        };
-
-        // Converte uma string 'DD/MM/YYYY' para 'YYYY-MM-DD'
-        const parseDataBR = (brDateString) => {
-             if (!brDateString || !brDateString.includes('/') || brDateString.length !== 10) return null;
-             const parts = brDateString.split('/');
-             if (parts.length !== 3) return null;
-             const [day, month, year] = parts;
-             if (day.length !== 2 || month.length !== 2 || year.length !== 4) return null;
-             return `${year}-${month}-${day}`;
-        };
-
+        const formatarData = (dataStr) => {
+            if (!dataStr || !dataStr.includes('-')) return ''; // Avoid formatting invalid date
+            const date = new Date(dataStr);
+            // Add 1 day to correct timezone issue from UTC
+            date.setUTCDate(date.getUTCDate() + 1);
+            return date.toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+        }
         const hojeISO = () => new Date().toISOString().split('T')[0];
         
         Chart.register(ChartDataLabels);
@@ -286,13 +300,11 @@
                 const valorTotal = parseFloat(String(formData.valor).replace(',', '.'));
                 const numParcelas = parseInt(formData.numParcelas) || 1;
                 const valorParcela = valorTotal / numParcelas;
-                
-                const [day, month, year] = formData.data.split('/');
-                const dataInicial = new Date(year, month - 1, day);
+                const dataInicial = new Date(formData.data + 'T00:00:00');
 
                 for (let i = 0; i < numParcelas; i++) {
                     const dataParcela = new Date(dataInicial);
-                    dataParcela.setMonth(dataInicial.getMonth() + i);
+                    dataParcela.setUTCMonth(dataInicial.getUTCMonth() + i);
                     
                     const novaSaida = {
                         descricao: `${formData.descricao} ${numParcelas > 1 ? `(${i+1}/${numParcelas})` : ''}`,
@@ -381,8 +393,8 @@
         // --- LÓGICA DE CÁLCULO E FILTRAGEM ---
         function calcularTotais() {
             const { month, year } = filtroDashboardState;
-            const inicioMes = new Date(year, month, 1);
-            const fimMes = new Date(year, month + 1, 0, 23, 59, 59, 999);
+            const inicioMes = new Date(Date.UTC(year, month, 1));
+            const fimMes = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
             const entradasPeriodo = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; });
             const saidasPeriodo = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes; });
             const totalEntradasMes = entradasPeriodo.reduce((acc, e) => acc + e.valor, 0);
@@ -667,7 +679,14 @@
                         <form id="formEntrada" class="space-y-4">
                              <div><label for="fonteEntrada" class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select id="fonteEntrada" class="${selectClasses}"><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select></div>
                             <div><label for="valorEntrada" class="block text-sm font-medium text-subtle-text mb-1">Valor Bruto</label><input type="text" inputmode="decimal" id="valorEntrada" class="${inputClasses}" placeholder="150,00" required></div>
-                            <div><label for="dataEntrada" class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="text" id="dataEntrada" placeholder="DD/MM/AAAA" class="${inputClasses}" required></div>
+                            <div>
+                                <label for="dataEntrada" class="block text-sm font-medium text-subtle-text mb-1">Data</label>
+                                <div class="date-input-container">
+                                    <input type="text" id="displayDataEntrada" value="${formatarData(hojeISO())}" class="${inputClasses} date-input-display" readonly>
+                                    <input type="date" id="dataEntrada" value="${hojeISO()}" class="date-input-native" required>
+                                    <div class="date-input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM16 14V5H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg></div>
+                                </div>
+                            </div>
                             <div><label for="statusRepasse" class="block text-sm font-medium text-subtle-text mb-1">Status</label><select id="statusRepasse" class="${selectClasses}"><option value="pendente">Pendente</option><option value="resgatado">Resgatado</option></select></div>
                             <button type="submit" class="${buttonClasses} mt-2">Adicionar Entrada</button>
                         </form>
@@ -691,21 +710,8 @@
                     </div>
                 </div>`;
             
-            const dataEntradaEl = document.getElementById('dataEntrada');
-            dataEntradaEl.value = formatarData(hojeISO());
-            dataEntradaEl.addEventListener('input', (e) => applyDateMask(e.target));
-            
-            document.getElementById('formEntrada').addEventListener('submit', e => { 
-                e.preventDefault(); 
-                const form = e.target;
-                const valor = parseFloat(form.valorEntrada.value.replace(',', '.'));
-                if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; }
-                const isoDate = parseDataBR(form.dataEntrada.value);
-                if (!isoDate) { showInfoModal('Data inválida! Use o formato DD/MM/AAAA.'); return; }
-                adicionarEntrada({ fonte: form.fonteEntrada.value, valor: valor, data: isoDate, status: form.statusRepasse.value }); 
-                form.reset(); 
-                form.dataEntrada.value = formatarData(hojeISO());
-            });
+            document.getElementById('dataEntrada').addEventListener('change', e => { document.getElementById('displayDataEntrada').value = formatarData(e.target.value); });
+            document.getElementById('formEntrada').addEventListener('submit', e => { e.preventDefault(); const form = e.target; const valor = parseFloat(form.valorEntrada.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } adicionarEntrada({ fonte: form.fonteEntrada.value, valor: valor, data: form.dataEntrada.value, status: form.statusRepasse.value }); form.reset(); form.dataEntrada.value = hojeISO(); form.querySelector('#displayDataEntrada').value = formatarData(hojeISO()); });
             document.getElementById('filtroMesEntradas').addEventListener('change', e => { filtroEntradasState.month = parseInt(e.target.value); renderizarListaEntradas(); });
             document.getElementById('filtroAnoEntradas').addEventListener('change', e => { filtroEntradasState.year = parseInt(e.target.value); renderizarListaEntradas(); });
             document.getElementById('filtroFonteEntradas').addEventListener('change', e => { filtroEntradasState.source = e.target.value; renderizarListaEntradas(); });
@@ -738,8 +744,7 @@
         function renderizarListaEntradas() {
             const listaEl = document.getElementById('listaEntradas'); if (!listaEl) return;
             const { month, year, source, status } = filtroEntradasState;
-            const inicio = new Date(year, month, 1);
-            const fim = new Date(year, month + 1, 0, 23, 59, 59, 999);
+            const inicio = new Date(Date.UTC(year, month, 1)), fim = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
             const filtradas = entradas.filter(e => { const d = new Date(e.data); return d >= inicio && d <= fim && (source === 'todos' || e.fonte === source) && (status === 'todos' || e.status === status); });
             document.getElementById('totalValorEntradas').textContent = `Total: ${formatarDinheiro(filtradas.reduce((acc, e) => acc + e.valor, 0))}`;
             if (filtradas.length === 0) { listaEl.innerHTML = '<p class="text-subtle-text text-center py-4">Nenhuma entrada encontrada.</p>'; return; }
@@ -775,7 +780,14 @@
                             <div><label for="descricaoSaida" class="block text-sm font-medium text-subtle-text mb-1">Descrição</label><input type="text" id="descricaoSaida" class="${inputClasses}" required></div>
                             <div><label for="categoriaSaida" class="block text-sm font-medium text-subtle-text mb-1">Categoria</label><select id="categoriaSaida" class="${selectClasses}"><option>Custo Fixo</option><option>Cartão de Crédito</option><option>Débito</option><option>Saque</option><option>Dízimo</option><option>Outro</option></select></div>
                             <div><label for="valorSaida" class="block text-sm font-medium text-subtle-text mb-1">Valor Total</label><input type="text" inputmode="decimal" id="valorSaida" class="${inputClasses}" placeholder="150,00" required></div>
-                            <div><label for="dataSaida" class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="text" id="dataSaida" placeholder="DD/MM/AAAA" class="${inputClasses}" required></div>
+                            <div>
+                                <label for="dataSaida" class="block text-sm font-medium text-subtle-text mb-1">Data</label>
+                                <div class="date-input-container">
+                                    <input type="text" id="displayDataSaida" value="${formatarData(hojeISO())}" class="${inputClasses} date-input-display" readonly>
+                                    <input type="date" id="dataSaida" value="${hojeISO()}" class="date-input-native" required>
+                                    <div class="date-input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM16 14V5H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg></div>
+                                </div>
+                            </div>
                             <div><label for="statusSaida" class="block text-sm font-medium text-subtle-text mb-1">Status</label><select id="statusSaida" class="${selectClasses}"><option value="em aberto">Em Aberto</option><option value="pago">Pago</option></select></div>
                             <div id="parcelasContainer" class="hidden"><label for="numParcelas" class="block text-sm font-medium text-subtle-text mb-1">Nº de Parcelas</label><input type="number" id="numParcelas" class="${inputClasses}" value="1" min="1"></div>
                             <div id="custoNegocioContainer" class="hidden"><div class="flex items-center"><input id="isCustoNegocio" type="checkbox" class="item-checkbox"><label for="isCustoNegocio" class="ml-2 block text-sm text-subtle-text">Custo do negócio</label></div></div>
@@ -801,25 +813,9 @@
                     </div>
                 </div>`;
             
-            const dataSaidaEl = document.getElementById('dataSaida');
-            dataSaidaEl.value = formatarData(hojeISO());
-            dataSaidaEl.addEventListener('input', (e) => applyDateMask(e.target));
-
+            document.getElementById('dataSaida').addEventListener('change', e => { document.getElementById('displayDataSaida').value = formatarData(e.target.value); });
             document.getElementById('categoriaSaida').addEventListener('change', (e) => { const isCartao = e.target.value === 'Cartão de Crédito'; document.getElementById('parcelasContainer').classList.toggle('hidden', !isCartao); document.getElementById('custoNegocioContainer').classList.toggle('hidden', !isCartao); });
-            document.getElementById('formSaida').addEventListener('submit', e => { 
-                e.preventDefault(); 
-                const form = e.target; 
-                const isCartao = form.categoriaSaida.value === 'Cartão de Crédito'; 
-                const valor = parseFloat(form.valorSaida.value.replace(',', '.')); 
-                if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; }
-                const isoDate = parseDataBR(form.dataSaida.value);
-                if (!isoDate) { showInfoModal('Data inválida! Use o formato DD/MM/AAAA.'); return; }
-                adicionarSaida({ descricao: form.descricaoSaida.value, categoria: form.categoriaSaida.value, valor: valor, data: isoDate, numParcelas: isCartao ? form.numParcelas.value : 1, isCustoNegocio: isCartao ? form.isCustoNegocio.checked : false, status: form.statusSaida.value }); 
-                form.reset(); 
-                form.dataSaida.value = formatarData(hojeISO()); 
-                document.getElementById('parcelasContainer').classList.add('hidden'); 
-                document.getElementById('custoNegocioContainer').classList.add('hidden'); 
-            });
+            document.getElementById('formSaida').addEventListener('submit', e => { e.preventDefault(); const form = e.target; const isCartao = form.categoriaSaida.value === 'Cartão de Crédito'; const valor = parseFloat(form.valorSaida.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } adicionarSaida({ descricao: form.descricaoSaida.value, categoria: form.categoriaSaida.value, valor: valor, data: form.dataSaida.value, numParcelas: isCartao ? form.numParcelas.value : 1, isCustoNegocio: isCartao ? form.isCustoNegocio.checked : false, status: form.statusSaida.value }); form.reset(); form.dataSaida.value = hojeISO(); form.querySelector('#displayDataSaida').value = formatarData(hojeISO()); document.getElementById('parcelasContainer').classList.add('hidden'); document.getElementById('custoNegocioContainer').classList.add('hidden'); });
             document.getElementById('filtroMesSaidas').addEventListener('change', e => { filtroSaidasState.month = parseInt(e.target.value); renderizarListaSaidas(); });
             document.getElementById('filtroAnoSaidas').addEventListener('change', e => { filtroSaidasState.year = parseInt(e.target.value); renderizarListaSaidas(); });
             document.getElementById('filtroCategoriaSaidas').addEventListener('change', e => { filtroSaidasState.category = e.target.value; renderizarListaSaidas(); });
@@ -853,8 +849,7 @@
         function renderizarListaSaidas() {
             const listaEl = document.getElementById('listaSaidas'); if (!listaEl) return;
             const { month, year, category, status } = filtroSaidasState;
-            const inicio = new Date(year, month, 1);
-            const fim = new Date(year, month + 1, 0, 23, 59, 59, 999);
+            const inicio = new Date(Date.UTC(year, month, 1)), fim = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
             const filtradas = saidas.filter(s => { const d = new Date(s.data); return d >= inicio && d <= fim && (category === 'todas' || s.categoria === category) && (status === 'todos' || s.status === status); });
             document.getElementById('totalValorSaidas').textContent = `Total: ${formatarDinheiro(filtradas.reduce((acc, s) => acc + s.valor, 0))}`;
             if (filtradas.length === 0) { listaEl.innerHTML = '<p class="text-subtle-text text-center py-4">Nenhuma saída encontrada.</p>'; return; }
@@ -966,12 +961,12 @@
                 'Outro': new Array(diasNoMes).fill(0)
             };
 
-            const inicioMes = new Date(year, month, 1);
-            const fimMes = new Date(year, month + 1, 0, 23, 59, 59, 999);
+            const inicioMes = new Date(Date.UTC(ano, mes, 1));
+            const fimMes = new Date(Date.UTC(ano, mes + 1, 0, 23, 59, 59, 999));
             const entradasDoMes = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; });
 
             entradasDoMes.forEach(entrada => {
-                const dia = new Date(entrada.data).getDate() - 1; 
+                const dia = new Date(entrada.data).getUTCDate() - 1; 
                 if (dataPorFonte[entrada.fonte] && dia >= 0 && dia < diasNoMes) {
                     dataPorFonte[entrada.fonte][dia] += entrada.valor;
                 }
@@ -1035,8 +1030,7 @@
             for (let ano = anoInicial; ano <= anoFinal; ano++) {
                 for (let mes = 0; mes < 12; mes++) {
                     labels.push(`${MESES_NOME[mes].substring(0,3)}/${String(ano).substring(2)}`);
-                    const inicioMes = new Date(ano, mes, 1);
-                    const fimMes = new Date(ano, mes + 1, 0, 23, 59, 59, 999);
+                    const inicioMes = new Date(Date.UTC(ano, mes, 1)), fimMes = new Date(Date.UTC(ano, mes + 1, 0, 23, 59, 59, 999));
                     
                     const entradasDoMes = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; });
                     const saidasDoMes = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes; });
@@ -1101,24 +1095,11 @@
                 }
             });
         }
-
-        // --- Máscara de Data ---
-        function applyDateMask(el) {
-            let value = el.value.replace(/\D/g, '');
-            if (value.length > 8) value = value.slice(0, 8);
-
-            if (value.length > 4) {
-                value = value.replace(/(\d{2})(\d{2})(\d{4})/, '$1/$2/$3');
-            } else if (value.length > 2) {
-                value = value.replace(/(\d{2})(\d{2})/, '$1/$2');
-            }
-            el.value = value;
-        }
         
         // --- MODAIS DE EDIÇÃO ---
         function mostrarModalEditarEntrada(id) {
             const entrada = entradas.find(e => e._id === id); if (!entrada) return;
-            const dataValor = entrada.data.split('T')[0];
+            const dataValor = new Date(entrada.data).toISOString().split('T')[0];
             const content = `<div class="bg-card-bg text-primary rounded-lg shadow-xl w-full max-w-md m-4 border border-border">
                 <div class="p-4 border-b border-border flex justify-between items-center">
                     <h3 class="text-xl font-semibold text-light-text">Editar Entrada</h3>
@@ -1128,7 +1109,14 @@
                     <input type="hidden" name="id" value="${entrada._id}">
                     <div><label class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select name="fonte" class="${selectClasses}" required><option ${entrada.fonte==='iFood'?'selected':''}>iFood</option><option ${entrada.fonte==='Uber'?'selected':''}>Uber</option><option ${entrada.fonte==='99'?'selected':''}>99</option><option ${entrada.fonte==='Outro'?'selected':''}>Outro</option></select></div>
                     <div><label class="block text-sm font-medium text-subtle-text mb-1">Valor Bruto</label><input type="text" inputmode="decimal" name="valor" value="${String(entrada.valor).replace('.',',')}" class="${inputClasses}" required></div>
-                    <div><label class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="text" name="data" value="${formatarData(dataValor)}" placeholder="DD/MM/AAAA" class="${inputClasses}" required oninput="applyDateMask(this)"></div>
+                    <div>
+                        <label class="block text-sm font-medium text-subtle-text mb-1">Data</label>
+                        <div class="date-input-container">
+                             <input type="text" id="displayEditDataEntrada" value="${formatarData(dataValor)}" class="${inputClasses} date-input-display" readonly>
+                             <input type="date" name="data" value="${dataValor}" class="date-input-native" required onchange="document.getElementById('displayEditDataEntrada').value = formatarData(this.value)">
+                             <div class="date-input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM16 14V5H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg></div>
+                        </div>
+                    </div>
                     <div><label class="block text-sm font-medium text-subtle-text mb-1">Status</label><select name="status" class="${selectClasses}" required><option value="pendente" ${entrada.status==='pendente'?'selected':''}>Pendente</option><option value="resgatado" ${entrada.status==='resgatado'?'selected':''}>Resgatado</option></select></div>
                     <div class="flex justify-end gap-2 pt-4">
                         <button type="button" class="close-modal-btn py-2 px-4 rounded-md border border-border hover:bg-border">Cancelar</button>
@@ -1137,21 +1125,12 @@
                 </form>
             </div>`;
             showModal(modals.editEntrada, content);
-            document.getElementById('formEditEntrada').addEventListener('submit', (e) => { 
-                e.preventDefault(); 
-                const form = e.target; 
-                const valor = parseFloat(form.valor.value.replace(',', '.')); 
-                if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; }
-                const isoDate = parseDataBR(form.data.value);
-                if (!isoDate) { showInfoModal('Data inválida! Use o formato DD/MM/AAAA.'); return; }
-                editarItem('entradas', form.id.value, { fonte: form.fonte.value, valor: valor, data: isoDate, status: form.status.value }); 
-                hideModal(modals.editEntrada); 
-            });
+            document.getElementById('formEditEntrada').addEventListener('submit', (e) => { e.preventDefault(); const form = e.target; const valor = parseFloat(form.valor.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } editarItem('entradas', form.id.value, { fonte: form.fonte.value, valor: valor, data: form.data.value, status: form.status.value }); hideModal(modals.editEntrada); });
         }
 
         function mostrarModalEditarSaida(id) {
             const saida = saidas.find(s => s._id === id); if (!saida) return;
-            const dataValor = saida.data.split('T')[0];
+            const dataValor = new Date(saida.data).toISOString().split('T')[0];
             const content = `<div class="bg-card-bg text-primary rounded-lg shadow-xl w-full max-w-md m-4 border border-border">
                 <div class="p-4 border-b border-border flex justify-between items-center">
                     <h3 class="text-xl font-semibold text-light-text">Editar Saída</h3>
@@ -1162,7 +1141,14 @@
                     <div><label class="block text-sm font-medium text-subtle-text mb-1">Descrição</label><input type="text" name="descricao" value="${saida.descricao}" class="${inputClasses}" required></div>
                     <div><label class="block text-sm font-medium text-subtle-text mb-1">Categoria</label><select name="categoria" class="${selectClasses}"><option ${saida.categoria==='Custo Fixo'?'selected':''}>Custo Fixo</option><option ${saida.categoria==='Cartão de Crédito'?'selected':''}>Cartão de Crédito</option><option ${saida.categoria==='Débito'?'selected':''}>Débito</option><option ${saida.categoria==='Saque'?'selected':''}>Saque</option><option ${saida.categoria==='Dízimo'?'selected':''}>Dízimo</option><option ${saida.categoria==='Outro'?'selected':''}>Outro</option></select></div>
                     <div><label class="block text-sm font-medium text-subtle-text mb-1">Valor</label><input type="text" inputmode="decimal" name="valor" value="${String(saida.valor).replace('.',',')}" class="${inputClasses}" required></div>
-                    <div><label class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="text" name="data" value="${formatarData(dataValor)}" placeholder="DD/MM/AAAA" class="${inputClasses}" required oninput="applyDateMask(this)"></div>
+                     <div>
+                        <label class="block text-sm font-medium text-subtle-text mb-1">Data</label>
+                        <div class="date-input-container">
+                             <input type="text" id="displayEditDataSaida" value="${formatarData(dataValor)}" class="${inputClasses} date-input-display" readonly>
+                             <input type="date" name="data" value="${dataValor}" class="date-input-native" required onchange="document.getElementById('displayEditDataSaida').value = formatarData(this.value)">
+                             <div class="date-input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM16 14V5H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg></div>
+                        </div>
+                    </div>
                     <div><label class="block text-sm font-medium text-subtle-text mb-1">Status</label><select name="status" class="${selectClasses}"><option value="em aberto" ${saida.status==='em aberto'?'selected':''}>Em Aberto</option><option value="pago" ${saida.status==='pago'?'selected':''}>Pago</option></select></div>
                     <div class="flex items-center" ${saida.categoria!=='Cartão de Crédito'?'style="display:none;"':''}><input id="editIsCustoNegocio" type="checkbox" name="isCustoNegocio" ${saida.isCustoNegocio?'checked':''} class="item-checkbox"><label for="editIsCustoNegocio" class="ml-2 block text-sm text-subtle-text">Custo do negócio</label></div>
                     <div class="flex justify-end gap-2 pt-4">
@@ -1172,19 +1158,9 @@
                 </form>
             </div>`;
             showModal(modals.editSaida, content);
-            document.getElementById('formEditSaida').addEventListener('submit', (e) => { 
-                e.preventDefault(); 
-                const form = e.target; 
-                const valor = parseFloat(form.valor.value.replace(',', '.')); 
-                if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; }
-                const isoDate = parseDataBR(form.data.value);
-                if (!isoDate) { showInfoModal('Data inválida! Use o formato DD/MM/AAAA.'); return; }
-                editarItem('saidas', form.id.value, { descricao: form.descricao.value, categoria: form.categoria.value, valor: valor, data: isoDate, isCustoNegocio: form.isCustoNegocio?form.isCustoNegocio.checked:false, status: form.status.value }); 
-                hideModal(modals.editSaida); 
-            });
+            document.getElementById('formEditSaida').addEventListener('submit', (e) => { e.preventDefault(); const form = e.target; const valor = parseFloat(form.valor.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } editarItem('saidas', form.id.value, { descricao: form.descricao.value, categoria: form.categoria.value, valor: valor, data: form.data.value, isCustoNegocio: form.isCustoNegocio?form.isCustoNegocio.checked:false, status: form.status.value }); hideModal(modals.editSaida); });
         }
     </script>
 
 </body>
 </html>
-
