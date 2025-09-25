@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
-        // Configuração de cores customizadas para o Tailwind CSS (Tema Dark Moderno).
+        // Configuração de cores customizadas para o Tailwind CSS (Tema Dark Moderno)
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -69,6 +69,31 @@
         .item-checkbox {
             transform: scale(1.2);
             accent-color: #f59e0b;
+        }
+        /* Custom date input styling */
+        .date-input-container {
+            position: relative;
+        }
+        .date-input-display {
+            pointer-events: none;
+            padding-right: 2.5rem; /* Space for icon */
+        }
+        .date-input-native {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .date-input-icon {
+            position: absolute;
+            top: 50%;
+            right: 0.75rem;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #94a3b8; /* subtle-text */
         }
     </style>
 </head>
@@ -173,7 +198,8 @@
                     </div>
                     <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                         <h3 class="text-lg font-semibold mb-4 text-light-text">Categorias de Saídas (<span class="periodo-label"></span>)</h3>
-                        <div class="h-80"><canvas id="saidasChart"></canvas></div>
+                        <div class="h-64"><canvas id="saidasChart"></canvas></div>
+                        <div id="saidasSummaryTable" class="mt-4 overflow-y-auto" style="max-height: 100px;"></div>
                     </div>
                 </div>
             </div>
@@ -223,7 +249,13 @@
 
         // --- FUNÇÕES UTILITÁRIAS ---
         const formatarDinheiro = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        const formatarData = (dataStr) => new Date(dataStr).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+        const formatarData = (dataStr) => {
+            if (!dataStr || !dataStr.includes('-')) return ''; // Avoid formatting invalid date
+            const date = new Date(dataStr);
+            // Add 1 day to correct timezone issue from UTC
+            date.setUTCDate(date.getUTCDate() + 1);
+            return date.toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+        }
         const hojeISO = () => new Date().toISOString().split('T')[0];
         
         Chart.register(ChartDataLabels);
@@ -374,7 +406,7 @@
         }
 
         // --- LÓGICA DE RENDERIZAÇÃO ---
-        let entradasChart, saidasChart, comparativoChart, evolucaoChart;
+        let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart;
         function renderizarDashboard(data) {
             document.getElementById('cardEntradas').textContent = formatarDinheiro(data.totalEntradas);
             document.getElementById('cardPagamentosRealizados').textContent = formatarDinheiro(data.totalPagamentosRealizados);
@@ -399,7 +431,6 @@
                 </div>`;
         }
         
-        // NOVA FUNÇÃO: Renderiza a tabela de resumo das fontes de renda
         function renderizarTabelaResumoEntradas(entradasPeriodo) {
             const container = document.getElementById('entradasSummaryTable');
             if (!container) return;
@@ -442,6 +473,54 @@
             container.innerHTML = listHtml;
         }
 
+        function renderizarTabelaResumoSaidas(saidasPeriodo) {
+            const container = document.getElementById('saidasSummaryTable');
+            if (!container) return;
+
+            const dadosSaidas = {};
+            let totalSaidas = 0;
+            saidasPeriodo.forEach(s => {
+                if (!dadosSaidas[s.categoria]) dadosSaidas[s.categoria] = 0;
+                dadosSaidas[s.categoria] += s.valor;
+                totalSaidas += s.valor;
+            });
+
+            if (totalSaidas === 0) {
+                container.innerHTML = '<p class="text-subtle-text text-center text-sm py-2">Nenhuma saída no período.</p>';
+                return;
+            }
+
+            const CORES_SAIDAS = {
+                'Cartão de Crédito': '#ef4444', 
+                'Dízimo': '#FFD700',
+                'Custo Fixo': '#22c55e',
+                'Débito': '#6366F1',
+                'Saque': '#EC4899',
+                'Outro': '#84CC16'
+            };
+            const sortedSaidas = Object.entries(dadosSaidas).sort(([, a], [, b]) => b - a);
+
+            let listHtml = '<ul class="space-y-2 text-sm">';
+            sortedSaidas.forEach(([categoria, valor]) => {
+                const percentual = (valor / totalSaidas * 100).toFixed(1);
+                const cor = CORES_SAIDAS[categoria] || '#A855F7';
+                listHtml += `
+                    <li class="flex justify-between items-center">
+                        <span class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${cor};"></span>
+                            <span>${categoria}</span>
+                        </span>
+                        <span class="font-semibold text-light-text">
+                            ${formatarDinheiro(valor)}
+                            <span class="text-xs text-subtle-text ml-1">(${percentual}%)</span>
+                        </span>
+                    </li>
+                `;
+            });
+            listHtml += '</ul>';
+
+            container.innerHTML = listHtml;
+        }
 
         function renderizarGraficos({ entradasPeriodo, saidasPeriodo }){
             Chart.defaults.color = tailwind.config.theme.extend.colors.subtle_text;
@@ -459,20 +538,30 @@
             const labelsEntradas = Object.keys(dadosEntradas);
             entradasChart = new Chart(ctxEntradas, {
                 type: 'doughnut', data: { labels: labelsEntradas, datasets: [{ data: Object.values(dadosEntradas), backgroundColor: labelsEntradas.map(l => CORES_FONTES[l] || '#CCCCCC'), borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: { legend: { position: 'bottom', labels: {color: '#e2e8f0'} }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
+                options: { responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: { legend: { display: false }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
             });
 
-            // Chama a nova função para renderizar a tabela de resumo
             renderizarTabelaResumoEntradas(entradasPeriodo);
 
             if (saidasChart) saidasChart.destroy();
             const ctxSaidas = document.getElementById('saidasChart').getContext('2d');
             const dadosSaidas = {};
             saidasPeriodo.forEach(s => { if (!dadosSaidas[s.categoria]) dadosSaidas[s.categoria] = 0; dadosSaidas[s.categoria] += s.valor; });
+            const CORES_SAIDAS = {
+                'Cartão de Crédito': '#ef4444', // Vermelho (negative color)
+                'Dízimo': '#FFD700',            // Dourado
+                'Custo Fixo': '#22c55e',       // Verde (positive color)
+                'Débito': '#6366F1',
+                'Saque': '#EC4899',
+                'Outro': '#84CC16'
+            };
+            const labelsSaidas = Object.keys(dadosSaidas);
             saidasChart = new Chart(ctxSaidas, {
-                type: 'doughnut', data: { labels: Object.keys(dadosSaidas), datasets: [{ data: Object.values(dadosSaidas), backgroundColor: ['#F59E0B', '#6366F1', '#EC4899', '#84CC16', '#14B8A6', '#EF4444', '#f59e0b', '#10b981'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: { legend: { position: 'bottom', labels: {color: '#e2e8f0'} }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
+                type: 'doughnut', data: { labels: labelsSaidas, datasets: [{ data: Object.values(dadosSaidas), backgroundColor: labelsSaidas.map(l => CORES_SAIDAS[l] || '#A855F7'), borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: { legend: { display: false }, datalabels: { formatter: (v) => v > 0 ? formatarDinheiro(v) : '', color: (ctx) => getContrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]), font: { weight: 'bold' } } } }
             });
+            
+            renderizarTabelaResumoSaidas(saidasPeriodo);
             
             if (comparativoChart) comparativoChart.destroy();
             const ctxComp = document.getElementById('comparativoChart').getContext('2d');
@@ -590,7 +679,14 @@
                         <form id="formEntrada" class="space-y-4">
                              <div><label for="fonteEntrada" class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select id="fonteEntrada" class="${selectClasses}"><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select></div>
                             <div><label for="valorEntrada" class="block text-sm font-medium text-subtle-text mb-1">Valor Bruto</label><input type="text" inputmode="decimal" id="valorEntrada" class="${inputClasses}" placeholder="150,00" required></div>
-                            <div><label for="dataEntrada" class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="date" id="dataEntrada" value="${hojeISO()}" class="${inputClasses}" required></div>
+                            <div>
+                                <label for="dataEntrada" class="block text-sm font-medium text-subtle-text mb-1">Data</label>
+                                <div class="date-input-container">
+                                    <input type="text" id="displayDataEntrada" value="${formatarData(hojeISO())}" class="${inputClasses} date-input-display" readonly>
+                                    <input type="date" id="dataEntrada" value="${hojeISO()}" class="date-input-native" required>
+                                    <div class="date-input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM16 14V5H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg></div>
+                                </div>
+                            </div>
                             <div><label for="statusRepasse" class="block text-sm font-medium text-subtle-text mb-1">Status</label><select id="statusRepasse" class="${selectClasses}"><option value="pendente">Pendente</option><option value="resgatado">Resgatado</option></select></div>
                             <button type="submit" class="${buttonClasses} mt-2">Adicionar Entrada</button>
                         </form>
@@ -614,7 +710,8 @@
                     </div>
                 </div>`;
             
-            document.getElementById('formEntrada').addEventListener('submit', e => { e.preventDefault(); const form = e.target; const valor = parseFloat(form.valorEntrada.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } adicionarEntrada({ fonte: form.fonteEntrada.value, valor: valor, data: form.dataEntrada.value, status: form.statusRepasse.value }); form.reset(); form.dataEntrada.value = hojeISO(); });
+            document.getElementById('dataEntrada').addEventListener('change', e => { document.getElementById('displayDataEntrada').value = formatarData(e.target.value); });
+            document.getElementById('formEntrada').addEventListener('submit', e => { e.preventDefault(); const form = e.target; const valor = parseFloat(form.valorEntrada.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } adicionarEntrada({ fonte: form.fonteEntrada.value, valor: valor, data: form.dataEntrada.value, status: form.statusRepasse.value }); form.reset(); form.dataEntrada.value = hojeISO(); form.querySelector('#displayDataEntrada').value = formatarData(hojeISO()); });
             document.getElementById('filtroMesEntradas').addEventListener('change', e => { filtroEntradasState.month = parseInt(e.target.value); renderizarListaEntradas(); });
             document.getElementById('filtroAnoEntradas').addEventListener('change', e => { filtroEntradasState.year = parseInt(e.target.value); renderizarListaEntradas(); });
             document.getElementById('filtroFonteEntradas').addEventListener('change', e => { filtroEntradasState.source = e.target.value; renderizarListaEntradas(); });
@@ -683,7 +780,14 @@
                             <div><label for="descricaoSaida" class="block text-sm font-medium text-subtle-text mb-1">Descrição</label><input type="text" id="descricaoSaida" class="${inputClasses}" required></div>
                             <div><label for="categoriaSaida" class="block text-sm font-medium text-subtle-text mb-1">Categoria</label><select id="categoriaSaida" class="${selectClasses}"><option>Custo Fixo</option><option>Cartão de Crédito</option><option>Débito</option><option>Saque</option><option>Dízimo</option><option>Outro</option></select></div>
                             <div><label for="valorSaida" class="block text-sm font-medium text-subtle-text mb-1">Valor Total</label><input type="text" inputmode="decimal" id="valorSaida" class="${inputClasses}" placeholder="150,00" required></div>
-                            <div><label for="dataSaida" class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="date" id="dataSaida" value="${hojeISO()}" class="${inputClasses}" required></div>
+                            <div>
+                                <label for="dataSaida" class="block text-sm font-medium text-subtle-text mb-1">Data</label>
+                                <div class="date-input-container">
+                                    <input type="text" id="displayDataSaida" value="${formatarData(hojeISO())}" class="${inputClasses} date-input-display" readonly>
+                                    <input type="date" id="dataSaida" value="${hojeISO()}" class="date-input-native" required>
+                                    <div class="date-input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM16 14V5H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg></div>
+                                </div>
+                            </div>
                             <div><label for="statusSaida" class="block text-sm font-medium text-subtle-text mb-1">Status</label><select id="statusSaida" class="${selectClasses}"><option value="em aberto">Em Aberto</option><option value="pago">Pago</option></select></div>
                             <div id="parcelasContainer" class="hidden"><label for="numParcelas" class="block text-sm font-medium text-subtle-text mb-1">Nº de Parcelas</label><input type="number" id="numParcelas" class="${inputClasses}" value="1" min="1"></div>
                             <div id="custoNegocioContainer" class="hidden"><div class="flex items-center"><input id="isCustoNegocio" type="checkbox" class="item-checkbox"><label for="isCustoNegocio" class="ml-2 block text-sm text-subtle-text">Custo do negócio</label></div></div>
@@ -709,8 +813,9 @@
                     </div>
                 </div>`;
             
+            document.getElementById('dataSaida').addEventListener('change', e => { document.getElementById('displayDataSaida').value = formatarData(e.target.value); });
             document.getElementById('categoriaSaida').addEventListener('change', (e) => { const isCartao = e.target.value === 'Cartão de Crédito'; document.getElementById('parcelasContainer').classList.toggle('hidden', !isCartao); document.getElementById('custoNegocioContainer').classList.toggle('hidden', !isCartao); });
-            document.getElementById('formSaida').addEventListener('submit', e => { e.preventDefault(); const form = e.target; const isCartao = form.categoriaSaida.value === 'Cartão de Crédito'; const valor = parseFloat(form.valorSaida.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } adicionarSaida({ descricao: form.descricaoSaida.value, categoria: form.categoriaSaida.value, valor: valor, data: form.dataSaida.value, numParcelas: isCartao ? form.numParcelas.value : 1, isCustoNegocio: isCartao ? form.isCustoNegocio.checked : false, status: form.statusSaida.value }); form.reset(); form.dataSaida.value = hojeISO(); document.getElementById('parcelasContainer').classList.add('hidden'); document.getElementById('custoNegocioContainer').classList.add('hidden'); });
+            document.getElementById('formSaida').addEventListener('submit', e => { e.preventDefault(); const form = e.target; const isCartao = form.categoriaSaida.value === 'Cartão de Crédito'; const valor = parseFloat(form.valorSaida.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } adicionarSaida({ descricao: form.descricaoSaida.value, categoria: form.categoriaSaida.value, valor: valor, data: form.dataSaida.value, numParcelas: isCartao ? form.numParcelas.value : 1, isCustoNegocio: isCartao ? form.isCustoNegocio.checked : false, status: form.statusSaida.value }); form.reset(); form.dataSaida.value = hojeISO(); form.querySelector('#displayDataSaida').value = formatarData(hojeISO()); document.getElementById('parcelasContainer').classList.add('hidden'); document.getElementById('custoNegocioContainer').classList.add('hidden'); });
             document.getElementById('filtroMesSaidas').addEventListener('change', e => { filtroSaidasState.month = parseInt(e.target.value); renderizarListaSaidas(); });
             document.getElementById('filtroAnoSaidas').addEventListener('change', e => { filtroSaidasState.year = parseInt(e.target.value); renderizarListaSaidas(); });
             document.getElementById('filtroCategoriaSaidas').addEventListener('change', e => { filtroSaidasState.category = e.target.value; renderizarListaSaidas(); });
@@ -770,8 +875,14 @@
 
         // --- ABA DE RELATÓRIOS ---
         function renderizarAbaRelatorios() {
-            tabs.relatorios.innerHTML = `<div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg space-y-8 border border-border">
-                <div id="evolucaoMensalContainer" class="p-6 border border-border rounded-lg">
+            const anos = getAnosDisponiveis().sort((a,b) => a - b);
+            const anoAtual = new Date().getFullYear();
+            const mesAtual = new Date().getMonth();
+
+            tabs.relatorios.innerHTML = `<div class="space-y-6">
+                
+                <!-- Relatório de Evolução Mensal -->
+                <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                         <h4 class="font-bold text-xl text-light-text">Evolução Mensal</h4>
                         <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
@@ -786,17 +897,120 @@
                         </div>
                     </div>
                     <div class="h-96"><canvas id="evolucaoChart"></canvas></div>
-                </div></div>`;
-            const anos = getAnosDisponiveis().sort((a,b) => a - b);
-            const anoInicialEl = document.getElementById('filtroAnoInicial'), anoFinalEl = document.getElementById('filtroAnoFinal');
+                </div>
+                
+                <!-- Novo Relatório de Recebimentos Diários -->
+                <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                        <h4 class="font-bold text-xl text-light-text">Recebimentos Diários por Fonte</h4>
+                        <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
+                            <div class="flex items-center gap-2">
+                                <label for="filtroMesRecebimentos" class="text-sm font-medium text-subtle-text">Mês:</label>
+                                <select id="filtroMesRecebimentos" class="${filterSelectClasses}">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === mesAtual ? 'selected' : ''}>${mes}</option>`).join('')}</select>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label for="filtroAnoRecebimentos" class="text-sm font-medium text-subtle-text">Ano:</label>
+                                <select id="filtroAnoRecebimentos" class="${filterSelectClasses}">${getAnosDisponiveis().map(ano => `<option value="${ano}" ${ano === anoAtual ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-96"><canvas id="recebimentosDiariosChart"></canvas></div>
+                </div>
+            </div>`;
+
+            const anoInicialEl = document.getElementById('filtroAnoInicial');
+            const anoFinalEl = document.getElementById('filtroAnoFinal');
             if(anos.length > 0) {
-                anoInicialEl.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join('');
-                anoFinalEl.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join('');
-                anoInicialEl.value = anos[0]; anoFinalEl.value = anos[anos.length - 1];
+                const todosAnosHtml = anos.map(a => `<option value="${a}">${a}</option>`).join('');
+                anoInicialEl.innerHTML = todosAnosHtml;
+                anoFinalEl.innerHTML = todosAnosHtml;
+                
+                // Define o ano atual como padrão para ambos os filtros
+                anoInicialEl.value = anoAtual;
+                anoFinalEl.value = anoAtual;
             }
             anoInicialEl.addEventListener('change', renderizarGraficoEvolucao);
             anoFinalEl.addEventListener('change', renderizarGraficoEvolucao);
+
+            document.getElementById('filtroMesRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
+            document.getElementById('filtroAnoRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
+            
             renderizarGraficoEvolucao();
+            renderizarGraficoRecebimentosDiarios();
+        }
+        
+        function renderizarGraficoRecebimentosDiarios() {
+            if (recebimentosDiariosChart) recebimentosDiariosChart.destroy();
+            const mesEl = document.getElementById('filtroMesRecebimentos');
+            const anoEl = document.getElementById('filtroAnoRecebimentos');
+            const ctx = document.getElementById('recebimentosDiariosChart').getContext('2d');
+
+            const drawMessage = (message) => { ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); ctx.font="16px Inter"; ctx.fillStyle="#94a3b8"; ctx.textAlign="center"; ctx.fillText(message,ctx.canvas.width/2,ctx.canvas.height/2); };
+
+            if (!mesEl || !anoEl) { drawMessage("Carregando..."); return; }
+            const mes = parseInt(mesEl.value);
+            const ano = parseInt(anoEl.value);
+
+            const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+            const labels = Array.from({length: diasNoMes}, (_, i) => String(i + 1).padStart(2, '0'));
+            
+            const dataPorFonte = {
+                'iFood': new Array(diasNoMes).fill(0),
+                'Uber': new Array(diasNoMes).fill(0),
+                '99': new Array(diasNoMes).fill(0),
+                'Outro': new Array(diasNoMes).fill(0)
+            };
+
+            const inicioMes = new Date(Date.UTC(ano, mes, 1));
+            const fimMes = new Date(Date.UTC(ano, mes + 1, 0, 23, 59, 59, 999));
+            const entradasDoMes = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; });
+
+            entradasDoMes.forEach(entrada => {
+                const dia = new Date(entrada.data).getUTCDate() - 1; 
+                if (dataPorFonte[entrada.fonte] && dia >= 0 && dia < diasNoMes) {
+                    dataPorFonte[entrada.fonte][dia] += entrada.valor;
+                }
+            });
+
+            const CORES_FONTES = { 'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Outro': '#6B7280' };
+            const datasets = Object.keys(dataPorFonte).map(fonte => ({
+                label: fonte,
+                data: dataPorFonte[fonte],
+                backgroundColor: CORES_FONTES[fonte],
+            }));
+
+            recebimentosDiariosChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0' } },
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${formatarDinheiro(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            stacked: false,
+                            grid: { color:'transparent' }
+                        },
+                        y: { 
+                            stacked: false,
+                            grid: { color: '#334155' },
+                            ticks: {
+                                callback: function(value) { return formatarDinheiro(value); }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         function renderizarGraficoEvolucao() {
@@ -810,38 +1024,143 @@
             const anoInicial = parseInt(anoInicialEl.value), anoFinal = parseInt(anoFinalEl.value);
             if (anoInicial > anoFinal) { drawMessage("O ano inicial não pode ser maior que o ano final."); return; }
 
-            const labels = [], dataEntradas = [], dataSaidas = [], dataSaldo = [];
+            const labels = [];
+            const dataEntradas = [], dataSaidasPagas = [], dataSaidasPrevistas = [], dataSaldo = [];
+            
             for (let ano = anoInicial; ano <= anoFinal; ano++) {
                 for (let mes = 0; mes < 12; mes++) {
                     labels.push(`${MESES_NOME[mes].substring(0,3)}/${String(ano).substring(2)}`);
                     const inicioMes = new Date(Date.UTC(ano, mes, 1)), fimMes = new Date(Date.UTC(ano, mes + 1, 0, 23, 59, 59, 999));
-                    const totalEntradas = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; }).reduce((acc, e) => acc + e.valor, 0);
-                    const totalSaidas = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes && s.status === 'pago'; }).reduce((acc, s) => acc + s.valor, 0);
-                    dataEntradas.push(totalEntradas); dataSaidas.push(totalSaidas); dataSaldo.push(totalEntradas - totalSaidas);
+                    
+                    const entradasDoMes = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; });
+                    const saidasDoMes = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes; });
+
+                    const totalEntradas = entradasDoMes.reduce((acc, e) => acc + e.valor, 0);
+                    const totalSaidasPagas = saidasDoMes.filter(s => s.status === 'pago').reduce((acc, s) => acc + s.valor, 0);
+                    const totalSaidasPrevistas = saidasDoMes.filter(s => s.status === 'em aberto').reduce((acc, s) => acc + s.valor, 0);
+                    
+                    dataEntradas.push(totalEntradas);
+                    dataSaidasPagas.push(totalSaidasPagas);
+                    dataSaidasPrevistas.push(totalSaidasPrevistas);
+                    dataSaldo.push(totalEntradas - (totalSaidasPagas + totalSaidasPrevistas));
                 }
             }
             
             evolucaoChart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels, datasets: [ { label: 'Saldo Líquido', type: 'line', data: dataSaldo, borderColor: '#3b82f6', tension: 0.1, fill: false, borderWidth: 3 }, { label: 'Entradas', data: dataEntradas, backgroundColor: '#22c55e' }, { label: 'Saídas (Pagas)', data: dataSaidas, backgroundColor: '#ef4444' } ] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: {labels: {color: '#e2e8f0'}} }, scales: { y: { beginAtZero: true, grid:{color: '#334155'} }, x: { grid:{color:'transparent'} } } }
+                data: { 
+                    labels, 
+                    datasets: [ 
+                        { label: 'Saldo Previsto', type: 'line', data: dataSaldo, borderColor: '#3b82f6', tension: 0.1, fill: false, borderWidth: 3 }, 
+                        { label: 'Entradas', data: dataEntradas, backgroundColor: '#22c55e', stack: 'in' }, 
+                        { label: 'Saídas (Pagas)', data: dataSaidasPagas, backgroundColor: '#ef4444', stack: 'out' },
+                        { label: 'Saídas (Previstas)', data: dataSaidasPrevistas, backgroundColor: '#f59e0b', stack: 'out' } 
+                    ] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        datalabels: { display: false }, 
+                        legend: { labels: { color: '#e2e8f0' } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += formatarDinheiro(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }, 
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: '#334155' },
+                            ticks: {
+                                callback: function(value) {
+                                    return formatarDinheiro(value);
+                                }
+                            }
+                        }, 
+                        x: { 
+                            grid: { color:'transparent' } 
+                        } 
+                    } 
+                }
             });
         }
         
         // --- MODAIS DE EDIÇÃO ---
         function mostrarModalEditarEntrada(id) {
             const entrada = entradas.find(e => e._id === id); if (!entrada) return;
-            showModal(modals.editEntrada, `<div class="bg-card-bg text-primary rounded-lg shadow-xl w-full max-w-md m-4 border border-border"><div class="p-4 border-b border-border flex justify-between items-center"><h3 class="text-xl font-semibold text-light-text">Editar Entrada</h3><button class="close-modal-btn text-3xl text-subtle-text hover:text-light-text">&times;</button></div><form id="formEditEntrada" class="p-6 space-y-4"><input type="hidden" name="id" value="${entrada._id}"><div><label class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select name="fonte" class="${selectClasses}" required><option ${entrada.fonte==='iFood'?'selected':''}>iFood</option><option ${entrada.fonte==='Uber'?'selected':''}>Uber</option><option ${entrada.fonte==='99'?'selected':''}>99</option><option ${entrada.fonte==='Outro'?'selected':''}>Outro</option></select></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Valor Bruto</label><input type="text" inputmode="decimal" name="valor" value="${String(entrada.valor).replace('.',',')}" class="${inputClasses}" required></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="date" name="data" value="${new Date(entrada.data).toISOString().split('T')[0]}" class="${inputClasses}" required></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Status</label><select name="status" class="${selectClasses}" required><option value="pendente" ${entrada.status==='pendente'?'selected':''}>Pendente</option><option value="resgatado" ${entrada.status==='resgatado'?'selected':''}>Resgatado</option></select></div><div class="flex justify-end gap-2 pt-4"><button type="button" class="close-modal-btn py-2 px-4 rounded-md border border-border hover:bg-border">Cancelar</button><button type="submit" class="${buttonClasses} !w-auto">Salvar</button></div></form></div>`);
+            const dataValor = new Date(entrada.data).toISOString().split('T')[0];
+            const content = `<div class="bg-card-bg text-primary rounded-lg shadow-xl w-full max-w-md m-4 border border-border">
+                <div class="p-4 border-b border-border flex justify-between items-center">
+                    <h3 class="text-xl font-semibold text-light-text">Editar Entrada</h3>
+                    <button class="close-modal-btn text-3xl text-subtle-text hover:text-light-text">&times;</button>
+                </div>
+                <form id="formEditEntrada" class="p-6 space-y-4">
+                    <input type="hidden" name="id" value="${entrada._id}">
+                    <div><label class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select name="fonte" class="${selectClasses}" required><option ${entrada.fonte==='iFood'?'selected':''}>iFood</option><option ${entrada.fonte==='Uber'?'selected':''}>Uber</option><option ${entrada.fonte==='99'?'selected':''}>99</option><option ${entrada.fonte==='Outro'?'selected':''}>Outro</option></select></div>
+                    <div><label class="block text-sm font-medium text-subtle-text mb-1">Valor Bruto</label><input type="text" inputmode="decimal" name="valor" value="${String(entrada.valor).replace('.',',')}" class="${inputClasses}" required></div>
+                    <div>
+                        <label class="block text-sm font-medium text-subtle-text mb-1">Data</label>
+                        <div class="date-input-container">
+                             <input type="text" id="displayEditDataEntrada" value="${formatarData(dataValor)}" class="${inputClasses} date-input-display" readonly>
+                             <input type="date" name="data" value="${dataValor}" class="date-input-native" required onchange="document.getElementById('displayEditDataEntrada').value = formatarData(this.value)">
+                             <div class="date-input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM16 14V5H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg></div>
+                        </div>
+                    </div>
+                    <div><label class="block text-sm font-medium text-subtle-text mb-1">Status</label><select name="status" class="${selectClasses}" required><option value="pendente" ${entrada.status==='pendente'?'selected':''}>Pendente</option><option value="resgatado" ${entrada.status==='resgatado'?'selected':''}>Resgatado</option></select></div>
+                    <div class="flex justify-end gap-2 pt-4">
+                        <button type="button" class="close-modal-btn py-2 px-4 rounded-md border border-border hover:bg-border">Cancelar</button>
+                        <button type="submit" class="${buttonClasses} !w-auto">Salvar</button>
+                    </div>
+                </form>
+            </div>`;
+            showModal(modals.editEntrada, content);
             document.getElementById('formEditEntrada').addEventListener('submit', (e) => { e.preventDefault(); const form = e.target; const valor = parseFloat(form.valor.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } editarItem('entradas', form.id.value, { fonte: form.fonte.value, valor: valor, data: form.data.value, status: form.status.value }); hideModal(modals.editEntrada); });
         }
 
         function mostrarModalEditarSaida(id) {
             const saida = saidas.find(s => s._id === id); if (!saida) return;
-            showModal(modals.editSaida, `<div class="bg-card-bg text-primary rounded-lg shadow-xl w-full max-w-md m-4 border border-border"><div class="p-4 border-b border-border flex justify-between items-center"><h3 class="text-xl font-semibold text-light-text">Editar Saída</h3><button class="close-modal-btn text-3xl text-subtle-text hover:text-light-text">&times;</button></div><form id="formEditSaida" class="p-6 space-y-4"><input type="hidden" name="id" value="${saida._id}"><div><label class="block text-sm font-medium text-subtle-text mb-1">Descrição</label><input type="text" name="descricao" value="${saida.descricao}" class="${inputClasses}" required></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Categoria</label><select name="categoria" class="${selectClasses}"><option ${saida.categoria==='Custo Fixo'?'selected':''}>Custo Fixo</option><option ${saida.categoria==='Cartão de Crédito'?'selected':''}>Cartão de Crédito</option><option ${saida.categoria==='Débito'?'selected':''}>Débito</option><option ${saida.categoria==='Saque'?'selected':''}>Saque</option><option ${saida.categoria==='Dízimo'?'selected':''}>Dízimo</option><option ${saida.categoria==='Outro'?'selected':''}>Outro</option></select></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Valor</label><input type="text" inputmode="decimal" name="valor" value="${String(saida.valor).replace('.',',')}" class="${inputClasses}" required></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="date" name="data" value="${new Date(saida.data).toISOString().split('T')[0]}" class="${inputClasses}" required></div><div><label class="block text-sm font-medium text-subtle-text mb-1">Status</label><select name="status" class="${selectClasses}"><option value="em aberto" ${saida.status==='em aberto'?'selected':''}>Em Aberto</option><option value="pago" ${saida.status==='pago'?'selected':''}>Pago</option></select></div><div class="flex items-center" ${saida.categoria!=='Cartão de Crédito'?'style="display:none;"':''}><input id="editIsCustoNegocio" type="checkbox" name="isCustoNegocio" ${saida.isCustoNegocio?'checked':''} class="item-checkbox"><label for="editIsCustoNegocio" class="ml-2 block text-sm text-subtle-text">Custo do negócio</label></div><div class="flex justify-end gap-2 pt-4"><button type="button" class="close-modal-btn py-2 px-4 rounded-md border border-border hover:bg-border">Cancelar</button><button type="submit" class="${buttonClasses} !w-auto">Salvar</button></div></form></div>`);
+            const dataValor = new Date(saida.data).toISOString().split('T')[0];
+            const content = `<div class="bg-card-bg text-primary rounded-lg shadow-xl w-full max-w-md m-4 border border-border">
+                <div class="p-4 border-b border-border flex justify-between items-center">
+                    <h3 class="text-xl font-semibold text-light-text">Editar Saída</h3>
+                    <button class="close-modal-btn text-3xl text-subtle-text hover:text-light-text">&times;</button>
+                </div>
+                <form id="formEditSaida" class="p-6 space-y-4">
+                    <input type="hidden" name="id" value="${saida._id}">
+                    <div><label class="block text-sm font-medium text-subtle-text mb-1">Descrição</label><input type="text" name="descricao" value="${saida.descricao}" class="${inputClasses}" required></div>
+                    <div><label class="block text-sm font-medium text-subtle-text mb-1">Categoria</label><select name="categoria" class="${selectClasses}"><option ${saida.categoria==='Custo Fixo'?'selected':''}>Custo Fixo</option><option ${saida.categoria==='Cartão de Crédito'?'selected':''}>Cartão de Crédito</option><option ${saida.categoria==='Débito'?'selected':''}>Débito</option><option ${saida.categoria==='Saque'?'selected':''}>Saque</option><option ${saida.categoria==='Dízimo'?'selected':''}>Dízimo</option><option ${saida.categoria==='Outro'?'selected':''}>Outro</option></select></div>
+                    <div><label class="block text-sm font-medium text-subtle-text mb-1">Valor</label><input type="text" inputmode="decimal" name="valor" value="${String(saida.valor).replace('.',',')}" class="${inputClasses}" required></div>
+                     <div>
+                        <label class="block text-sm font-medium text-subtle-text mb-1">Data</label>
+                        <div class="date-input-container">
+                             <input type="text" id="displayEditDataSaida" value="${formatarData(dataValor)}" class="${inputClasses} date-input-display" readonly>
+                             <input type="date" name="data" value="${dataValor}" class="date-input-native" required onchange="document.getElementById('displayEditDataSaida').value = formatarData(this.value)">
+                             <div class="date-input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM16 14V5H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg></div>
+                        </div>
+                    </div>
+                    <div><label class="block text-sm font-medium text-subtle-text mb-1">Status</label><select name="status" class="${selectClasses}"><option value="em aberto" ${saida.status==='em aberto'?'selected':''}>Em Aberto</option><option value="pago" ${saida.status==='pago'?'selected':''}>Pago</option></select></div>
+                    <div class="flex items-center" ${saida.categoria!=='Cartão de Crédito'?'style="display:none;"':''}><input id="editIsCustoNegocio" type="checkbox" name="isCustoNegocio" ${saida.isCustoNegocio?'checked':''} class="item-checkbox"><label for="editIsCustoNegocio" class="ml-2 block text-sm text-subtle-text">Custo do negócio</label></div>
+                    <div class="flex justify-end gap-2 pt-4">
+                        <button type="button" class="close-modal-btn py-2 px-4 rounded-md border border-border hover:bg-border">Cancelar</button>
+                        <button type="submit" class="${buttonClasses} !w-auto">Salvar</button>
+                    </div>
+                </form>
+            </div>`;
+            showModal(modals.editSaida, content);
             document.getElementById('formEditSaida').addEventListener('submit', (e) => { e.preventDefault(); const form = e.target; const valor = parseFloat(form.valor.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } editarItem('saidas', form.id.value, { descricao: form.descricao.value, categoria: form.categoria.value, valor: valor, data: form.data.value, isCustoNegocio: form.isCustoNegocio?form.isCustoNegocio.checked:false, status: form.status.value }); hideModal(modals.editSaida); });
         }
     </script>
 
 </body>
 </html>
-
