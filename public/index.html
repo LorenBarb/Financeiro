@@ -142,46 +142,34 @@
                 <!-- Cards Principais -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                     <!-- Card Entradas -->
-                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-positive hover:shadow-positive/20 flex">
-                        <div class="flex items-center justify-between w-full">
-                            <div class="flex flex-col"><h3 class="text-subtle-text font-medium text-sm">Entradas Recebidas</h3><p id="cardEntradas" class="text-2xl font-bold text-positive whitespace-nowrap">R$ 0,00</p></div>
-                            <div class="bg-positive/10 p-3 rounded-lg flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-positive"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" /></svg></div>
-                        </div>
+                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-positive hover:shadow-positive/20 flex items-center justify-between">
+                        <div class="flex flex-col"><h3 class="text-subtle-text font-medium text-sm">Entradas Recebidas</h3><p id="cardEntradas" class="text-xl font-bold text-positive whitespace-nowrap">R$ 0,00</p></div>
+                        <div class="bg-positive/10 p-3 rounded-lg flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-positive"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" /></svg></div>
                     </div>
                      <!-- Card Pagamentos -->
-                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-negative hover:shadow-negative/20 flex">
-                         <div class="flex items-center justify-between w-full">
-                            <div class="flex flex-col"><h3 class="text-subtle-text font-medium text-sm">Pagamentos</h3><p id="cardPagamentosRealizados" class="text-2xl font-bold text-negative whitespace-nowrap">R$ 0,00</p></div>
-                             <div class="bg-negative/10 p-3 rounded-lg flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-negative"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0-3.182-5.511m3.182 5.51-5.511-3.182" /></svg></div>
-                        </div>
+                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-negative hover:shadow-negative/20 flex items-center justify-between">
+                        <div class="flex flex-col"><h3 class="text-subtle-text font-medium text-sm">Pagamentos</h3><p id="cardPagamentosRealizados" class="text-xl font-bold text-negative whitespace-nowrap">R$ 0,00</p></div>
+                        <div class="bg-negative/10 p-3 rounded-lg flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-negative"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0-3.182-5.511m3.182 5.51-5.511-3.182" /></svg></div>
                     </div>
                     <!-- Card Saldo Guardado -->
-                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-saved hover:shadow-saved/20 flex">
-                        <div class="flex items-center justify-between w-full">
-                            <div class="flex flex-col"><h3 class="text-subtle-text font-medium text-sm">Saldo Guardado</h3><p id="cardSaldoGuardado" class="text-2xl font-bold text-saved whitespace-nowrap">R$ 0,00</p></div>
-                            <div class="bg-saved/10 p-3 rounded-lg flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-saved"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625H14.625M12 10.875a2.625 2.625 0 1 1 0 5.25 2.625 2.625 0 0 1 0-5.25m0 5.25V18.75m0 .375a2.625 2.625 0 1 1 0-5.25 2.625 2.625 0 0 1 0 5.25Z" /></svg></div>
-                        </div>
+                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-saved hover:shadow-saved/20 flex items-center justify-between">
+                        <div class="flex flex-col"><h3 class="text-subtle-text font-medium text-sm">Saldo Guardado</h3><p id="cardSaldoGuardado" class="text-xl font-bold text-saved whitespace-nowrap">R$ 0,00</p></div>
+                        <div class="bg-saved/10 p-3 rounded-lg flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-saved"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625H14.625M12 10.875a2.625 2.625 0 1 1 0 5.25 2.625 2.625 0 0 1 0-5.25m0 5.25V18.75m0 .375a2.625 2.625 0 1 1 0-5.25 2.625 2.625 0 0 1 0 5.25Z" /></svg></div>
                     </div>
                      <!-- Card Em Aberto -->
-                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-warning hover:shadow-warning/20 flex">
-                        <div class="flex items-center justify-between w-full">
-                            <div class="flex flex-col"><h3 class="text-subtle-text font-medium text-sm">Em Aberto</h3><p id="cardValoresEmAberto" class="text-2xl font-bold text-warning whitespace-nowrap">R$ 0,00</p></div>
-                            <div class="bg-warning/10 p-3 rounded-lg flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-warning"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></div>
-                        </div>
+                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-warning hover:shadow-warning/20 flex items-center justify-between">
+                        <div class="flex flex-col"><h3 class="text-subtle-text font-medium text-sm">Em Aberto</h3><p id="cardValoresEmAberto" class="text-xl font-bold text-warning whitespace-nowrap">R$ 0,00</p></div>
+                        <div class="bg-warning/10 p-3 rounded-lg flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-warning"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></div>
                     </div>
                      <!-- Card Saldo Previsto -->
-                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-neutral hover:shadow-neutral/20 flex">
-                        <div class="flex items-center justify-between w-full">
-                            <div class="flex flex-col"><h3 class="text-subtle-text font-medium text-sm">Saldo Previsto</h3><p id="cardSaldoPrevistoMes" class="text-2xl font-bold text-light-text whitespace-nowrap">R$ 0,00</p></div>
-                             <div class="bg-neutral/10 p-3 rounded-lg flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-neutral"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52v16.5m-13.5-16.5c-1.01.143-2.01.317-3 .52m-3-.52v16.5" /></svg></div>
-                        </div>
+                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-neutral hover:shadow-neutral/20 flex items-center justify-between">
+                        <div class="flex flex-col"><h3 class="text-subtle-text font-medium text-sm">Saldo Previsto</h3><p id="cardSaldoPrevistoMes" class="text-xl font-bold text-light-text whitespace-nowrap">R$ 0,00</p></div>
+                        <div class="bg-neutral/10 p-3 rounded-lg flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-neutral"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52v16.5m-13.5-16.5c-1.01.143-2.01.317-3 .52m-3-.52v16.5" /></svg></div>
                     </div>
                      <!-- Card Gastos Futuros -->
-                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-purple-500 hover:shadow-purple-500/20 flex">
-                        <div class="flex items-center justify-between w-full">
-                            <div class="flex flex-col"><h3 class="text-subtle-text font-medium text-sm">Gastos Futuros</h3><p id="cardGastosPrevistos" class="text-2xl font-bold text-purple-500 whitespace-nowrap">R$ 0,00</p></div>
-                            <div class="bg-purple-500/10 p-3 rounded-lg flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-purple-500"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg></div>
-                        </div>
+                    <div class="bg-card-bg border border-border p-5 rounded-2xl shadow-lg transition-all duration-300 hover:border-purple-500 hover:shadow-purple-500/20 flex items-center justify-between">
+                        <div class="flex flex-col"><h3 class="text-subtle-text font-medium text-sm">Gastos Futuros</h3><p id="cardGastosPrevistos" class="text-xl font-bold text-purple-500 whitespace-nowrap">R$ 0,00</p></div>
+                        <div class="bg-purple-500/10 p-3 rounded-lg flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-purple-500"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg></div>
                     </div>
                 </div>
                 
@@ -728,8 +716,18 @@
                          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                             <h3 class="text-lg font-semibold text-light-text flex-shrink-0">Histórico de Entradas</h3>
                             <div class="flex flex-wrap items-center justify-start sm:justify-end gap-2" id="filtrosEntradas">
-                                <select id="filtroStatusEntradas" class="${filterSelectClasses}"><option value="todos">Todos</option><option value="pendente">Pendente</option><option value="resgatado">Resgatado</option></select>
-                                <select id="filtroFonteEntradas" class="${filterSelectClasses}"><option value="todos">Todas</option><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select>
+                                <select id="filtroStatusEntradas" class="${filterSelectClasses}">
+                                    <option value="todos" ${filtroEntradasState.status === 'todos' ? 'selected' : ''}>Todos</option>
+                                    <option value="pendente" ${filtroEntradasState.status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                                    <option value="resgatado" ${filtroEntradasState.status === 'resgatado' ? 'selected' : ''}>Resgatado</option>
+                                </select>
+                                <select id="filtroFonteEntradas" class="${filterSelectClasses}">
+                                    <option value="todos" ${filtroEntradasState.source === 'todos' ? 'selected' : ''}>Todas</option>
+                                    <option value="iFood" ${filtroEntradasState.source === 'iFood' ? 'selected' : ''}>iFood</option>
+                                    <option value="Uber" ${filtroEntradasState.source === 'Uber' ? 'selected' : ''}>Uber</option>
+                                    <option value="99" ${filtroEntradasState.source === '99' ? 'selected' : ''}>99</option>
+                                    <option value="Outro" ${filtroEntradasState.source === 'Outro' ? 'selected' : ''}>Outro</option>
+                                </select>
                                 <select id="filtroMesEntradas" class="${filterSelectClasses}">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroEntradasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
                                 <select id="filtroAnoEntradas" class="${filterSelectClasses}">${anos.map(ano => `<option value="${ano}" ${ano === filtroEntradasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
                             </div>
@@ -778,12 +776,38 @@
             const listaEl = document.getElementById('listaEntradas'); if (!listaEl) return;
             const { month, year, source, status } = filtroEntradasState;
             const inicio = new Date(Date.UTC(year, month, 1)), fim = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
-            const filtradas = entradas.filter(e => { const d = new Date(e.data); return d >= inicio && d <= fim && (source === 'todos' || e.fonte === source) && (status === 'todos' || e.status === status); });
+            
+            const filtradas = entradas.filter(e => {
+                const d = new Date(e.data);
+                
+                const dataValida = d >= inicio && d <= fim;
+                const fonteValida = source === 'todos' || e.fonte === source;
+
+                if (!dataValida || !fonteValida) {
+                    return false;
+                }
+
+                // CORREÇÃO: Lógica de filtro de status aprimorada
+                if (status === 'todos') {
+                    return true;
+                } else if (status === 'pendente') {
+                    // Considera 'pendente' se o status for 'pendente' ou se não houver status (dados antigos)
+                    return e.status === 'pendente' || !e.status;
+                } else if (status === 'resgatado') {
+                    // Considera 'resgatado' se o status for 'resgatado' ou 'repassado' (dados antigos)
+                    return e.status === 'resgatado' || e.status === 'repassado';
+                }
+                return false;
+            });
+
             document.getElementById('totalValorEntradas').textContent = `Total: ${formatarDinheiro(filtradas.reduce((acc, e) => acc + e.valor, 0))}`;
             if (filtradas.length === 0) { listaEl.innerHTML = '<p class="text-subtle-text text-center py-4">Nenhuma entrada encontrada.</p>'; return; }
             let html = '<ul class="space-y-3">';
             filtradas.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(e => {
-                const pendente = e.status === 'pendente';
+                // CORREÇÃO: Lógica de exibição aprimorada
+                const isResgatado = e.status === 'resgatado' || e.status === 'repassado';
+                const statusText = isResgatado ? 'resgatado' : 'pendente';
+
                 html += `<li class="flex justify-between items-center p-3 rounded-md border border-border bg-slate-900/30 hover:border-secondary/50">
                     <div class="flex items-center flex-grow gap-4">
                         <input type="checkbox" data-id="${e._id}" onchange="handleEntradaSelection(this)" class="item-checkbox flex-shrink-0" ${selectedEntradas.has(e._id) ? 'checked' : ''}>
@@ -793,7 +817,7 @@
                     <div class="flex items-center gap-2">
                        <div class="text-right">
                             <p class="font-semibold text-positive">${formatarDinheiro(e.valor)}</p>
-                            <button data-id="${e._id}" class="status-toggle text-sm font-medium ${pendente ? 'text-warning' : 'text-positive'}">${e.status}</button>
+                            <button data-id="${e._id}" class="status-toggle text-sm font-medium ${isResgatado ? 'text-positive' : 'text-warning'}">${statusText}</button>
                        </div>
                        <button class="edit-btn text-subtle-text hover:text-secondary hover:bg-secondary/10 ${iconButtonClasses}" data-id="${e._id}"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
                        <button class="delete-btn text-subtle-text hover:text-negative hover:bg-negative/10 ${iconButtonClasses}" data-id="${e._id}"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg></button>
@@ -831,8 +855,20 @@
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                             <h3 class="text-lg font-semibold text-light-text flex-shrink-0">Histórico de Saídas</h3>
                             <div class="flex flex-wrap items-center justify-start sm:justify-end gap-2" id="filtrosSaidas">
-                                <select id="filtroStatusSaidas" class="${filterSelectClasses}"><option value="todos">Todos</option><option value="em aberto">Em Aberto</option><option value="pago">Pago</option></select>
-                                <select id="filtroCategoriaSaidas" class="${filterSelectClasses}"><option value="todas">Categorias</option><option>Custo Fixo</option><option>Cartão de Crédito</option><option>Débito</option><option>Saque</option><option>Dízimo</option><option>Outro</option></select>
+                                <select id="filtroStatusSaidas" class="${filterSelectClasses}">
+                                    <option value="todos" ${filtroSaidasState.status === 'todos' ? 'selected' : ''}>Todos</option>
+                                    <option value="em aberto" ${filtroSaidasState.status === 'em aberto' ? 'selected' : ''}>Em Aberto</option>
+                                    <option value="pago" ${filtroSaidasState.status === 'pago' ? 'selected' : ''}>Pago</option>
+                                </select>
+                                <select id="filtroCategoriaSaidas" class="${filterSelectClasses}">
+                                    <option value="todas" ${filtroSaidasState.category === 'todas' ? 'selected' : ''}>Categorias</option>
+                                    <option value="Custo Fixo" ${filtroSaidasState.category === 'Custo Fixo' ? 'selected' : ''}>Custo Fixo</option>
+                                    <option value="Cartão de Crédito" ${filtroSaidasState.category === 'Cartão de Crédito' ? 'selected' : ''}>Cartão de Crédito</option>
+                                    <option value="Débito" ${filtroSaidasState.category === 'Débito' ? 'selected' : ''}>Débito</option>
+                                    <option value="Saque" ${filtroSaidasState.category === 'Saque' ? 'selected' : ''}>Saque</option>
+                                    <option value="Dízimo" ${filtroSaidasState.category === 'Dízimo' ? 'selected' : ''}>Dízimo</option>
+                                    <option value="Outro" ${filtroSaidasState.category === 'Outro' ? 'selected' : ''}>Outro</option>
+                                </select>
                                 <select id="filtroMesSaidas" class="${filterSelectClasses}">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroSaidasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
                                 <select id="filtroAnoSaidas" class="${filterSelectClasses}">${anos.map(ano => `<option value="${ano}" ${ano === filtroSaidasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
                             </div>
