@@ -278,8 +278,8 @@
         const formatarData = (dataStr) => {
             if (!dataStr || !dataStr.includes('-')) return ''; // Avoid formatting invalid date
             const date = new Date(dataStr);
-            // Add 1 day to correct timezone issue from UTC
-            date.setUTCDate(date.getUTCDate() + 1);
+            // A linha abaixo foi removida para corrigir o problema do dia a mais.
+            // date.setUTCDate(date.getUTCDate() + 1); 
             return date.toLocaleDateString('pt-BR', {timeZone: 'UTC'});
         }
         const hojeISO = () => new Date().toISOString().split('T')[0];
@@ -1263,4 +1263,5 @@
 
 </body>
 </html>
+
 
