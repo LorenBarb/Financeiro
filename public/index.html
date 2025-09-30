@@ -246,10 +246,26 @@
         // --- ESTADO GLOBAL ---
         let entradas = [];
         let saidas = [];
-        const hoje = new Date();
-        let filtroDashboardState = { month: hoje.getMonth(), year: hoje.getFullYear() };
-        let filtroEntradasState = { month: hoje.getMonth(), year: hoje.getFullYear(), source: 'todos', status: 'todos' };
-        let filtroSaidasState = { month: hoje.getMonth(), year: hoje.getFullYear(), category: 'todas', status: 'todos' };
+        
+        // CORREÇÃO FUSO HORÁRIO: Força o uso do fuso horário de Brasília (America/Sao_Paulo)
+        // 1. Cria um formatador para obter a data no fuso horário do Brasil.
+        const brasilDateFormatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Sao_Paulo',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        // 2. Obtém a data de "hoje" no Brasil no formato 'YYYY-MM-DD'.
+        const hojeBrasilString = brasilDateFormatter.format(new Date());
+
+        // 3. Cria um objeto Date que representa o início do dia no Brasil (em UTC) para cálculos.
+        const [ano, mes, dia] = hojeBrasilString.split('-').map(Number);
+        const hoje = new Date(Date.UTC(ano, mes - 1, dia));
+
+        // 4. Define o estado inicial dos filtros com base na data do Brasil.
+        let filtroDashboardState = { month: hoje.getUTCMonth(), year: hoje.getUTCFullYear() };
+        let filtroEntradasState = { month: hoje.getUTCMonth(), year: hoje.getUTCFullYear(), source: 'todos', status: 'todos' };
+        let filtroSaidasState = { month: hoje.getUTCMonth(), year: hoje.getUTCFullYear(), category: 'todas', status: 'todos' };
         let selectedEntradas = new Set();
         let selectedSaidas = new Set();
        
@@ -282,7 +298,8 @@
             // date.setUTCDate(date.getUTCDate() + 1); 
             return date.toLocaleDateString('pt-BR', {timeZone: 'UTC'});
         }
-        const hojeISO = () => new Date().toISOString().split('T')[0];
+        // CORREÇÃO FUSO HORÁRIO: Retorna a string da data de hoje já formatada para o fuso do Brasil.
+        const hojeISO = () => hojeBrasilString;
         
         Chart.register(ChartDataLabels);
 
@@ -1263,5 +1280,6 @@
 
 </body>
 </html>
+
 
 
