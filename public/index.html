@@ -140,66 +140,66 @@
                 </div>
 
                 <!-- Cards Principais -->
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
                     <!-- Card Entradas -->
-                    <div class="bg-card-bg border border-border p-4 rounded-2xl shadow-lg transition-all duration-300 hover:border-positive hover:shadow-positive/20 flex flex-col justify-between">
+                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg transition-all duration-300 hover:border-positive hover:shadow-positive/20 flex flex-col justify-between">
                         <div class="flex justify-between items-start">
-                            <h3 class="text-subtle-text font-medium text-sm leading-tight">Entradas Recebidas</h3>
+                            <h3 class="text-subtle-text font-medium text-xs md:text-sm leading-tight">Entradas Recebidas</h3>
                             <div class="bg-positive/10 p-2.5 rounded-lg flex-shrink-0 ml-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-positive"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"></path></svg>
                             </div>
                         </div>
-                        <p id="cardEntradas" class="text-xl md:text-2xl font-bold text-positive mt-2 self-start">R$ 0,00</p>
+                        <p id="cardEntradas" class="text-lg md:text-xl font-bold text-positive mt-2 self-start">R$ 0,00</p>
                     </div>
                     <!-- Card Pagamentos -->
-                    <div class="bg-card-bg border border-border p-4 rounded-2xl shadow-lg transition-all duration-300 hover:border-negative hover:shadow-negative/20 flex flex-col justify-between">
+                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg transition-all duration-300 hover:border-negative hover:shadow-negative/20 flex flex-col justify-between">
                         <div class="flex justify-between items-start">
-                            <h3 class="text-subtle-text font-medium text-sm leading-tight">Pagamentos</h3>
+                            <h3 class="text-subtle-text font-medium text-xs md:text-sm leading-tight">Pagamentos</h3>
                             <div class="bg-negative/10 p-2.5 rounded-lg flex-shrink-0 ml-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-negative"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0-3.182-5.511m3.182 5.51-5.511-3.182"></path></svg>
                             </div>
                         </div>
-                        <p id="cardPagamentosRealizados" class="text-xl md:text-2xl font-bold text-negative mt-2 self-start">R$ 0,00</p>
+                        <p id="cardPagamentosRealizados" class="text-lg md:text-xl font-bold text-negative mt-2 self-start">R$ 0,00</p>
                     </div>
                     <!-- Card Saldo Guardado -->
-                    <div class="bg-card-bg border border-border p-4 rounded-2xl shadow-lg transition-all duration-300 hover:border-saved hover:shadow-saved/20 flex flex-col justify-between">
+                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg transition-all duration-300 hover:border-saved hover:shadow-saved/20 flex flex-col justify-between">
                         <div class="flex justify-between items-start">
-                            <h3 class="text-subtle-text font-medium text-sm leading-tight">Saldo Guardado</h3>
+                            <h3 class="text-subtle-text font-medium text-xs md:text-sm leading-tight">Saldo Guardado</h3>
                             <div class="bg-saved/10 p-2.5 rounded-lg flex-shrink-0 ml-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-saved"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625H14.625M12 10.875a2.625 2.625 0 1 1 0 5.25 2.625 2.625 0 0 1 0-5.25m0 5.25V18.75m0 .375a2.625 2.625 0 1 1 0-5.25 2.625 2.625 0 0 1 0 5.25Z"></path></svg>
                             </div>
                         </div>
-                        <p id="cardSaldoGuardado" class="text-xl md:text-2xl font-bold text-saved mt-2 self-start">R$ 0,00</p>
+                        <p id="cardSaldoGuardado" class="text-lg md:text-xl font-bold text-saved mt-2 self-start">R$ 0,00</p>
                     </div>
                     <!-- Card Em Aberto -->
-                    <div class="bg-card-bg border border-border p-4 rounded-2xl shadow-lg transition-all duration-300 hover:border-warning hover:shadow-warning/20 flex flex-col justify-between">
+                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg transition-all duration-300 hover:border-warning hover:shadow-warning/20 flex flex-col justify-between">
                         <div class="flex justify-between items-start">
-                            <h3 class="text-subtle-text font-medium text-sm leading-tight">Em Aberto</h3>
+                            <h3 class="text-subtle-text font-medium text-xs md:text-sm leading-tight">Em Aberto</h3>
                             <div class="bg-warning/10 p-2.5 rounded-lg flex-shrink-0 ml-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-warning"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>
                             </div>
                         </div>
-                        <p id="cardValoresEmAberto" class="text-xl md:text-2xl font-bold text-warning mt-2 self-start">R$ 0,00</p>
+                        <p id="cardValoresEmAberto" class="text-lg md:text-xl font-bold text-warning mt-2 self-start">R$ 0,00</p>
                     </div>
                     <!-- Card Saldo Previsto -->
-                    <div class="bg-card-bg border border-border p-4 rounded-2xl shadow-lg transition-all duration-300 hover:border-neutral hover:shadow-neutral/20 flex flex-col justify-between">
+                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg transition-all duration-300 hover:border-neutral hover:shadow-neutral/20 flex flex-col justify-between">
                         <div class="flex justify-between items-start">
-                            <h3 class="text-subtle-text font-medium text-sm leading-tight">Saldo Previsto</h3>
+                            <h3 class="text-subtle-text font-medium text-xs md:text-sm leading-tight">Saldo Previsto</h3>
                             <div class="bg-neutral/10 p-2.5 rounded-lg flex-shrink-0 ml-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-neutral"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52v16.5m-13.5-16.5c-1.01.143-2.01.317-3 .52m-3-.52v16.5"></path></svg>
                             </div>
                         </div>
-                        <p id="cardSaldoPrevistoMes" class="text-xl md:text-2xl font-bold text-light-text mt-2 self-start">R$ 0,00</p>
+                        <p id="cardSaldoPrevistoMes" class="text-lg md:text-xl font-bold text-light-text mt-2 self-start">R$ 0,00</p>
                     </div>
                     <!-- Card Gastos Futuros -->
-                    <div class="bg-card-bg border border-border p-4 rounded-2xl shadow-lg transition-all duration-300 hover:border-purple-500 hover:shadow-purple-500/20 flex flex-col justify-between">
+                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg transition-all duration-300 hover:border-purple-500 hover:shadow-purple-500/20 flex flex-col justify-between">
                         <div class="flex justify-between items-start">
-                            <h3 class="text-subtle-text font-medium text-sm leading-tight">Gastos Futuros</h3>
+                            <h3 class="text-subtle-text font-medium text-xs md:text-sm leading-tight">Gastos Futuros</h3>
                             <div class="bg-purple-500/10 p-2.5 rounded-lg flex-shrink-0 ml-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-purple-500"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"></path></svg>
                             </div>
                         </div>
-                        <p id="cardGastosPrevistos" class="text-xl md:text-2xl font-bold text-purple-500 mt-2 self-start">R$ 0,00</p>
+                        <p id="cardGastosPrevistos" class="text-lg md:text-xl font-bold text-purple-500 mt-2 self-start">R$ 0,00</p>
                     </div>
                 </div>
                 
@@ -894,7 +894,7 @@
                             </div>
                             <div><label for="statusSaida" class="block text-sm font-medium text-subtle-text mb-1">Status</label><select id="statusSaida" class="${selectClasses}"><option value="em aberto">Em Aberto</option><option value="pago">Pago</option></select></div>
                             <div id="parcelasContainer" class="hidden"><label for="numParcelas" class="block text-sm font-medium text-subtle-text mb-1">Nº de Parcelas</label><input type="number" id="numParcelas" class="${inputClasses}" value="1" min="1"></div>
-                            <div id="custoNegocioContainer" class="hidden"><div class="flex items-center"><input id="isCustoNegocio" type="checkbox" class="item-checkbox"><label for="isCustoNegocio" class="ml-2 block text-sm text-subtle-text">Custo do negócio</label></div></div>
+                            <div id="custoNegocioContainer"><div class="flex items-center"><input id="isCustoNegocio" type="checkbox" class="item-checkbox"><label for="isCustoNegocio" class="ml-2 block text-sm text-subtle-text">Custo do negócio</label></div></div>
                             <button type="submit" class="${buttonClasses} mt-2">Adicionar Saída</button>
                         </form>
                     </div>
@@ -930,8 +930,8 @@
                 </div>`;
             
             document.getElementById('dataSaida').addEventListener('change', e => { document.getElementById('displayDataSaida').value = formatarData(e.target.value); });
-            document.getElementById('categoriaSaida').addEventListener('change', (e) => { const isCartao = e.target.value === 'Cartão de Crédito'; document.getElementById('parcelasContainer').classList.toggle('hidden', !isCartao); document.getElementById('custoNegocioContainer').classList.toggle('hidden', !isCartao); });
-            document.getElementById('formSaida').addEventListener('submit', e => { e.preventDefault(); const form = e.target; const isCartao = form.categoriaSaida.value === 'Cartão de Crédito'; const valor = parseFloat(form.valorSaida.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } adicionarSaida({ descricao: form.descricaoSaida.value, categoria: form.categoriaSaida.value, valor: valor, data: form.dataSaida.value, numParcelas: isCartao ? form.numParcelas.value : 1, isCustoNegocio: isCartao ? form.isCustoNegocio.checked : false, status: form.statusSaida.value }); form.reset(); form.dataSaida.value = hojeISO(); form.querySelector('#displayDataSaida').value = formatarData(hojeISO()); document.getElementById('parcelasContainer').classList.add('hidden'); document.getElementById('custoNegocioContainer').classList.add('hidden'); });
+            document.getElementById('categoriaSaida').addEventListener('change', (e) => { const isCartao = e.target.value === 'Cartão de Crédito'; document.getElementById('parcelasContainer').classList.toggle('hidden', !isCartao); });
+            document.getElementById('formSaida').addEventListener('submit', e => { e.preventDefault(); const form = e.target; const isCartao = form.categoriaSaida.value === 'Cartão de Crédito'; const valor = parseFloat(form.valorSaida.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } adicionarSaida({ descricao: form.descricaoSaida.value, categoria: form.categoriaSaida.value, valor: valor, data: form.dataSaida.value, numParcelas: isCartao ? form.numParcelas.value : 1, isCustoNegocio: form.isCustoNegocio.checked, status: form.statusSaida.value }); form.reset(); form.dataSaida.value = hojeISO(); form.querySelector('#displayDataSaida').value = formatarData(hojeISO()); document.getElementById('parcelasContainer').classList.add('hidden'); });
             document.getElementById('filtroMesSaidas').addEventListener('change', e => { filtroSaidasState.month = parseInt(e.target.value); renderizarListaSaidas(); });
             document.getElementById('filtroAnoSaidas').addEventListener('change', e => { filtroSaidasState.year = parseInt(e.target.value); renderizarListaSaidas(); });
             document.getElementById('filtroCategoriaSaidas').addEventListener('change', e => { filtroSaidasState.category = e.target.value; renderizarListaSaidas(); });
@@ -1266,7 +1266,7 @@
                         </div>
                     </div>
                     <div><label class="block text-sm font-medium text-subtle-text mb-1">Status</label><select name="status" class="${selectClasses}"><option value="em aberto" ${saida.status==='em aberto'?'selected':''}>Em Aberto</option><option value="pago" ${saida.status==='pago'?'selected':''}>Pago</option></select></div>
-                    <div class="flex items-center" ${saida.categoria!=='Cartão de Crédito'?'style="display:none;"':''}><input id="editIsCustoNegocio" type="checkbox" name="isCustoNegocio" ${saida.isCustoNegocio?'checked':''} class="item-checkbox"><label for="editIsCustoNegocio" class="ml-2 block text-sm text-subtle-text">Custo do negócio</label></div>
+                    <div class="flex items-center"><input id="editIsCustoNegocio" type="checkbox" name="isCustoNegocio" ${saida.isCustoNegocio?'checked':''} class="item-checkbox"><label for="editIsCustoNegocio" class="ml-2 block text-sm text-subtle-text">Custo do negócio</label></div>
                     <div class="flex justify-end gap-2 pt-4">
                         <button type="button" class="close-modal-btn py-2 px-4 rounded-md border border-border hover:bg-border">Cancelar</button>
                         <button type="submit" class="${buttonClasses} !w-auto">Salvar</button>
@@ -1274,12 +1274,9 @@
                 </form>
             </div>`;
             showModal(modals.editSaida, content);
-            document.getElementById('formEditSaida').addEventListener('submit', (e) => { e.preventDefault(); const form = e.target; const valor = parseFloat(form.valor.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } editarItem('saidas', form.id.value, { descricao: form.descricao.value, categoria: form.categoria.value, valor: valor, data: form.data.value, isCustoNegocio: form.isCustoNegocio?form.isCustoNegocio.checked:false, status: form.status.value }); hideModal(modals.editSaida); });
+            document.getElementById('formEditSaida').addEventListener('submit', (e) => { e.preventDefault(); const form = e.target; const valor = parseFloat(form.valor.value.replace(',', '.')); if(isNaN(valor)) { showInfoModal('Valor inválido!'); return; } editarItem('saidas', form.id.value, { descricao: form.descricao.value, categoria: form.categoria.value, valor: valor, data: form.data.value, isCustoNegocio: form.isCustoNegocio.checked, status: form.status.value }); hideModal(modals.editSaida); });
         }
     </script>
 
 </body>
 </html>
-
-
-
