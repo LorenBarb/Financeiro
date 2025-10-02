@@ -141,40 +141,65 @@
 
                 <!-- Cards Principais -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-                    <!-- Card Saldo Mês Anterior -->
-                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg flex flex-col justify-between">
-                        <h3 class="text-subtle-text font-medium text-sm leading-tight h-10">Saldo Mês Anterior</h3>
-                        <p id="cardSaldoAnterior" class="text-xl md:text-2xl font-bold text-light-text mt-2 self-start">R$ 0,00</p>
-                    </div>
                     <!-- Card Entradas -->
-                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg flex flex-col justify-between">
-                        <h3 class="text-subtle-text font-medium text-sm leading-tight h-10">Entradas Recebidas</h3>
-                        <p id="cardEntradas" class="text-xl md:text-2xl font-bold text-positive mt-2 self-start">R$ 0,00</p>
+                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg transition-all duration-300 hover:border-positive hover:shadow-positive/20 flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-subtle-text font-medium text-xs md:text-sm leading-tight">Entradas Recebidas</h3>
+                            <div class="bg-positive/10 p-2.5 rounded-lg flex-shrink-0 ml-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-positive"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"></path></svg>
+                            </div>
+                        </div>
+                        <p id="cardEntradas" class="text-lg md:text-xl font-bold text-positive mt-2 self-start">R$ 0,00</p>
                     </div>
                     <!-- Card Pagamentos -->
-                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg flex flex-col justify-between">
-                        <h3 class="text-subtle-text font-medium text-sm leading-tight h-10">Pagamentos</h3>
-                        <p id="cardPagamentosRealizados" class="text-xl md:text-2xl font-bold text-negative mt-2 self-start">R$ 0,00</p>
+                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg transition-all duration-300 hover:border-negative hover:shadow-negative/20 flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-subtle-text font-medium text-xs md:text-sm leading-tight">Pagamentos</h3>
+                            <div class="bg-negative/10 p-2.5 rounded-lg flex-shrink-0 ml-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-negative"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0-3.182-5.511m3.182 5.51-5.511-3.182"></path></svg>
+                            </div>
+                        </div>
+                        <p id="cardPagamentosRealizados" class="text-lg md:text-xl font-bold text-negative mt-2 self-start">R$ 0,00</p>
+                    </div>
+                    <!-- Card Saldo Guardado -->
+                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg transition-all duration-300 hover:border-saved hover:shadow-saved/20 flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-subtle-text font-medium text-xs md:text-sm leading-tight">Saldo Guardado</h3>
+                            <div class="bg-saved/10 p-2.5 rounded-lg flex-shrink-0 ml-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-saved"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625H14.625M12 10.875a2.625 2.625 0 1 1 0 5.25 2.625 2.625 0 0 1 0-5.25m0 5.25V18.75m0 .375a2.625 2.625 0 1 1 0-5.25 2.625 2.625 0 0 1 0 5.25Z"></path></svg>
+                            </div>
+                        </div>
+                        <p id="cardSaldoGuardado" class="text-lg md:text-xl font-bold text-saved mt-2 self-start">R$ 0,00</p>
                     </div>
                     <!-- Card Em Aberto -->
-                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg flex flex-col justify-between">
-                        <h3 class="text-subtle-text font-medium text-sm leading-tight h-10">Em Aberto</h3>
-                        <p id="cardValoresEmAberto" class="text-xl md:text-2xl font-bold text-warning mt-2 self-start">R$ 0,00</p>
-                    </div>
-                    <!-- Card Saldo Atual -->
-                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg flex flex-col justify-between">
-                        <h3 class="text-subtle-text font-medium text-sm leading-tight h-10">Saldo Atual</h3>
-                        <p id="cardSaldoGuardado" class="text-xl md:text-2xl font-bold text-saved mt-2 self-start">R$ 0,00</p>
+                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg transition-all duration-300 hover:border-warning hover:shadow-warning/20 flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-subtle-text font-medium text-xs md:text-sm leading-tight">Em Aberto</h3>
+                            <div class="bg-warning/10 p-2.5 rounded-lg flex-shrink-0 ml-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-warning"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>
+                            </div>
+                        </div>
+                        <p id="cardValoresEmAberto" class="text-lg md:text-xl font-bold text-warning mt-2 self-start">R$ 0,00</p>
                     </div>
                     <!-- Card Saldo Previsto -->
-                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg flex flex-col justify-between">
-                        <h3 class="text-subtle-text font-medium text-sm leading-tight h-10">Saldo Previsto</h3>
-                        <p id="cardSaldoPrevistoMes" class="text-xl md:text-2xl font-bold text-light-text mt-2 self-start">R$ 0,00</p>
+                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg transition-all duration-300 hover:border-neutral hover:shadow-neutral/20 flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-subtle-text font-medium text-xs md:text-sm leading-tight">Saldo Previsto</h3>
+                            <div class="bg-neutral/10 p-2.5 rounded-lg flex-shrink-0 ml-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-neutral"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52v16.5m-13.5-16.5c-1.01.143-2.01.317-3 .52m-3-.52v16.5"></path></svg>
+                            </div>
+                        </div>
+                        <p id="cardSaldoPrevistoMes" class="text-lg md:text-xl font-bold text-light-text mt-2 self-start">R$ 0,00</p>
                     </div>
                     <!-- Card Gastos Futuros -->
-                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg flex flex-col justify-between">
-                        <h3 class="text-subtle-text font-medium text-sm leading-tight h-10">Gastos Futuros</h3>
-                        <p id="cardGastosPrevistos" class="text-xl md:text-2xl font-bold text-purple-500 mt-2 self-start">R$ 0,00</p>
+                    <div class="bg-card-bg border border-border p-3 rounded-2xl shadow-lg transition-all duration-300 hover:border-purple-500 hover:shadow-purple-500/20 flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-subtle-text font-medium text-xs md:text-sm leading-tight">Gastos Futuros</h3>
+                            <div class="bg-purple-500/10 p-2.5 rounded-lg flex-shrink-0 ml-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-purple-500"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"></path></svg>
+                            </div>
+                        </div>
+                        <p id="cardGastosPrevistos" class="text-lg md:text-xl font-bold text-purple-500 mt-2 self-start">R$ 0,00</p>
                     </div>
                 </div>
                 
@@ -269,8 +294,11 @@
         const formatarData = (dataStr) => {
             if (!dataStr || !dataStr.includes('-')) return ''; // Avoid formatting invalid date
             const date = new Date(dataStr);
+            // A linha abaixo foi removida para corrigir o problema do dia a mais.
+            // date.setUTCDate(date.getUTCDate() + 1); 
             return date.toLocaleDateString('pt-BR', {timeZone: 'UTC'});
         }
+        // CORREÇÃO FUSO HORÁRIO: Retorna a string da data de hoje já formatada para o fuso do Brasil.
         const hojeISO = () => hojeBrasilString;
         
         Chart.register(ChartDataLabels);
@@ -392,6 +420,7 @@
         async function alterarStatusEntrada(id) {
             const entrada = entradas.find(en => en._id === id);
             if(entrada){
+                // CORREÇÃO: Lógica de toggle aprimorada para lidar com status antigo 'repassado'
                 const isResgatado = entrada.status === 'resgatado' || entrada.status === 'repassado';
                 const novoStatus = isResgatado ? 'pendente' : 'resgatado';
                 await editarItem('entradas', id, { status: novoStatus });
@@ -411,15 +440,6 @@
             const { month, year } = filtroDashboardState;
             const inicioMes = new Date(Date.UTC(year, month, 1));
             const fimMes = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
-
-            const totalEntradasAnteriores = entradas
-                .filter(e => new Date(e.data) < inicioMes)
-                .reduce((acc, e) => acc + e.valor, 0);
-            const totalSaidasPagasAnteriores = saidas
-                .filter(s => new Date(s.data) < inicioMes && s.status === 'pago')
-                .reduce((acc, s) => acc + s.valor, 0);
-            const saldoMesAnterior = totalEntradasAnteriores - totalSaidasPagasAnteriores;
-            
             const entradasPeriodo = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMes && d <= fimMes; });
             const saidasPeriodo = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMes && d <= fimMes; });
             
@@ -427,12 +447,11 @@
             const totalPagamentosRealizadosMes = saidasPeriodo.filter(s => s.status === 'pago').reduce((acc, s) => acc + s.valor, 0);
             const totalValoresEmAbertoMes = saidasPeriodo.filter(s => s.status === 'em aberto').reduce((acc, s) => acc + s.valor, 0);
             
-            const saldoGuardado = saldoMesAnterior + totalEntradasMes - totalPagamentosRealizadosMes;
-            const saldoPrevistoMes = saldoMesAnterior + totalEntradasMes - (totalPagamentosRealizadosMes + totalValoresEmAbertoMes);
+            const saldoGuardado = totalEntradasMes - totalPagamentosRealizadosMes;
+            const saldoPrevistoMes = totalEntradasMes - (totalPagamentosRealizadosMes + totalValoresEmAbertoMes);
             const gastosPrevistosFuturos = saidas.filter(s => new Date(s.data) > fimMes && s.status === 'em aberto').reduce((acc, s) => acc + s.valor, 0);
 
             return { 
-                saldoMesAnterior,
                 totalEntradas: totalEntradasMes, 
                 totalPagamentosRealizados: totalPagamentosRealizadosMes, 
                 totalValoresEmAberto: totalValoresEmAbertoMes, 
@@ -446,22 +465,18 @@
 
         // --- LÓGICA DE RENDERIZAÇÃO ---
         let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart;
-        
         function renderizarDashboard(data) {
-            const saldoAnteriorEl = document.getElementById('cardSaldoAnterior');
-            saldoAnteriorEl.textContent = formatarDinheiro(data.saldoMesAnterior);
-            saldoAnteriorEl.classList.remove('text-positive', 'text-negative', 'text-light-text');
-            saldoAnteriorEl.classList.add(data.saldoMesAnterior >= 0 ? 'text-positive' : 'text-negative');
-
             document.getElementById('cardEntradas').textContent = formatarDinheiro(data.totalEntradas);
             document.getElementById('cardPagamentosRealizados').textContent = formatarDinheiro(data.totalPagamentosRealizados);
             document.getElementById('cardValoresEmAberto').textContent = formatarDinheiro(data.totalValoresEmAberto);
 
+            // Card Saldo Previsto
             const saldoPrevistoEl = document.getElementById('cardSaldoPrevistoMes');
             saldoPrevistoEl.textContent = formatarDinheiro(data.saldoPrevistoMes);
             saldoPrevistoEl.classList.remove('text-positive', 'text-negative', 'text-light-text');
             saldoPrevistoEl.classList.add(data.saldoPrevistoMes >= 0 ? 'text-positive' : 'text-negative');
 
+            // Card Saldo Guardado
             const saldoGuardadoEl = document.getElementById('cardSaldoGuardado');
             saldoGuardadoEl.textContent = formatarDinheiro(data.saldoGuardado);
             saldoGuardadoEl.classList.remove('text-positive', 'text-negative', 'text-saved');
@@ -477,30 +492,10 @@
              const container = document.getElementById('resumoMetasContainer');
              container.innerHTML = `
                 <div class="bg-neutral/10 border-l-4 border-neutral text-primary p-4 rounded-md text-sm space-y-2">
-                    <div class="flex justify-between">
-                        <span>Saldo Mês Anterior:</span> 
-                        <strong class="${data.saldoMesAnterior >= 0 ? 'text-light-text' : 'text-negative'}">${formatarDinheiro(data.saldoMesAnterior)}</strong>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>(+) Entradas do Mês:</span> 
-                        <strong class="text-positive">${formatarDinheiro(data.totalEntradas)}</strong>
-                    </div>
-                     <div class="flex justify-between">
-                        <span>(-) Pagamentos do Mês:</span> 
-                        <strong class="text-negative">${formatarDinheiro(data.totalPagamentosRealizados)}</strong>
-                    </div>
-                    <div class="flex justify-between border-t border-border pt-2 mt-2 font-bold">
-                        <span>(=) Saldo Atual:</span> 
-                        <strong class="text-saved">${formatarDinheiro(data.saldoGuardado)}</strong>
-                    </div>
-                    <div class="flex justify-between text-warning">
-                        <span>(-) Contas a Pagar:</span> 
-                        <strong>${formatarDinheiro(data.totalValoresEmAberto)}</strong>
-                    </div>
-                    <div class="flex justify-between border-t border-border pt-2 mt-2 font-bold">
-                        <span>(=) Saldo Previsto:</span> 
-                        <strong class="${data.saldoPrevistoMes >= 0 ? 'text-positive' : 'text-negative'}">${formatarDinheiro(data.saldoPrevistoMes)}</strong>
-                    </div>
+                    <div class="flex justify-between"><span>Entradas:</span> <strong class="text-positive">${formatarDinheiro(data.totalEntradas)}</strong></div>
+                    <div class="flex justify-between"><span>Pagamentos:</span> <strong class="text-negative">${formatarDinheiro(data.totalPagamentosRealizados)}</strong></div>
+                    <div class="flex justify-between border-t border-border pt-2 mt-2"><span>Saldo Guardado:</span> <strong class="text-saved">${formatarDinheiro(data.saldoGuardado)}</strong></div>
+                    <div class="flex justify-between"><span>A Pagar:</span> <strong class="text-warning">${formatarDinheiro(data.totalValoresEmAberto)}</strong></div>
                 </div>`;
         }
         
@@ -620,7 +615,14 @@
             const ctxSaidas = document.getElementById('saidasChart').getContext('2d');
             const dadosSaidas = {};
             saidasPeriodo.forEach(s => { if (!dadosSaidas[s.categoria]) dadosSaidas[s.categoria] = 0; dadosSaidas[s.categoria] += s.valor; });
-            const CORES_SAIDAS = { 'Cartão de Crédito': '#ef4444', 'Dízimo': '#FFD700', 'Custo Fixo': '#22c55e', 'Débito': '#6366F1', 'Saque': '#EC4899', 'Outro': '#84CC16' };
+            const CORES_SAIDAS = {
+                'Cartão de Crédito': '#ef4444', // Vermelho (negative color)
+                'Dízimo': '#FFD700',            // Dourado
+                'Custo Fixo': '#22c55e',       // Verde (positive color)
+                'Débito': '#6366F1',
+                'Saque': '#EC4899',
+                'Outro': '#84CC16'
+            };
             const labelsSaidas = Object.keys(dadosSaidas);
             saidasChart = new Chart(ctxSaidas, {
                 type: 'doughnut', data: { labels: labelsSaidas, datasets: [{ data: Object.values(dadosSaidas), backgroundColor: labelsSaidas.map(l => CORES_SAIDAS[l] || '#A855F7'), borderWidth: 0 }] },
@@ -828,12 +830,20 @@
                 const dataValida = d >= inicio && d <= fim;
                 const fonteValida = source === 'todos' || e.fonte === source;
 
-                if (!dataValida || !fonteValida) return false;
+                if (!dataValida || !fonteValida) {
+                    return false;
+                }
 
-                if (status === 'todos') return true;
-                if (status === 'pendente') return e.status === 'pendente' || !e.status;
-                if (status === 'resgatado') return e.status === 'resgatado' || e.status === 'repassado';
-                
+                // CORREÇÃO: Lógica de filtro de status aprimorada
+                if (status === 'todos') {
+                    return true;
+                } else if (status === 'pendente') {
+                    // Considera 'pendente' se o status for 'pendente' ou se não houver status (dados antigos)
+                    return e.status === 'pendente' || !e.status;
+                } else if (status === 'resgatado') {
+                    // Considera 'resgatado' se o status for 'resgatado' ou 'repassado' (dados antigos)
+                    return e.status === 'resgatado' || e.status === 'repassado';
+                }
                 return false;
             });
 
@@ -841,6 +851,7 @@
             if (filtradas.length === 0) { listaEl.innerHTML = '<p class="text-subtle-text text-center py-4">Nenhuma entrada encontrada.</p>'; return; }
             let html = '<ul class="space-y-3">';
             filtradas.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(e => {
+                // CORREÇÃO: Lógica de exibição aprimorada
                 const isResgatado = e.status === 'resgatado' || e.status === 'repassado';
                 const statusText = isResgatado ? 'resgatado' : 'pendente';
 
@@ -986,6 +997,7 @@
 
             tabs.relatorios.innerHTML = `<div class="space-y-6">
                 
+                <!-- Relatório de Evolução Mensal -->
                 <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                         <h4 class="font-bold text-xl text-light-text">Evolução Mensal</h4>
@@ -1003,6 +1015,7 @@
                     <div class="h-96"><canvas id="evolucaoChart"></canvas></div>
                 </div>
                 
+                <!-- Novo Relatório de Recebimentos Diários -->
                 <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                         <h4 class="font-bold text-xl text-light-text">Recebimentos Diários por Fonte</h4>
@@ -1028,6 +1041,7 @@
                 anoInicialEl.innerHTML = todosAnosHtml;
                 anoFinalEl.innerHTML = todosAnosHtml;
                 
+                // Define o ano atual como padrão para ambos os filtros
                 anoInicialEl.value = anoAtual;
                 anoFinalEl.value = anoAtual;
             }
@@ -1090,11 +1104,26 @@
                     plugins: {
                         legend: { labels: { color: '#e2e8f0' } },
                         datalabels: { display: false },
-                        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${formatarDinheiro(c.parsed.y)}` } }
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${formatarDinheiro(context.parsed.y)}`;
+                                }
+                            }
+                        }
                     },
                     scales: {
-                        x: { stacked: false, grid: { color:'transparent' } },
-                        y: { stacked: false, grid: { color: '#334155' }, ticks: { callback: (v) => formatarDinheiro(v) } }
+                        x: { 
+                            stacked: false,
+                            grid: { color:'transparent' }
+                        },
+                        y: { 
+                            stacked: false,
+                            grid: { color: '#334155' },
+                            ticks: {
+                                callback: function(value) { return formatarDinheiro(value); }
+                            }
+                        }
                     }
                 }
             });
@@ -1145,9 +1174,40 @@
                     ] 
                 },
                 options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { datalabels: { display: false }, legend: { labels: { color: '#e2e8f0' } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label || ''}: ${formatarDinheiro(c.parsed.y)}` } } }, 
-                    scales: { y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { callback: (v) => formatarDinheiro(v) } }, x: { grid: { color:'transparent' } } } 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        datalabels: { display: false }, 
+                        legend: { labels: { color: '#e2e8f0' } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += formatarDinheiro(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }, 
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: '#334155' },
+                            ticks: {
+                                callback: function(value) {
+                                    return formatarDinheiro(value);
+                                }
+                            }
+                        }, 
+                        x: { 
+                            grid: { color:'transparent' } 
+                        } 
+                    } 
                 }
             });
         }
@@ -1220,4 +1280,3 @@
 
 </body>
 </html>
-
