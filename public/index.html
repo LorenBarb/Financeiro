@@ -481,7 +481,7 @@
         }
 
         // --- LÓGICA DE RENDERIZAÇÃO ---
-        let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart;
+        let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart, comparativoMensalChart;
         function renderizarDashboard(data) {
             // Cálculos dos saldos principais
             const saldoAtual = data.saldoMesAnterior + data.totalEntradas - data.totalPagamentosRealizados;
@@ -1020,6 +1020,79 @@
         }
 
         // --- ABA DE RELATÓRIOS ---
+        function renderizarGraficoComparativoMensal() {
+            if (comparativoMensalChart) comparativoMensalChart.destroy();
+            const anoEl = document.getElementById('filtroAnoComparativo');
+            const ctx = document.getElementById('comparativoMensalChart')?.getContext('2d');
+
+            const drawMessage = (message) => { if(!ctx) return; ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); ctx.font="16px Inter"; ctx.fillStyle="#94a3b8"; ctx.textAlign="center"; ctx.fillText(message,ctx.canvas.width/2,ctx.canvas.height/2); };
+
+            if (!ctx) return;
+            if (!anoEl || !anoEl.value) { drawMessage("Carregando..."); return; }
+            const ano = parseInt(anoEl.value);
+
+            const dataEntradasMensais = new Array(12).fill(0);
+            
+            const entradasDoAno = entradas.filter(e => {
+                const d = new Date(e.data);
+                return d.getUTCFullYear() === ano;
+            });
+
+            entradasDoAno.forEach(entrada => {
+                const mes = new Date(entrada.data).getUTCMonth();
+                dataEntradasMensais[mes] += entrada.valor;
+            });
+
+            comparativoMensalChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: MESES_NOME,
+                    datasets: [{
+                        label: `Entradas em ${ano}`,
+                        data: dataEntradasMensais,
+                        backgroundColor: '#22c55e', // positive color
+                        borderColor: '#16a34a',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'end',
+                            formatter: (v) => v > 0 ? formatarDinheiro(v) : '',
+                            color: '#f1f5f9',
+                            font: { weight: 'bold' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Total: ${formatarDinheiro(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#334155' },
+                            ticks: {
+                                callback: function(value) { return formatarDinheiro(value); }
+                            }
+                        },
+                        x: {
+                            grid: { color: 'transparent' }
+                        }
+                    }
+                }
+            });
+        }
+        
         function renderizarAbaRelatorios() {
             const anos = getAnosDisponiveis().sort((a,b) => a - b);
             const anoAtual = new Date().getFullYear();
@@ -1045,7 +1118,7 @@
                     <div class="h-96"><canvas id="evolucaoChart"></canvas></div>
                 </div>
                 
-                <!-- Novo Relatório de Recebimentos Diários -->
+                <!-- Relatório de Recebimentos Diários por Fonte -->
                 <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                         <h4 class="font-bold text-xl text-light-text">Recebimentos Diários por Fonte</h4>
@@ -1062,27 +1135,50 @@
                     </div>
                     <div class="h-96"><canvas id="recebimentosDiariosChart"></canvas></div>
                 </div>
+
+                <!-- Comparativo de Entradas Mensais -->
+                <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                        <h4 class="font-bold text-xl text-light-text">Comparativo de Entradas Mensais</h4>
+                        <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
+                            <div class="flex items-center gap-2">
+                                <label for="filtroAnoComparativo" class="text-sm font-medium text-subtle-text">Ano:</label>
+                                <select id="filtroAnoComparativo" class="${filterSelectClasses}"></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-96"><canvas id="comparativoMensalChart"></canvas></div>
+                </div>
             </div>`;
 
             const anoInicialEl = document.getElementById('filtroAnoInicial');
             const anoFinalEl = document.getElementById('filtroAnoFinal');
+            const anoComparativoEl = document.getElementById('filtroAnoComparativo');
+
             if(anos.length > 0) {
                 const todosAnosHtml = anos.map(a => `<option value="${a}">${a}</option>`).join('');
+                const anosDescHtml = getAnosDisponiveis().map(a => `<option value="${a}">${a}</option>`).join('');
+                
                 anoInicialEl.innerHTML = todosAnosHtml;
                 anoFinalEl.innerHTML = todosAnosHtml;
-                
-                // Define o ano atual como padrão para ambos os filtros
+                anoComparativoEl.innerHTML = anosDescHtml;
+
                 anoInicialEl.value = anoAtual;
                 anoFinalEl.value = anoAtual;
+                if(getAnosDisponiveis().includes(anoAtual)){
+                    anoComparativoEl.value = anoAtual;
+                }
             }
             anoInicialEl.addEventListener('change', renderizarGraficoEvolucao);
             anoFinalEl.addEventListener('change', renderizarGraficoEvolucao);
+            anoComparativoEl.addEventListener('change', renderizarGraficoComparativoMensal);
 
             document.getElementById('filtroMesRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
             document.getElementById('filtroAnoRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
             
             renderizarGraficoEvolucao();
             renderizarGraficoRecebimentosDiarios();
+            renderizarGraficoComparativoMensal();
         }
         
         function renderizarGraficoRecebimentosDiarios() {
