@@ -95,8 +95,8 @@ router.post('/entradas', async (req, res) => {
     });
     const newEntrada = await entrada.save({ session });
 
-    // Se houver valor, cria o dízimo associado
-    if (newEntrada.valor > 0) {
+    // Se houver valor e a fonte NÃO FOR 'Ajuste', cria o dízimo associado
+    if (newEntrada.valor > 0 && newEntrada.fonte !== 'Ajuste') {
       const dizimo = new Saida({
         descricao: `Dízimo sobre ${newEntrada.fonte}`,
         categoria: 'Dízimo',
@@ -125,25 +125,71 @@ router.put('/entradas/:id', async (req, res) => {
   session.startTransaction();
   try {
     const { id } = req.params;
-    const updatedEntrada = await Entrada.findByIdAndUpdate(id, req.body, { new: true, session });
 
-    if (!updatedEntrada) {
+    // Busca a entrada original para saber o estado anterior
+    const entradaOriginal = await Entrada.findById(id).session(session);
+    if (!entradaOriginal) {
       throw new Error('Entrada não encontrada');
     }
 
-    // Atualiza o dízimo correspondente
-    const novoValorDizimo = updatedEntrada.valor * 0.1;
-    await Saida.findOneAndUpdate(
-      { entradaId: updatedEntrada._id },
-      { 
-        $set: { 
-          valor: novoValorDizimo,
+    // Atualiza a entrada
+    const updatedEntrada = await Entrada.findByIdAndUpdate(id, req.body, { new: true, session });
+    if (!updatedEntrada) {
+      throw new Error('Falha ao atualizar a entrada');
+    }
+
+    const eraAjuste = entradaOriginal.fonte === 'Ajuste';
+    const virouAjuste = updatedEntrada.fonte === 'Ajuste';
+
+    // Caso 1: Era uma entrada normal e virou 'Ajuste' -> Deleta dízimo existente
+    if (!eraAjuste && virouAjuste) {
+      await Saida.findOneAndDelete({ entradaId: updatedEntrada._id }, { session });
+    }
+    // Caso 2: Era 'Ajuste' e virou uma entrada normal -> Cria um novo dízimo
+    else if (eraAjuste && !virouAjuste) {
+      if (updatedEntrada.valor > 0) {
+        const dizimo = new Saida({
+          descricao: `Dízimo sobre ${updatedEntrada.fonte}`,
+          categoria: 'Dízimo',
+          valor: updatedEntrada.valor * 0.1,
           data: updatedEntrada.data,
-          descricao: `Dízimo sobre ${updatedEntrada.fonte}`
-        } 
-      },
-      { session }
-    );
+          isCustoNegocio: false,
+          status: 'pago',
+          entradaId: updatedEntrada._id
+        });
+        await dizimo.save({ session });
+      }
+    }
+    // Caso 3: Era normal e continuou normal -> Atualiza o dízimo existente
+    else if (!eraAjuste && !virouAjuste) {
+      const novoValorDizimo = updatedEntrada.valor * 0.1;
+      const dizimoExistente = await Saida.findOneAndUpdate(
+        { entradaId: updatedEntrada._id },
+        {
+          $set: {
+            valor: novoValorDizimo,
+            data: updatedEntrada.data,
+            descricao: `Dízimo sobre ${updatedEntrada.fonte}`
+          }
+        },
+        { session, upsert: false } // Não cria se não existir
+      );
+
+      // Caso de borda: se uma entrada normal não tinha dízimo por algum motivo, cria agora
+      if (!dizimoExistente && updatedEntrada.valor > 0) {
+        const dizimo = new Saida({
+          descricao: `Dízimo sobre ${updatedEntrada.fonte}`,
+          categoria: 'Dízimo',
+          valor: updatedEntrada.valor * 0.1,
+          data: updatedEntrada.data,
+          isCustoNegocio: false,
+          status: 'pago',
+          entradaId: updatedEntrada._id
+        });
+        await dizimo.save({ session });
+      }
+    }
+    // Caso 4: Era 'Ajuste' e continuou 'Ajuste' -> Não faz nada com o dízimo.
 
     await session.commitTransaction();
     res.json(updatedEntrada);
@@ -154,6 +200,7 @@ router.put('/entradas/:id', async (req, res) => {
     session.endSession();
   }
 });
+
 
 // DELETE: Deletar uma entrada
 router.delete('/entradas/:id', async (req, res) => {
@@ -233,4 +280,3 @@ router.delete('/saidas/:id', async (req, res) => {
 });
 
 module.exports = router;
-

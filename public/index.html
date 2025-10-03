@@ -545,7 +545,7 @@
                 return;
             }
 
-            const CORES_FONTES = { 'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Outro': '#6B7280' };
+            const CORES_FONTES = { 'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Ajuste': '#3b82f6', 'Outro': '#6B7280' };
             const sortedEntradas = Object.entries(dadosEntradas).sort(([, a], [, b]) => b - a);
 
             let listHtml = '<ul class="space-y-2 text-sm">';
@@ -631,7 +631,7 @@
             const ctxEntradas = document.getElementById('entradasChart').getContext('2d');
             const dadosEntradas = {};
             entradasPeriodo.forEach(e => { if(!dadosEntradas[e.fonte]) dadosEntradas[e.fonte] = 0; dadosEntradas[e.fonte] += e.valor; });
-            const CORES_FONTES = { 'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Outro': '#6B7280' };
+            const CORES_FONTES = { 'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Ajuste': '#3b82f6', 'Outro': '#6B7280' };
             const labelsEntradas = Object.keys(dadosEntradas);
             entradasChart = new Chart(ctxEntradas, {
                 type: 'doughnut', data: { labels: labelsEntradas, datasets: [{ data: Object.values(dadosEntradas), backgroundColor: labelsEntradas.map(l => CORES_FONTES[l] || '#CCCCCC'), borderWidth: 0 }] },
@@ -774,7 +774,7 @@
                     <div class="md:col-span-1 bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border self-start">
                         <h3 class="text-lg font-semibold mb-4 text-light-text">Adicionar Nova Entrada</h3>
                         <form id="formEntrada" class="space-y-4">
-                             <div><label for="fonteEntrada" class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select id="fonteEntrada" class="${selectClasses}"><option>iFood</option><option>Uber</option><option>99</option><option>Outro</option></select></div>
+                             <div><label for="fonteEntrada" class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select id="fonteEntrada" class="${selectClasses}"><option>iFood</option><option>Uber</option><option>99</option><option>Ajuste</option><option>Outro</option></select></div>
                             <div><label for="valorEntrada" class="block text-sm font-medium text-subtle-text mb-1">Valor Bruto</label><input type="text" inputmode="decimal" id="valorEntrada" class="${inputClasses}" placeholder="150,00" required></div>
                             <div>
                                 <label for="dataEntrada" class="block text-sm font-medium text-subtle-text mb-1">Data</label>
@@ -802,6 +802,7 @@
                                     <option value="iFood" ${filtroEntradasState.source === 'iFood' ? 'selected' : ''}>iFood</option>
                                     <option value="Uber" ${filtroEntradasState.source === 'Uber' ? 'selected' : ''}>Uber</option>
                                     <option value="99" ${filtroEntradasState.source === '99' ? 'selected' : ''}>99</option>
+                                    <option value="Ajuste" ${filtroEntradasState.source === 'Ajuste' ? 'selected' : ''}>Ajuste</option>
                                     <option value="Outro" ${filtroEntradasState.source === 'Outro' ? 'selected' : ''}>Outro</option>
                                 </select>
                                 <select id="filtroMesEntradas" class="${filterSelectClasses}">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroEntradasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
@@ -828,7 +829,7 @@
                  const target = e.target.closest('.status-toggle, .edit-btn, .delete-btn'); if(!target) return; const id = target.dataset.id;
                  if(target.classList.contains('status-toggle')) alterarStatusEntrada(id);
                  if(target.classList.contains('edit-btn')) mostrarModalEditarEntrada(id);
-                 if(target.classList.contains('delete-btn')) showConfirmModal('Tem certeza? Isso também excluirá o dízimo associado.', () => removerItem('entradas', id));
+                 if(target.classList.contains('delete-btn')) showConfirmModal('Tem certeza? Isso também excluirá o dízimo associado (se houver).', () => removerItem('entradas', id));
             });
             renderizarListaEntradas();
         }
@@ -887,7 +888,7 @@
                 html += `<li class="flex justify-between items-center p-3 rounded-md border border-border bg-slate-900/30 hover:border-secondary/50">
                     <div class="flex items-center flex-grow gap-4">
                         <input type="checkbox" data-id="${e._id}" onchange="handleEntradaSelection(this)" class="item-checkbox flex-shrink-0" ${selectedEntradas.has(e._id) ? 'checked' : ''}>
-                        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${ {'iFood': '#EA1D2C', 'Uber': '#333', '99': '#FFC700', 'Outro': '#6B7280'}[e.fonte] }"></span>
+                        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${ {'iFood': '#EA1D2C', 'Uber': '#333', '99': '#FFC700', 'Ajuste': '#3b82f6', 'Outro': '#6B7280'}[e.fonte] }"></span>
                         <div><p class="font-semibold text-light-text">${e.fonte}</p><p class="text-sm text-subtle-text">${formatarData(e.data)}</p></div>
                     </div>
                     <div class="flex items-center gap-2">
@@ -1103,6 +1104,7 @@
                 'iFood': new Array(diasNoMes).fill(0),
                 'Uber': new Array(diasNoMes).fill(0),
                 '99': new Array(diasNoMes).fill(0),
+                'Ajuste': new Array(diasNoMes).fill(0),
                 'Outro': new Array(diasNoMes).fill(0)
             };
 
@@ -1117,7 +1119,7 @@
                 }
             });
 
-            const CORES_FONTES = { 'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Outro': '#6B7280' };
+            const CORES_FONTES = { 'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700', 'Ajuste': '#3b82f6', 'Outro': '#6B7280' };
             const datasets = Object.keys(dataPorFonte).map(fonte => ({
                 label: fonte,
                 data: dataPorFonte[fonte],
@@ -1252,7 +1254,7 @@
                 </div>
                 <form id="formEditEntrada" class="p-6 space-y-4">
                     <input type="hidden" name="id" value="${entrada._id}">
-                    <div><label class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select name="fonte" class="${selectClasses}" required><option ${entrada.fonte==='iFood'?'selected':''}>iFood</option><option ${entrada.fonte==='Uber'?'selected':''}>Uber</option><option ${entrada.fonte==='99'?'selected':''}>99</option><option ${entrada.fonte==='Outro'?'selected':''}>Outro</option></select></div>
+                    <div><label class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select name="fonte" class="${selectClasses}" required><option ${entrada.fonte==='iFood'?'selected':''}>iFood</option><option ${entrada.fonte==='Uber'?'selected':''}>Uber</option><option ${entrada.fonte==='99'?'selected':''}>99</option><option ${entrada.fonte==='Ajuste'?'selected':''}>Ajuste</option><option ${entrada.fonte==='Outro'?'selected':''}>Outro</option></select></div>
                     <div><label class="block text-sm font-medium text-subtle-text mb-1">Valor Bruto</label><input type="text" inputmode="decimal" name="valor" value="${String(entrada.valor).replace('.',',')}" class="${inputClasses}" required></div>
                     <div>
                         <label class="block text-sm font-medium text-subtle-text mb-1">Data</label>
@@ -1309,5 +1311,3 @@
 
 </body>
 </html>
-
-
