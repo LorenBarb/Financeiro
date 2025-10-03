@@ -5,7 +5,7 @@ const entradaSchema = new mongoose.Schema({
   fonte: {
     type: String,
     required: true,
-    enum: ['iFood', 'Uber', '99', 'Outro'] // Garante que a fonte seja um desses valores
+    enum: ['iFood', 'Uber', '99', 'Ajuste', 'Outro'] // Garante que a fonte seja um desses valores
   },
   valor: {
     type: Number,
@@ -25,4 +25,3 @@ const entradaSchema = new mongoose.Schema({
 
 // Cria e exporta o modelo 'Entrada' baseado no schema
 module.exports = mongoose.model('Entrada', entradaSchema);
-
