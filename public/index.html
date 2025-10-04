@@ -481,7 +481,7 @@
         }
 
         // --- LÓGICA DE RENDERIZAÇÃO ---
-        let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart, comparativoMensalChart, comparativoSaidasMensalChart;
+        let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart, comparativoMensalChart, comparativoSaidasMensalChart, custosNegocioChart;
         function renderizarDashboard(data) {
             // Cálculos dos saldos principais
             const saldoAtual = data.saldoMesAnterior + data.totalEntradas - data.totalPagamentosRealizados;
@@ -1165,6 +1165,75 @@
                 }
             });
         }
+
+        function renderizarGraficoCustosNegocio() {
+            if (custosNegocioChart) custosNegocioChart.destroy();
+            const anoEl = document.getElementById('filtroAnoCustosNegocio');
+            const ctx = document.getElementById('custosNegocioChart')?.getContext('2d');
+
+            const drawMessage = (message) => { if(!ctx) return; ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); ctx.font="16px Inter"; ctx.fillStyle="#94a3b8"; ctx.textAlign="center"; ctx.fillText(message,ctx.canvas.width/2,ctx.canvas.height/2); };
+
+            if (!ctx) return;
+            if (!anoEl || !anoEl.value) { drawMessage("Carregando..."); return; }
+            const ano = parseInt(anoEl.value);
+
+            const dataCustosMensais = new Array(12).fill(0);
+            
+            const custosDoAno = saidas.filter(s => {
+                const d = new Date(s.data);
+                return d.getUTCFullYear() === ano && s.isCustoNegocio;
+            });
+
+            custosDoAno.forEach(saida => {
+                const mes = new Date(saida.data).getUTCMonth();
+                dataCustosMensais[mes] += saida.valor;
+            });
+
+            custosNegocioChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: MESES_NOME,
+                    datasets: [{
+                        label: `Custos do Negócio em ${ano}`,
+                        data: dataCustosMensais,
+                        backgroundColor: '#A855F7',
+                        borderColor: '#9333EA',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end', align: 'end',
+                            formatter: (v) => v > 0 ? formatarDinheiro(v) : '',
+                            color: '#f1f5f9', font: { weight: 'bold' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Total: ${formatarDinheiro(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#334155' },
+                            ticks: {
+                                callback: function(value) { return formatarDinheiro(value); }
+                            }
+                        },
+                        x: {
+                            grid: { color: 'transparent' }
+                        }
+                    }
+                }
+            });
+        }
         
         function renderizarAbaRelatorios() {
             const anos = getAnosDisponiveis().sort((a,b) => a - b);
@@ -1236,12 +1305,27 @@
                     </div>
                     <div class="h-96"><canvas id="comparativoSaidasMensalChart"></canvas></div>
                 </div>
+
+                <!-- Custos do Negócio Mensais -->
+                <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                        <h4 class="font-bold text-xl text-light-text">Custos do Negócio (Mensal)</h4>
+                        <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
+                            <div class="flex items-center gap-2">
+                                <label for="filtroAnoCustosNegocio" class="text-sm font-medium text-subtle-text">Ano:</label>
+                                <select id="filtroAnoCustosNegocio" class="${filterSelectClasses}"></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-96"><canvas id="custosNegocioChart"></canvas></div>
+                </div>
             </div>`;
 
             const anoInicialEl = document.getElementById('filtroAnoInicial');
             const anoFinalEl = document.getElementById('filtroAnoFinal');
             const anoComparativoEl = document.getElementById('filtroAnoComparativo');
             const anoComparativoSaidasEl = document.getElementById('filtroAnoComparativoSaidas');
+            const anoCustosNegocioEl = document.getElementById('filtroAnoCustosNegocio');
 
             if(anos.length > 0) {
                 const todosAnosHtml = anos.map(a => `<option value="${a}">${a}</option>`).join('');
@@ -1251,18 +1335,21 @@
                 anoFinalEl.innerHTML = todosAnosHtml;
                 anoComparativoEl.innerHTML = anosDescHtml;
                 anoComparativoSaidasEl.innerHTML = anosDescHtml;
+                anoCustosNegocioEl.innerHTML = anosDescHtml;
 
                 anoInicialEl.value = anoAtual;
                 anoFinalEl.value = anoAtual;
                 if(getAnosDisponiveis().includes(anoAtual)){
                     anoComparativoEl.value = anoAtual;
                     anoComparativoSaidasEl.value = anoAtual;
+                    anoCustosNegocioEl.value = anoAtual;
                 }
             }
             anoInicialEl.addEventListener('change', renderizarGraficoEvolucao);
             anoFinalEl.addEventListener('change', renderizarGraficoEvolucao);
             anoComparativoEl.addEventListener('change', renderizarGraficoComparativoMensal);
             anoComparativoSaidasEl.addEventListener('change', renderizarGraficoComparativoSaidasMensal);
+            anoCustosNegocioEl.addEventListener('change', renderizarGraficoCustosNegocio);
 
             document.getElementById('filtroMesRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
             document.getElementById('filtroAnoRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
@@ -1271,6 +1358,7 @@
             renderizarGraficoRecebimentosDiarios();
             renderizarGraficoComparativoMensal();
             renderizarGraficoComparativoSaidasMensal();
+            renderizarGraficoCustosNegocio();
         }
         
         function renderizarGraficoRecebimentosDiarios() {
@@ -1499,5 +1587,3 @@
 
 </body>
 </html>
-
-
