@@ -1021,11 +1021,14 @@
 
         // --- ABA DE RELATÓRIOS ---
 
-        function renderizarTabelaEntradasDiarias(monthlyData, ano) {
+        function renderizarTabelaEntradasDiarias(monthlyData, ano, selectedMonths) {
             const container = document.getElementById('entradasDiariasTableContainer');
             if (!container) return;
 
-            const hasData = monthlyData.some(monthData => monthData.some(dayValue => dayValue > 0));
+            const hasData = monthlyData.some((monthData, monthIndex) => 
+                selectedMonths.includes(monthIndex) && monthData.some(dayValue => dayValue > 0)
+            );
+
             if (!hasData) {
                 container.innerHTML = '';
                 return;
@@ -1037,8 +1040,8 @@
                     <table class="w-full text-sm text-left text-subtle-text">
                         <thead class="text-xs text-primary uppercase bg-slate-700/50">
                             <tr>
-                                <th scope="col" class="px-4 py-3 rounded-l-lg">Dia</th>
-                                ${MESES_NOME.map(mes => `<th scope="col" class="px-4 py-3 text-center">${mes.substring(0,3)}</th>`).join('')}
+                                <th scope="col" class="px-4 py-3 rounded-l-lg sticky left-0 bg-slate-700/80 backdrop-blur-sm">Dia</th>
+                                ${MESES_NOME.map((mes, i) => selectedMonths.includes(i) ? `<th scope="col" class="px-4 py-3 text-center">${mes.substring(0,3)}</th>` : '').join('')}
                                 <th scope="col" class="px-4 py-3 rounded-r-lg text-center">Total Dia</th>
                             </tr>
                         </thead>
@@ -1049,19 +1052,20 @@
 
             for (let day = 0; day < 31; day++) {
                 let totalPerDay = 0;
-                const dayValues = monthlyData.map(monthData => monthData[day]);
-                const dayHasData = dayValues.some(v => v > 0);
+                const dayHasDataInSelectedMonths = selectedMonths.some(monthIndex => monthlyData[monthIndex][day] > 0);
 
-                if (dayHasData) {
+                if (dayHasDataInSelectedMonths) {
                     tableHtml += `<tr class="border-b border-border hover:bg-slate-700/30">
-                        <th scope="row" class="px-4 py-3 font-medium text-light-text text-center">${day + 1}</th>
+                        <th scope="row" class="px-4 py-3 font-medium text-light-text text-center sticky left-0 bg-card-bg/80 backdrop-blur-sm">${day + 1}</th>
                     `;
 
                     for (let month = 0; month < 12; month++) {
-                        const value = monthlyData[month][day];
-                        totalPerDay += value;
-                        totalsPerMonth[month] += value;
-                        tableHtml += `<td class="px-4 py-3 text-center ${value > 0 ? 'text-light-text' : ''}">${value > 0 ? formatarDinheiro(value) : '-'}</td>`;
+                        if (selectedMonths.includes(month)) {
+                            const value = monthlyData[month][day];
+                            totalPerDay += value;
+                            totalsPerMonth[month] += value;
+                            tableHtml += `<td class="px-4 py-3 text-center ${value > 0 ? 'text-light-text' : ''}">${value > 0 ? formatarDinheiro(value) : '-'}</td>`;
+                        }
                     }
                     tableHtml += `<td class="px-4 py-3 font-bold text-light-text text-center">${formatarDinheiro(totalPerDay)}</td>`;
                     tableHtml += `</tr>`;
@@ -1072,9 +1076,9 @@
                         </tbody>
                         <tfoot>
                             <tr class="font-semibold text-primary bg-slate-700/50">
-                                <th scope="row" class="px-4 py-3 text-base rounded-l-lg">Total Mês</th>
-                                ${totalsPerMonth.map(total => `<td class="px-4 py-3 text-center">${formatarDinheiro(total)}</td>`).join('')}
-                                <td class="px-4 py-3 text-center rounded-r-lg font-extrabold text-secondary">${formatarDinheiro(totalsPerMonth.reduce((a, b) => a + b, 0))}</td>
+                                <th scope="row" class="px-4 py-3 text-base rounded-l-lg sticky left-0 bg-slate-700/80 backdrop-blur-sm">Total Mês</th>
+                                ${totalsPerMonth.map((total, i) => selectedMonths.includes(i) ? `<td class="px-4 py-3 text-center">${formatarDinheiro(total)}</td>` : '').join('')}
+                                <td class="px-4 py-3 text-center rounded-r-lg font-extrabold text-secondary">${formatarDinheiro(selectedMonths.reduce((acc, monthIndex) => acc + totalsPerMonth[monthIndex], 0))}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -1168,6 +1172,8 @@
             if (!anoEl || !anoEl.value) { drawMessage("Carregando..."); return; }
             const ano = parseInt(anoEl.value);
 
+            const selectedMonths = Array.from(document.querySelectorAll('.month-checkbox:checked')).map(cb => parseInt(cb.value));
+
             const monthlyData = Array.from({ length: 12 }, () => Array(31).fill(0));
             const entradasDoAno = entradas.filter(e => new Date(e.data).getUTCFullYear() === ano);
 
@@ -1186,12 +1192,12 @@
             ];
 
             const datasets = monthlyData.map((data, index) => {
-                if (data.some(value => value > 0)) { // Only show months with data
+                if (selectedMonths.includes(index) && data.some(value => value > 0)) {
                     return {
                         label: MESES_NOME[index],
                         data: data,
                         borderColor: monthColors[index],
-                        backgroundColor: `${monthColors[index]}1A`, // semi-transparent for fill
+                        backgroundColor: `${monthColors[index]}1A`,
                         fill: false,
                         tension: 0.3,
                         pointRadius: 2,
@@ -1201,8 +1207,8 @@
             }).filter(Boolean);
 
             if (datasets.length === 0) {
-                drawMessage(`Nenhuma entrada encontrada para ${ano}.`);
-                renderizarTabelaEntradasDiarias(monthlyData, ano); // Still call to clear the table
+                drawMessage(`Nenhuma entrada encontrada para os meses selecionados em ${ano}.`);
+                renderizarTabelaEntradasDiarias(monthlyData, ano, selectedMonths);
                 return;
             }
 
@@ -1250,7 +1256,7 @@
                 }
             });
 
-            renderizarTabelaEntradasDiarias(monthlyData, ano);
+            renderizarTabelaEntradasDiarias(monthlyData, ano, selectedMonths);
         }
 
         function renderizarGraficoComparativoSaidasMensal() {
@@ -1413,6 +1419,17 @@
                             </div>
                         </div>
                     </div>
+                     <div class="mb-6 p-3 bg-slate-900/50 rounded-lg">
+                        <label class="text-sm font-medium text-subtle-text mb-2 block">Selecione os meses para comparar:</label>
+                        <div id="monthSelectorContainer" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-x-4 gap-y-2">
+                            ${MESES_NOME.map((mes, i) => `
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="mes-${i}" value="${i}" class="item-checkbox month-checkbox" checked>
+                                    <label for="mes-${i}" class="ml-2 text-sm">${mes.substring(0,3)}</label>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
                     <div class="h-96"><canvas id="entradasDiariasChart"></canvas></div>
                     <div id="entradasDiariasTableContainer" class="mt-8"></div>
                 </div>
@@ -1530,6 +1547,9 @@
             anoComparativoSaidasEl.addEventListener('change', renderizarGraficoComparativoSaidasMensal);
             anoCustosNegocioEl.addEventListener('change', renderizarGraficoCustosNegocio);
             anoEntradasDiariasEl.addEventListener('change', renderizarGraficoEntradasDiarias);
+            document.querySelectorAll('.month-checkbox').forEach(cb => {
+                cb.addEventListener('change', renderizarGraficoEntradasDiarias);
+            });
 
 
             document.getElementById('filtroMesRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
@@ -1769,4 +1789,3 @@
 
 </body>
 </html>
-
