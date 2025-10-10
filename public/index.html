@@ -256,6 +256,7 @@
         // --- ESTADO GLOBAL ---
         let entradas = [];
         let saidas = [];
+        let comparativoDiarioSelectedMonths = [];
         
         // CORREÇÃO FUSO HORÁRIO: Força o uso do fuso horário de Brasília (America/Sao_Paulo)
         // 1. Cria um formatador para obter a data no fuso horário do Brasil.
@@ -481,7 +482,7 @@
         }
 
         // --- LÓGICA DE RENDERIZAÇÃO ---
-        let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart, comparativoMensalChart, comparativoSaidasMensalChart, custosNegocioChart, entradasDiariasChart;
+        let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart, comparativoMensalChart, comparativoSaidasMensalChart, custosNegocioChart, entradasDiariasChart, entradasMensaisChart;
         function renderizarDashboard(data) {
             // Cálculos dos saldos principais
             const saldoAtual = data.saldoMesAnterior + data.totalEntradas - data.totalPagamentosRealizados;
@@ -1021,7 +1022,7 @@
 
         // --- ABA DE RELATÓRIOS ---
 
-        function renderizarTabelaEntradasDiarias(monthlyData, ano, selectedMonths) {
+        function renderizarTabelaEntradasDiarias(ano, monthlyData, selectedMonths) {
             const container = document.getElementById('entradasDiariasTableContainer');
             if (!container) return;
 
@@ -1030,17 +1031,17 @@
             );
 
             if (!hasData) {
-                container.innerHTML = '';
+                container.innerHTML = '<p class="text-subtle-text text-center py-4">Nenhum dado detalhado para os meses selecionados.</p>';
                 return;
             }
 
             let tableHtml = `
-                <h5 class="text-lg font-semibold text-light-text mb-4 mt-6">Dados Detalhados de Entradas em ${ano}</h5>
+                <h5 class="text-lg font-semibold text-light-text mb-4 mt-8">Dados Detalhados de Entradas em ${ano}</h5>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left text-subtle-text">
                         <thead class="text-xs text-primary uppercase bg-slate-700/50">
                             <tr>
-                                <th scope="col" class="px-4 py-3 rounded-l-lg sticky left-0 bg-slate-700/80 backdrop-blur-sm">Dia</th>
+                                <th scope="col" class="px-4 py-3 rounded-l-lg sticky left-0 bg-slate-800 z-10">Dia</th>
                                 ${MESES_NOME.map((mes, i) => selectedMonths.includes(i) ? `<th scope="col" class="px-4 py-3 text-center">${mes.substring(0,3)}</th>` : '').join('')}
                                 <th scope="col" class="px-4 py-3 rounded-r-lg text-center">Total Dia</th>
                             </tr>
@@ -1056,7 +1057,7 @@
 
                 if (dayHasDataInSelectedMonths) {
                     tableHtml += `<tr class="border-b border-border hover:bg-slate-700/30">
-                        <th scope="row" class="px-4 py-3 font-medium text-light-text text-center sticky left-0 bg-card-bg/80 backdrop-blur-sm">${day + 1}</th>
+                        <th scope="row" class="px-4 py-3 font-medium text-light-text text-center sticky left-0 bg-slate-800/95 backdrop-blur-sm z-10">${day + 1}</th>
                     `;
 
                     for (let month = 0; month < 12; month++) {
@@ -1076,7 +1077,7 @@
                         </tbody>
                         <tfoot>
                             <tr class="font-semibold text-primary bg-slate-700/50">
-                                <th scope="row" class="px-4 py-3 text-base rounded-l-lg sticky left-0 bg-slate-700/80 backdrop-blur-sm">Total Mês</th>
+                                <th scope="row" class="px-4 py-3 text-base rounded-l-lg sticky left-0 bg-slate-800 z-10">Total Mês</th>
                                 ${totalsPerMonth.map((total, i) => selectedMonths.includes(i) ? `<td class="px-4 py-3 text-center">${formatarDinheiro(total)}</td>` : '').join('')}
                                 <td class="px-4 py-3 text-center rounded-r-lg font-extrabold text-secondary">${formatarDinheiro(selectedMonths.reduce((acc, monthIndex) => acc + totalsPerMonth[monthIndex], 0))}</td>
                             </tr>
@@ -1087,7 +1088,7 @@
 
             container.innerHTML = tableHtml;
         }
-
+        
         function renderizarGraficoComparativoMensal() {
             if (comparativoMensalChart) comparativoMensalChart.destroy();
             const anoEl = document.getElementById('filtroAnoComparativo');
@@ -1161,104 +1162,6 @@
             });
         }
         
-        function renderizarGraficoEntradasDiarias() {
-            if (entradasDiariasChart) entradasDiariasChart.destroy();
-            const anoEl = document.getElementById('filtroAnoEntradasDiarias');
-            const ctx = document.getElementById('entradasDiariasChart')?.getContext('2d');
-
-            const drawMessage = (message) => { if(!ctx) return; ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); ctx.font="16px Inter"; ctx.fillStyle="#94a3b8"; ctx.textAlign="center"; ctx.fillText(message,ctx.canvas.width/2,ctx.canvas.height/2); };
-
-            if (!ctx) return;
-            if (!anoEl || !anoEl.value) { drawMessage("Carregando..."); return; }
-            const ano = parseInt(anoEl.value);
-
-            const selectedMonths = Array.from(document.querySelectorAll('.month-checkbox:checked')).map(cb => parseInt(cb.value));
-
-            const monthlyData = Array.from({ length: 12 }, () => Array(31).fill(0));
-            const entradasDoAno = entradas.filter(e => new Date(e.data).getUTCFullYear() === ano);
-
-            entradasDoAno.forEach(entrada => {
-                const date = new Date(entrada.data);
-                const month = date.getUTCMonth(); // 0-11
-                const dayIndex = date.getUTCDate() - 1; // 0-30
-                if (month >= 0 && month < 12 && dayIndex >= 0 && dayIndex < 31) {
-                    monthlyData[month][dayIndex] += entrada.valor;
-                }
-            });
-
-            const monthColors = [
-                '#3b82f6', '#16a34a', '#ef4444', '#f97316', '#8b5cf6', '#ec4899',
-                '#14b8a6', '#eab308', '#64748b', '#d946ef', '#0ea5e9', '#65a30d'
-            ];
-
-            const datasets = monthlyData.map((data, index) => {
-                if (selectedMonths.includes(index) && data.some(value => value > 0)) {
-                    return {
-                        label: MESES_NOME[index],
-                        data: data,
-                        borderColor: monthColors[index],
-                        backgroundColor: `${monthColors[index]}1A`,
-                        fill: false,
-                        tension: 0.3,
-                        pointRadius: 2,
-                    };
-                }
-                return null;
-            }).filter(Boolean);
-
-            if (datasets.length === 0) {
-                drawMessage(`Nenhuma entrada encontrada para os meses selecionados em ${ano}.`);
-                renderizarTabelaEntradasDiarias(monthlyData, ano, selectedMonths);
-                return;
-            }
-
-            const labels = Array.from({ length: 31 }, (_, i) => String(i + 1));
-            
-            entradasDiariasChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { 
-                            position: 'bottom',
-                            labels: {
-                                color: '#e2e8f0',
-                                usePointStyle: true,
-                                boxWidth: 8
-                            }
-                        },
-                        datalabels: { display: false },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${formatarDinheiro(context.parsed.y)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#334155' },
-                            ticks: { callback: function(value) { return formatarDinheiro(value); } }
-                        },
-                        x: { 
-                            grid: { color: 'transparent' }
-                        }
-                    }
-                }
-            });
-
-            renderizarTabelaEntradasDiarias(monthlyData, ano, selectedMonths);
-        }
-
         function renderizarGraficoComparativoSaidasMensal() {
             if (comparativoSaidasMensalChart) comparativoSaidasMensalChart.destroy();
             const anoEl = document.getElementById('filtroAnoComparativoSaidas');
@@ -1401,6 +1304,115 @@
             });
         }
         
+        function renderizarDetalhesComparativoDiario(ano) {
+            const container = document.getElementById('comparativoDiarioDetalhes');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="h-96"><canvas id="entradasDiariasChart"></canvas></div>
+                <div id="entradasDiariasTableContainer" class="mt-8"></div>
+            `;
+            
+            const selectedMonths = comparativoDiarioSelectedMonths;
+            const monthlyData = Array.from({ length: 12 }, () => Array(31).fill(0));
+            const entradasDoAno = entradas.filter(e => new Date(e.data).getUTCFullYear() === ano);
+
+            entradasDoAno.forEach(entrada => {
+                const date = new Date(entrada.data);
+                const month = date.getUTCMonth();
+                const dayIndex = date.getUTCDate() - 1;
+                if (month >= 0 && month < 12 && dayIndex >= 0 && dayIndex < 31) {
+                    monthlyData[month][dayIndex] += entrada.valor;
+                }
+            });
+            
+            renderizarGraficoEntradasDiarias(ano, monthlyData, selectedMonths);
+            renderizarTabelaEntradasDiarias(ano, monthlyData, selectedMonths);
+        }
+
+        function renderizarComparativoDiario() {
+            if (entradasMensaisChart) entradasMensaisChart.destroy();
+            const anoEl = document.getElementById('filtroAnoComparativoDiario');
+            const ctx = document.getElementById('entradasMensaisChart')?.getContext('2d');
+            const detailsContainer = document.getElementById('comparativoDiarioDetalhes');
+
+            const drawMessage = (chartCtx, message) => { if(!chartCtx) return; chartCtx.clearRect(0,0,chartCtx.canvas.width,chartCtx.canvas.height); chartCtx.font="16px Inter"; chartCtx.fillStyle="#94a3b8"; chartCtx.textAlign="center"; chartCtx.fillText(message,chartCtx.canvas.width/2,chartCtx.canvas.height/2); };
+            
+            if (!ctx || !anoEl || !anoEl.value) {
+                drawMessage(ctx, "Carregando...");
+                detailsContainer.innerHTML = '';
+                return;
+            }
+            
+            const ano = parseInt(anoEl.value);
+            const monthlyTotals = Array(12).fill(0);
+            const monthsWithData = new Set();
+            
+            entradas.filter(e => new Date(e.data).getUTCFullYear() === ano)
+                .forEach(e => {
+                    const month = new Date(e.data).getUTCMonth();
+                    monthlyTotals[month] += e.valor;
+                    monthsWithData.add(month);
+                });
+
+            if (comparativoDiarioSelectedMonths.length === 0 && monthsWithData.size > 0) {
+                comparativoDiarioSelectedMonths = Array.from(monthsWithData).slice(0, 2);
+            }
+            
+            const backgroundColors = monthlyTotals.map((_, i) => comparativoDiarioSelectedMonths.includes(i) ? '#f59e0b' : '#334155');
+
+            entradasMensaisChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: MESES_NOME.map(m => m.substring(0,3)),
+                    datasets: [{
+                        label: 'Total de Entradas',
+                        data: monthlyTotals,
+                        backgroundColor: backgroundColors,
+                        borderColor: '#1e293b',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (evt, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const pos = comparativoDiarioSelectedMonths.indexOf(index);
+                            if (pos !== -1) {
+                                comparativoDiarioSelectedMonths.splice(pos, 1);
+                            } else {
+                                comparativoDiarioSelectedMonths.push(index);
+                            }
+                            renderizarComparativoDiario();
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { display: false },
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    return `${MESES_NOME[context.dataIndex]}: ${formatarDinheiro(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { grid: { color: '#334155' }, ticks: { display: false } },
+                        x: { grid: { color: 'transparent' } }
+                    }
+                }
+            });
+            
+            if (comparativoDiarioSelectedMonths.length > 0) {
+                renderizarDetalhesComparativoDiario(ano);
+            } else {
+                detailsContainer.innerHTML = '<p class="text-subtle-text text-center py-10">Clique em uma ou mais barras para comparar os detalhes diários.</p>';
+            }
+        }
+
         function renderizarAbaRelatorios() {
             const anos = getAnosDisponiveis().sort((a,b) => a - b);
             const anoAtual = new Date().getFullYear();
@@ -1408,30 +1420,20 @@
 
             tabs.relatorios.innerHTML = `<div class="space-y-6">
                 
-                <!-- Comparativo de Entradas Diárias -->
+                <!-- Análise Comparativa de Entradas Diárias -->
                 <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                        <h4 class="font-bold text-xl text-light-text">Comparativo de Entradas Diárias</h4>
+                        <h4 class="font-bold text-xl text-light-text">Análise Comparativa de Entradas Diárias</h4>
                          <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
                             <div class="flex items-center gap-2">
-                                <label for="filtroAnoEntradasDiarias" class="text-sm font-medium text-subtle-text">Ano:</label>
-                                <select id="filtroAnoEntradasDiarias" class="${filterSelectClasses}"></select>
+                                <label for="filtroAnoComparativoDiario" class="text-sm font-medium text-subtle-text">Ano:</label>
+                                <select id="filtroAnoComparativoDiario" class="${filterSelectClasses}"></select>
                             </div>
                         </div>
                     </div>
-                     <div class="mb-6 p-3 bg-slate-900/50 rounded-lg">
-                        <label class="text-sm font-medium text-subtle-text mb-2 block">Selecione os meses para comparar:</label>
-                        <div id="monthSelectorContainer" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-x-4 gap-y-2">
-                            ${MESES_NOME.map((mes, i) => `
-                                <div class="flex items-center">
-                                    <input type="checkbox" id="mes-${i}" value="${i}" class="item-checkbox month-checkbox" checked>
-                                    <label for="mes-${i}" class="ml-2 text-sm">${mes.substring(0,3)}</label>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    <div class="h-96"><canvas id="entradasDiariasChart"></canvas></div>
-                    <div id="entradasDiariasTableContainer" class="mt-8"></div>
+                    <p class="text-center text-subtle-text text-sm mb-4">Clique nas barras para selecionar/remover meses da comparação.</p>
+                    <div class="h-60 mb-8"><canvas id="entradasMensaisChart"></canvas></div>
+                    <div id="comparativoDiarioDetalhes"></div>
                 </div>
 
                 <!-- Relatório de Evolução Mensal -->
@@ -1518,7 +1520,7 @@
             const anoComparativoEl = document.getElementById('filtroAnoComparativo');
             const anoComparativoSaidasEl = document.getElementById('filtroAnoComparativoSaidas');
             const anoCustosNegocioEl = document.getElementById('filtroAnoCustosNegocio');
-            const anoEntradasDiariasEl = document.getElementById('filtroAnoEntradasDiarias');
+            const anoComparativoDiarioEl = document.getElementById('filtroAnoComparativoDiario');
 
             if(anos.length > 0) {
                 const todosAnosHtml = anos.map(a => `<option value="${a}">${a}</option>`).join('');
@@ -1529,8 +1531,7 @@
                 anoComparativoEl.innerHTML = anosDescHtml;
                 anoComparativoSaidasEl.innerHTML = anosDescHtml;
                 anoCustosNegocioEl.innerHTML = anosDescHtml;
-                anoEntradasDiariasEl.innerHTML = anosDescHtml;
-
+                anoComparativoDiarioEl.innerHTML = anosDescHtml;
 
                 anoInicialEl.value = anoAtual;
                 anoFinalEl.value = anoAtual;
@@ -1538,7 +1539,7 @@
                     anoComparativoEl.value = anoAtual;
                     anoComparativoSaidasEl.value = anoAtual;
                     anoCustosNegocioEl.value = anoAtual;
-                    anoEntradasDiariasEl.value = anoAtual;
+                    anoComparativoDiarioEl.value = anoAtual;
                 }
             }
             anoInicialEl.addEventListener('change', renderizarGraficoEvolucao);
@@ -1546,16 +1547,15 @@
             anoComparativoEl.addEventListener('change', renderizarGraficoComparativoMensal);
             anoComparativoSaidasEl.addEventListener('change', renderizarGraficoComparativoSaidasMensal);
             anoCustosNegocioEl.addEventListener('change', renderizarGraficoCustosNegocio);
-            anoEntradasDiariasEl.addEventListener('change', renderizarGraficoEntradasDiarias);
-            document.querySelectorAll('.month-checkbox').forEach(cb => {
-                cb.addEventListener('change', renderizarGraficoEntradasDiarias);
+            anoComparativoDiarioEl.addEventListener('change', () => {
+                comparativoDiarioSelectedMonths = []; // Reset selection when year changes
+                renderizarComparativoDiario();
             });
-
 
             document.getElementById('filtroMesRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
             document.getElementById('filtroAnoRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
             
-            renderizarGraficoEntradasDiarias();
+            renderizarComparativoDiario();
             renderizarGraficoEvolucao();
             renderizarGraficoRecebimentosDiarios();
             renderizarGraficoComparativoMensal();
@@ -1789,3 +1789,4 @@
 
 </body>
 </html>
+
