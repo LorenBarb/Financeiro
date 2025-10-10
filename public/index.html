@@ -1020,6 +1020,70 @@
         }
 
         // --- ABA DE RELATÓRIOS ---
+
+        function renderizarTabelaEntradasDiarias(monthlyData, ano) {
+            const container = document.getElementById('entradasDiariasTableContainer');
+            if (!container) return;
+
+            const hasData = monthlyData.some(monthData => monthData.some(dayValue => dayValue > 0));
+            if (!hasData) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let tableHtml = `
+                <h5 class="text-lg font-semibold text-light-text mb-4 mt-6">Dados Detalhados de Entradas em ${ano}</h5>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-subtle-text">
+                        <thead class="text-xs text-primary uppercase bg-slate-700/50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 rounded-l-lg">Dia</th>
+                                ${MESES_NOME.map(mes => `<th scope="col" class="px-4 py-3 text-center">${mes.substring(0,3)}</th>`).join('')}
+                                <th scope="col" class="px-4 py-3 rounded-r-lg text-center">Total Dia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            const totalsPerMonth = Array(12).fill(0);
+
+            for (let day = 0; day < 31; day++) {
+                let totalPerDay = 0;
+                const dayValues = monthlyData.map(monthData => monthData[day]);
+                const dayHasData = dayValues.some(v => v > 0);
+
+                if (dayHasData) {
+                    tableHtml += `<tr class="border-b border-border hover:bg-slate-700/30">
+                        <th scope="row" class="px-4 py-3 font-medium text-light-text text-center">${day + 1}</th>
+                    `;
+
+                    for (let month = 0; month < 12; month++) {
+                        const value = monthlyData[month][day];
+                        totalPerDay += value;
+                        totalsPerMonth[month] += value;
+                        tableHtml += `<td class="px-4 py-3 text-center ${value > 0 ? 'text-light-text' : ''}">${value > 0 ? formatarDinheiro(value) : '-'}</td>`;
+                    }
+                    tableHtml += `<td class="px-4 py-3 font-bold text-light-text text-center">${formatarDinheiro(totalPerDay)}</td>`;
+                    tableHtml += `</tr>`;
+                }
+            }
+            
+            tableHtml += `
+                        </tbody>
+                        <tfoot>
+                            <tr class="font-semibold text-primary bg-slate-700/50">
+                                <th scope="row" class="px-4 py-3 text-base rounded-l-lg">Total Mês</th>
+                                ${totalsPerMonth.map(total => `<td class="px-4 py-3 text-center">${formatarDinheiro(total)}</td>`).join('')}
+                                <td class="px-4 py-3 text-center rounded-r-lg font-extrabold text-secondary">${formatarDinheiro(totalsPerMonth.reduce((a, b) => a + b, 0))}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = tableHtml;
+        }
+
         function renderizarGraficoComparativoMensal() {
             if (comparativoMensalChart) comparativoMensalChart.destroy();
             const anoEl = document.getElementById('filtroAnoComparativo');
@@ -1138,6 +1202,7 @@
 
             if (datasets.length === 0) {
                 drawMessage(`Nenhuma entrada encontrada para ${ano}.`);
+                renderizarTabelaEntradasDiarias(monthlyData, ano); // Still call to clear the table
                 return;
             }
 
@@ -1184,6 +1249,8 @@
                     }
                 }
             });
+
+            renderizarTabelaEntradasDiarias(monthlyData, ano);
         }
 
         function renderizarGraficoComparativoSaidasMensal() {
@@ -1335,10 +1402,10 @@
 
             tabs.relatorios.innerHTML = `<div class="space-y-6">
                 
-                <!-- Entradas Diárias por Mês -->
+                <!-- Comparativo de Entradas Diárias -->
                 <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                        <h4 class="font-bold text-xl text-light-text">Entradas Diárias por Mês</h4>
+                        <h4 class="font-bold text-xl text-light-text">Comparativo de Entradas Diárias</h4>
                          <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
                             <div class="flex items-center gap-2">
                                 <label for="filtroAnoEntradasDiarias" class="text-sm font-medium text-subtle-text">Ano:</label>
@@ -1347,6 +1414,7 @@
                         </div>
                     </div>
                     <div class="h-96"><canvas id="entradasDiariasChart"></canvas></div>
+                    <div id="entradasDiariasTableContainer" class="mt-8"></div>
                 </div>
 
                 <!-- Relatório de Evolução Mensal -->
