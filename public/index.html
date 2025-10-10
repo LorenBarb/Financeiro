@@ -256,7 +256,6 @@
         // --- ESTADO GLOBAL ---
         let entradas = [];
         let saidas = [];
-        let comparativoDiarioSelectedMonths = [];
         
         // CORREÇÃO FUSO HORÁRIO: Força o uso do fuso horário de Brasília (America/Sao_Paulo)
         // 1. Cria um formatador para obter a data no fuso horário do Brasil.
@@ -482,7 +481,7 @@
         }
 
         // --- LÓGICA DE RENDERIZAÇÃO ---
-        let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart, comparativoMensalChart, comparativoSaidasMensalChart, custosNegocioChart, entradasDiariasChart, entradasMensaisChart;
+        let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart, comparativoMensalChart, comparativoSaidasMensalChart, custosNegocioChart, analiseDiariaChart;
         function renderizarDashboard(data) {
             // Cálculos dos saldos principais
             const saldoAtual = data.saldoMesAnterior + data.totalEntradas - data.totalPagamentosRealizados;
@@ -1022,118 +1021,121 @@
 
         // --- ABA DE RELATÓRIOS ---
         
-        function renderizarHeatmapEntradas() {
-            const anoEl = document.getElementById('filtroAnoHeatmap');
-            const container = document.getElementById('heatmapContainer');
-            const legendContainer = document.getElementById('heatmapLegend');
-
-            if (!anoEl || !container || !legendContainer) return;
-
-            const ano = parseInt(anoEl.value);
+        function renderizarAnaliseDiaria() {
+            if (analiseDiariaChart) analiseDiariaChart.destroy();
             
-            // 1. Process data
+            const anoEl = document.getElementById('filtroAnoAnaliseDiaria');
+            const tableContainer = document.getElementById('dailyAnalysisTableContainer');
+            const chartCtx = document.getElementById('dailyTotalsChart')?.getContext('2d');
+
+            if (!anoEl || !tableContainer || !chartCtx) return;
+            
+            const ano = parseInt(anoEl.value);
+
+            // Data processing
             const monthlyData = Array.from({ length: 12 }, () => Array(31).fill(0));
             const entradasDoAno = entradas.filter(e => new Date(e.data).getUTCFullYear() === ano);
             
-            let maxValue = 0;
+            let hasData = false;
             entradasDoAno.forEach(entrada => {
+                hasData = true;
                 const date = new Date(entrada.data);
-                const month = date.getUTCMonth(); // 0-11
-                const dayIndex = date.getUTCDate() - 1; // 0-30
-                if (month >= 0 && month < 12 && dayIndex >= 0 && dayIndex < 31) {
-                    monthlyData[month][dayIndex] += entrada.valor;
-                    if (monthlyData[month][dayIndex] > maxValue) {
-                        maxValue = monthlyData[month][dayIndex];
-                    }
-                }
+                const month = date.getUTCMonth();
+                const dayIndex = date.getUTCDate() - 1;
+                monthlyData[month][dayIndex] += entrada.valor;
             });
 
-            if (maxValue === 0) {
-                container.innerHTML = '<p class="text-subtle-text text-center py-10">Nenhuma entrada encontrada para este ano.</p>';
-                legendContainer.innerHTML = '';
+            if (!hasData) {
+                tableContainer.innerHTML = '<p class="text-subtle-text text-center py-8">Nenhuma entrada encontrada para este ano.</p>';
+                chartCtx.clearRect(0, 0, chartCtx.canvas.width, chartCtx.canvas.height);
                 return;
             }
 
-            // 2. Color scale function
-            const getColor = (value) => {
-                if (value === 0) return 'transparent';
-                const intensity = Math.sqrt(value / maxValue); // Using sqrt for better distribution
-                // HSL: H(0=red, 120=green), S(%), L(%)
-                const h = 130; // Green-cyan
-                const s = 70;
-                const l_start = 20; // dark
-                const l_end = 75; // bright
-                const l = l_start + (l_end - l_start) * intensity;
-                return `hsl(${h}, ${s}%, ${l}%)`;
-            };
-
-            // 3. Generate Table HTML
+            // Generate Table HTML
+            const totalsPerDay = Array(31).fill(0);
             let tableHtml = `
                 <table class="w-full text-xs text-center border-separate" style="border-spacing: 2px;">
-                    <thead class="text-primary/80">
-                        <tr>
-                            <th class="p-2 sticky left-0 bg-card-bg z-10 rounded-tl-lg">Dia</th>
-                            ${MESES_NOME.map(mes => `<th class="p-2 font-normal">${mes.substring(0,3)}</th>`).join('')}
-                            <th class="p-2 sticky right-0 bg-card-bg z-10 rounded-tr-lg">Total Dia</th>
+                    <thead>
+                        <tr class="text-primary/80">
+                            <th class="p-2 sticky left-0 bg-card-bg z-10 rounded-tl-lg">Mês</th>
+                            ${Array.from({ length: 31 }, (_, i) => `<th class="p-2 font-normal">${i + 1}</th>`).join('')}
+                            <th class="p-2 sticky right-0 bg-card-bg z-10 rounded-tr-lg">Total Mês</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
+            
+            for (let month = 0; month < 12; month++) {
+                let totalPerMonth = 0;
+                let rowHtml = `<tr class="hover:bg-slate-700/30">
+                    <th class="p-1 font-semibold text-light-text sticky left-0 bg-card-bg z-10">${MESES_NOME[month].substring(0,3)}</th>`;
 
-            const totalsPerMonth = Array(12).fill(0);
-            for (let day = 0; day < 31; day++) {
-                let totalPerDay = 0;
-                const dayValues = monthlyData.map(monthData => monthData[day]);
-                const dayHasData = dayValues.some(v => v > 0);
-
-                if (dayHasData) {
-                    tableHtml += `<tr>
-                        <th class="p-1 font-semibold text-light-text sticky left-0 bg-card-bg z-10">${day + 1}</th>
-                    `;
-
-                    for (let month = 0; month < 12; month++) {
-                        const value = monthlyData[month][day];
-                        totalPerDay += value;
-                        totalsPerMonth[month] += value;
-                        const bgColor = getColor(value);
-                        const textColor = value > maxValue * 0.6 ? 'text-dark-bg' : 'text-light-text/90';
-                        
-                        tableHtml += `
-                            <td class="rounded-md p-1 font-medium ${textColor} transition-transform duration-150 hover:scale-125 hover:z-20" style="background-color: ${bgColor};" title="${formatarDinheiro(value)}">
-                                ${value > 0 ? value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0}) : ''}
-                            </td>
-                        `;
-                    }
-                    tableHtml += `<th class="p-1 font-semibold text-light-text sticky right-0 bg-card-bg z-10">${formatarDinheiro(totalPerDay)}</th></tr>`;
+                for (let day = 0; day < 31; day++) {
+                    const value = monthlyData[month][day];
+                    totalPerMonth += value;
+                    totalsPerDay[day] += value;
+                    rowHtml += `<td class="p-1 ${value > 0 ? 'text-light-text/90' : 'text-subtle-text/50'}">${value > 0 ? formatarDinheiro(value) : '-'}</td>`;
                 }
+                rowHtml += `<th class="p-1 font-bold text-secondary sticky right-0 bg-card-bg z-10">${formatarDinheiro(totalPerMonth)}</th></tr>`;
+                tableHtml += rowHtml;
             }
-                    
+            
             tableHtml += `
                     </tbody>
-                    <tfoot class="font-bold text-primary">
-                        <tr>
-                            <th class="p-2 sticky left-0 bg-card-bg z-10 rounded-bl-lg">Total Mês</th>
-                            ${totalsPerMonth.map(total => `<td class="p-2">${formatarDinheiro(total)}</td>`).join('')}
-                            <th class="p-2 sticky right-0 bg-card-bg z-10 text-secondary rounded-br-lg">${formatarDinheiro(totalsPerMonth.reduce((a, b) => a + b, 0))}</th>
-                        </tr>
+                    <tfoot>
+                        <tr class="font-bold text-primary">
+                            <th class="p-2 sticky left-0 bg-card-bg z-10 rounded-bl-lg">Total Dia</th>`;
+            
+            const grandTotal = totalsPerDay.reduce((a, b) => a + b, 0);
+            totalsPerDay.forEach(total => {
+                tableHtml += `<td class="p-2">${formatarDinheiro(total)}</td>`;
+            });
+            
+            tableHtml += `<th class="p-2 sticky right-0 bg-card-bg z-10 text-secondary rounded-br-lg">${formatarDinheiro(grandTotal)}</th></tr>
                     </tfoot>
-                </table>
-            `;
+                </table>`;
+            
+            tableContainer.innerHTML = tableHtml;
 
-            container.innerHTML = tableHtml;
-
-            // 4. Generate Legend
-            legendContainer.innerHTML = `
-                <span>Menos</span>
-                <div class="w-3 h-4 rounded-sm" style="background-color: ${getColor(maxValue * 0.01)}"></div>
-                <div class="w-3 h-4 rounded-sm" style="background-color: ${getColor(maxValue * 0.25)}"></div>
-                <div class="w-3 h-4 rounded-sm" style="background-color: ${getColor(maxValue * 0.50)}"></div>
-                <div class="w-3 h-4 rounded-sm" style="background-color: ${getColor(maxValue * 0.75)}"></div>
-                <div class="w-3 h-4 rounded-sm" style="background-color: ${getColor(maxValue)}"></div>
-                <span>Mais</span>
-            `;
+            // Generate Bar Chart for Daily Totals
+            analiseDiariaChart = new Chart(chartCtx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({ length: 31 }, (_, i) => `Dia ${i + 1}`),
+                    datasets: [{
+                        label: `Soma total por dia em ${ano}`,
+                        data: totalsPerDay,
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Total: ${formatarDinheiro(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            grid: { color: '#334155' }, 
+                            ticks: { callback: (value) => formatarDinheiro(value) }
+                        },
+                        x: { 
+                            grid: { color: 'transparent' }
+                        }
+                    }
+                }
+            });
         }
-
+        
         function renderizarGraficoComparativoMensal() {
             if (comparativoMensalChart) comparativoMensalChart.destroy();
             const anoEl = document.getElementById('filtroAnoComparativo');
@@ -1356,19 +1358,20 @@
 
             tabs.relatorios.innerHTML = `<div class="space-y-6">
                 
-                <!-- Mapa de Calor de Entradas Diárias -->
+                <!-- Análise de Entradas Diárias por Mês -->
                 <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                        <h4 class="font-bold text-xl text-light-text">Mapa de Calor de Entradas Diárias</h4>
+                        <h4 class="font-bold text-xl text-light-text">Análise de Entradas Diárias por Mês</h4>
                          <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
                             <div class="flex items-center gap-2">
-                                <label for="filtroAnoHeatmap" class="text-sm font-medium text-subtle-text">Ano:</label>
-                                <select id="filtroAnoHeatmap" class="${filterSelectClasses}"></select>
+                                <label for="filtroAnoAnaliseDiaria" class="text-sm font-medium text-subtle-text">Ano:</label>
+                                <select id="filtroAnoAnaliseDiaria" class="${filterSelectClasses}"></select>
                             </div>
                         </div>
                     </div>
-                    <div id="heatmapContainer" class="overflow-x-auto"></div>
-                    <div id="heatmapLegend" class="flex items-center justify-end gap-2 mt-4 text-xs"></div>
+                    <div id="dailyAnalysisTableContainer" class="overflow-x-auto mb-8"></div>
+                    <h5 class="text-lg font-semibold text-light-text mb-4 mt-8">Total de Ganhos por Dia do Mês</h5>
+                    <div class="h-96"><canvas id="dailyTotalsChart"></canvas></div>
                 </div>
 
                 <!-- Relatório de Evolução Mensal -->
@@ -1455,7 +1458,7 @@
             const anoComparativoEl = document.getElementById('filtroAnoComparativo');
             const anoComparativoSaidasEl = document.getElementById('filtroAnoComparativoSaidas');
             const anoCustosNegocioEl = document.getElementById('filtroAnoCustosNegocio');
-            const anoHeatmapEl = document.getElementById('filtroAnoHeatmap');
+            const anoAnaliseDiariaEl = document.getElementById('filtroAnoAnaliseDiaria');
 
             if(anos.length > 0) {
                 const todosAnosHtml = anos.map(a => `<option value="${a}">${a}</option>`).join('');
@@ -1466,7 +1469,7 @@
                 anoComparativoEl.innerHTML = anosDescHtml;
                 anoComparativoSaidasEl.innerHTML = anosDescHtml;
                 anoCustosNegocioEl.innerHTML = anosDescHtml;
-                anoHeatmapEl.innerHTML = anosDescHtml;
+                anoAnaliseDiariaEl.innerHTML = anosDescHtml;
 
                 anoInicialEl.value = anoAtual;
                 anoFinalEl.value = anoAtual;
@@ -1474,7 +1477,7 @@
                     anoComparativoEl.value = anoAtual;
                     anoComparativoSaidasEl.value = anoAtual;
                     anoCustosNegocioEl.value = anoAtual;
-                    anoHeatmapEl.value = anoAtual;
+                    anoAnaliseDiariaEl.value = anoAtual;
                 }
             }
             anoInicialEl.addEventListener('change', renderizarGraficoEvolucao);
@@ -1482,12 +1485,12 @@
             anoComparativoEl.addEventListener('change', renderizarGraficoComparativoMensal);
             anoComparativoSaidasEl.addEventListener('change', renderizarGraficoComparativoSaidasMensal);
             anoCustosNegocioEl.addEventListener('change', renderizarGraficoCustosNegocio);
-            anoHeatmapEl.addEventListener('change', renderizarHeatmapEntradas);
+            anoAnaliseDiariaEl.addEventListener('change', renderizarAnaliseDiaria);
 
             document.getElementById('filtroMesRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
             document.getElementById('filtroAnoRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
             
-            renderizarHeatmapEntradas();
+            renderizarAnaliseDiaria();
             renderizarGraficoEvolucao();
             renderizarGraficoRecebimentosDiarios();
             renderizarGraficoComparativoMensal();
