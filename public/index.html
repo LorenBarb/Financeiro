@@ -481,7 +481,7 @@
         }
 
         // --- LÓGICA DE RENDERIZAÇÃO ---
-        let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart, comparativoMensalChart, comparativoSaidasMensalChart, custosNegocioChart, mediaDiariaChart;
+        let entradasChart, saidasChart, comparativoChart, evolucaoChart, recebimentosDiariosChart, comparativoMensalChart, comparativoSaidasMensalChart, custosNegocioChart, entradasDiariasChart;
         function renderizarDashboard(data) {
             // Cálculos dos saldos principais
             const saldoAtual = data.saldoMesAnterior + data.totalEntradas - data.totalPagamentosRealizados;
@@ -1093,11 +1093,10 @@
             });
         }
         
-        // NOVO GRÁFICO: Média de Recebimentos por Dia do Mês
-        function renderizarGraficoMediaDiaria() {
-            if (mediaDiariaChart) mediaDiariaChart.destroy();
-            const anoEl = document.getElementById('filtroAnoMediaDiaria');
-            const ctx = document.getElementById('mediaDiariaChart')?.getContext('2d');
+        function renderizarGraficoEntradasDiarias() {
+            if (entradasDiariasChart) entradasDiariasChart.destroy();
+            const anoEl = document.getElementById('filtroAnoEntradasDiarias');
+            const ctx = document.getElementById('entradasDiariasChart')?.getContext('2d');
 
             const drawMessage = (message) => { if(!ctx) return; ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); ctx.font="16px Inter"; ctx.fillStyle="#94a3b8"; ctx.textAlign="center"; ctx.fillText(message,ctx.canvas.width/2,ctx.canvas.height/2); };
 
@@ -1105,67 +1104,70 @@
             if (!anoEl || !anoEl.value) { drawMessage("Carregando..."); return; }
             const ano = parseInt(anoEl.value);
 
-            // Estrutura para armazenar a soma e a contagem de meses para cada dia
-            const dailyData = Array.from({ length: 31 }, () => ({ total: 0, count: 0 }));
-            const monthDaysSeen = Array.from({ length: 31 }, () => new Set());
-
-
+            const monthlyData = Array.from({ length: 12 }, () => Array(31).fill(0));
             const entradasDoAno = entradas.filter(e => new Date(e.data).getUTCFullYear() === ano);
 
             entradasDoAno.forEach(entrada => {
                 const date = new Date(entrada.data);
-                const dayOfMonth = date.getUTCDate(); // 1-31
                 const month = date.getUTCMonth(); // 0-11
-                const index = dayOfMonth - 1;
-
-                if (index >= 0 && index < 31) {
-                    dailyData[index].total += entrada.valor;
-                    // Adiciona o mês ao Set para saber em quantos meses este dia teve entrada
-                    monthDaysSeen[index].add(month);
+                const dayIndex = date.getUTCDate() - 1; // 0-30
+                if (month >= 0 && month < 12 && dayIndex >= 0 && dayIndex < 31) {
+                    monthlyData[month][dayIndex] += entrada.valor;
                 }
             });
-            
-            // Calcula a contagem de meses em que cada dia teve registro
-            for (let i = 0; i < 31; i++) {
-                dailyData[i].count = monthDaysSeen[i].size;
+
+            const monthColors = [
+                '#3b82f6', '#16a34a', '#ef4444', '#f97316', '#8b5cf6', '#ec4899',
+                '#14b8a6', '#eab308', '#64748b', '#d946ef', '#0ea5e9', '#65a30d'
+            ];
+
+            const datasets = monthlyData.map((data, index) => {
+                if (data.some(value => value > 0)) { // Only show months with data
+                    return {
+                        label: MESES_NOME[index],
+                        data: data,
+                        borderColor: monthColors[index],
+                        backgroundColor: `${monthColors[index]}1A`, // semi-transparent for fill
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 2,
+                    };
+                }
+                return null;
+            }).filter(Boolean);
+
+            if (datasets.length === 0) {
+                drawMessage(`Nenhuma entrada encontrada para ${ano}.`);
+                return;
             }
 
             const labels = Array.from({ length: 31 }, (_, i) => String(i + 1));
-            const averageData = dailyData.map(d => (d.count > 0 ? d.total / d.count : 0));
             
-            mediaDiariaChart = new Chart(ctx, {
+            entradasDiariasChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: `Média Diária de Entradas em ${ano}`,
-                        data: averageData,
-                        backgroundColor: 'rgba(245, 158, 11, 0.2)', // secondary com alpha
-                        borderColor: '#f59e0b', // secondary
-                        borderWidth: 2,
-                        pointBackgroundColor: '#f59e0b',
-                        pointRadius: 3,
-                        tension: 0.3
-                    }]
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                color: '#e2e8f0',
+                                usePointStyle: true,
+                                boxWidth: 8
+                            }
+                        },
                         datalabels: { display: false },
                         tooltip: {
+                            mode: 'index',
+                            intersect: false,
                             callbacks: {
                                 label: function(context) {
-                                    const index = context.dataIndex;
-                                    const avg = context.parsed.y;
-                                    const total = dailyData[index].total;
-                                    const count = dailyData[index].count;
-                                    let tooltipText = `Média: ${formatarDinheiro(avg)}`;
-                                    if (count > 0) {
-                                       tooltipText += ` (Total: ${formatarDinheiro(total)} em ${count} mes(es))`;
-                                    }
-                                    return tooltipText;
+                                    return `${context.dataset.label}: ${formatarDinheiro(context.parsed.y)}`;
                                 }
                             }
                         }
@@ -1176,12 +1178,13 @@
                             grid: { color: '#334155' },
                             ticks: { callback: function(value) { return formatarDinheiro(value); } }
                         },
-                        x: { grid: { color: 'transparent' } }
+                        x: { 
+                            grid: { color: 'transparent' }
+                        }
                     }
                 }
             });
         }
-
 
         function renderizarGraficoComparativoSaidasMensal() {
             if (comparativoSaidasMensalChart) comparativoSaidasMensalChart.destroy();
@@ -1332,18 +1335,18 @@
 
             tabs.relatorios.innerHTML = `<div class="space-y-6">
                 
-                <!-- NOVO RELATÓRIO: Média Diária de Recebimentos -->
+                <!-- Entradas Diárias por Mês -->
                 <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                        <h4 class="font-bold text-xl text-light-text">Média Diária de Entradas (Ano)</h4>
+                        <h4 class="font-bold text-xl text-light-text">Entradas Diárias por Mês</h4>
                          <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
                             <div class="flex items-center gap-2">
-                                <label for="filtroAnoMediaDiaria" class="text-sm font-medium text-subtle-text">Ano:</label>
-                                <select id="filtroAnoMediaDiaria" class="${filterSelectClasses}"></select>
+                                <label for="filtroAnoEntradasDiarias" class="text-sm font-medium text-subtle-text">Ano:</label>
+                                <select id="filtroAnoEntradasDiarias" class="${filterSelectClasses}"></select>
                             </div>
                         </div>
                     </div>
-                    <div class="h-96"><canvas id="mediaDiariaChart"></canvas></div>
+                    <div class="h-96"><canvas id="entradasDiariasChart"></canvas></div>
                 </div>
 
                 <!-- Relatório de Evolução Mensal -->
@@ -1430,7 +1433,7 @@
             const anoComparativoEl = document.getElementById('filtroAnoComparativo');
             const anoComparativoSaidasEl = document.getElementById('filtroAnoComparativoSaidas');
             const anoCustosNegocioEl = document.getElementById('filtroAnoCustosNegocio');
-            const anoMediaDiariaEl = document.getElementById('filtroAnoMediaDiaria');
+            const anoEntradasDiariasEl = document.getElementById('filtroAnoEntradasDiarias');
 
             if(anos.length > 0) {
                 const todosAnosHtml = anos.map(a => `<option value="${a}">${a}</option>`).join('');
@@ -1441,7 +1444,7 @@
                 anoComparativoEl.innerHTML = anosDescHtml;
                 anoComparativoSaidasEl.innerHTML = anosDescHtml;
                 anoCustosNegocioEl.innerHTML = anosDescHtml;
-                anoMediaDiariaEl.innerHTML = anosDescHtml;
+                anoEntradasDiariasEl.innerHTML = anosDescHtml;
 
 
                 anoInicialEl.value = anoAtual;
@@ -1450,7 +1453,7 @@
                     anoComparativoEl.value = anoAtual;
                     anoComparativoSaidasEl.value = anoAtual;
                     anoCustosNegocioEl.value = anoAtual;
-                    anoMediaDiariaEl.value = anoAtual;
+                    anoEntradasDiariasEl.value = anoAtual;
                 }
             }
             anoInicialEl.addEventListener('change', renderizarGraficoEvolucao);
@@ -1458,13 +1461,13 @@
             anoComparativoEl.addEventListener('change', renderizarGraficoComparativoMensal);
             anoComparativoSaidasEl.addEventListener('change', renderizarGraficoComparativoSaidasMensal);
             anoCustosNegocioEl.addEventListener('change', renderizarGraficoCustosNegocio);
-            anoMediaDiariaEl.addEventListener('change', renderizarGraficoMediaDiaria);
+            anoEntradasDiariasEl.addEventListener('change', renderizarGraficoEntradasDiarias);
 
 
             document.getElementById('filtroMesRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
             document.getElementById('filtroAnoRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
             
-            renderizarGraficoMediaDiaria();
+            renderizarGraficoEntradasDiarias();
             renderizarGraficoEvolucao();
             renderizarGraficoRecebimentosDiarios();
             renderizarGraficoComparativoMensal();
@@ -1698,3 +1701,4 @@
 
 </body>
 </html>
+
