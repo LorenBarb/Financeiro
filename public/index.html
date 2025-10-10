@@ -1021,74 +1021,119 @@
         }
 
         // --- ABA DE RELATÓRIOS ---
+        
+        function renderizarHeatmapEntradas() {
+            const anoEl = document.getElementById('filtroAnoHeatmap');
+            const container = document.getElementById('heatmapContainer');
+            const legendContainer = document.getElementById('heatmapLegend');
 
-        function renderizarTabelaEntradasDiarias(ano, monthlyData, selectedMonths) {
-            const container = document.getElementById('entradasDiariasTableContainer');
-            if (!container) return;
+            if (!anoEl || !container || !legendContainer) return;
 
-            const hasData = monthlyData.some((monthData, monthIndex) => 
-                selectedMonths.includes(monthIndex) && monthData.some(dayValue => dayValue > 0)
-            );
+            const ano = parseInt(anoEl.value);
+            
+            // 1. Process data
+            const monthlyData = Array.from({ length: 12 }, () => Array(31).fill(0));
+            const entradasDoAno = entradas.filter(e => new Date(e.data).getUTCFullYear() === ano);
+            
+            let maxValue = 0;
+            entradasDoAno.forEach(entrada => {
+                const date = new Date(entrada.data);
+                const month = date.getUTCMonth(); // 0-11
+                const dayIndex = date.getUTCDate() - 1; // 0-30
+                if (month >= 0 && month < 12 && dayIndex >= 0 && dayIndex < 31) {
+                    monthlyData[month][dayIndex] += entrada.valor;
+                    if (monthlyData[month][dayIndex] > maxValue) {
+                        maxValue = monthlyData[month][dayIndex];
+                    }
+                }
+            });
 
-            if (!hasData) {
-                container.innerHTML = '<p class="text-subtle-text text-center py-4">Nenhum dado detalhado para os meses selecionados.</p>';
+            if (maxValue === 0) {
+                container.innerHTML = '<p class="text-subtle-text text-center py-10">Nenhuma entrada encontrada para este ano.</p>';
+                legendContainer.innerHTML = '';
                 return;
             }
 
+            // 2. Color scale function
+            const getColor = (value) => {
+                if (value === 0) return 'transparent';
+                const intensity = Math.sqrt(value / maxValue); // Using sqrt for better distribution
+                // HSL: H(0=red, 120=green), S(%), L(%)
+                const h = 130; // Green-cyan
+                const s = 70;
+                const l_start = 20; // dark
+                const l_end = 75; // bright
+                const l = l_start + (l_end - l_start) * intensity;
+                return `hsl(${h}, ${s}%, ${l}%)`;
+            };
+
+            // 3. Generate Table HTML
             let tableHtml = `
-                <h5 class="text-lg font-semibold text-light-text mb-4 mt-8">Dados Detalhados de Entradas em ${ano}</h5>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-subtle-text">
-                        <thead class="text-xs text-primary uppercase bg-slate-700/50">
-                            <tr>
-                                <th scope="col" class="px-4 py-3 rounded-l-lg sticky left-0 bg-slate-800 z-10">Dia</th>
-                                ${MESES_NOME.map((mes, i) => selectedMonths.includes(i) ? `<th scope="col" class="px-4 py-3 text-center">${mes.substring(0,3)}</th>` : '').join('')}
-                                <th scope="col" class="px-4 py-3 rounded-r-lg text-center">Total Dia</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                <table class="w-full text-xs text-center border-separate" style="border-spacing: 2px;">
+                    <thead class="text-primary/80">
+                        <tr>
+                            <th class="p-2 sticky left-0 bg-card-bg z-10 rounded-tl-lg">Dia</th>
+                            ${MESES_NOME.map(mes => `<th class="p-2 font-normal">${mes.substring(0,3)}</th>`).join('')}
+                            <th class="p-2 sticky right-0 bg-card-bg z-10 rounded-tr-lg">Total Dia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             `;
 
             const totalsPerMonth = Array(12).fill(0);
-
             for (let day = 0; day < 31; day++) {
                 let totalPerDay = 0;
-                const dayHasDataInSelectedMonths = selectedMonths.some(monthIndex => monthlyData[monthIndex][day] > 0);
+                const dayValues = monthlyData.map(monthData => monthData[day]);
+                const dayHasData = dayValues.some(v => v > 0);
 
-                if (dayHasDataInSelectedMonths) {
-                    tableHtml += `<tr class="border-b border-border hover:bg-slate-700/30">
-                        <th scope="row" class="px-4 py-3 font-medium text-light-text text-center sticky left-0 bg-slate-800/95 backdrop-blur-sm z-10">${day + 1}</th>
+                if (dayHasData) {
+                    tableHtml += `<tr>
+                        <th class="p-1 font-semibold text-light-text sticky left-0 bg-card-bg z-10">${day + 1}</th>
                     `;
 
                     for (let month = 0; month < 12; month++) {
-                        if (selectedMonths.includes(month)) {
-                            const value = monthlyData[month][day];
-                            totalPerDay += value;
-                            totalsPerMonth[month] += value;
-                            tableHtml += `<td class="px-4 py-3 text-center ${value > 0 ? 'text-light-text' : ''}">${value > 0 ? formatarDinheiro(value) : '-'}</td>`;
-                        }
+                        const value = monthlyData[month][day];
+                        totalPerDay += value;
+                        totalsPerMonth[month] += value;
+                        const bgColor = getColor(value);
+                        const textColor = value > maxValue * 0.6 ? 'text-dark-bg' : 'text-light-text/90';
+                        
+                        tableHtml += `
+                            <td class="rounded-md p-1 font-medium ${textColor} transition-transform duration-150 hover:scale-125 hover:z-20" style="background-color: ${bgColor};" title="${formatarDinheiro(value)}">
+                                ${value > 0 ? value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0}) : ''}
+                            </td>
+                        `;
                     }
-                    tableHtml += `<td class="px-4 py-3 font-bold text-light-text text-center">${formatarDinheiro(totalPerDay)}</td>`;
-                    tableHtml += `</tr>`;
+                    tableHtml += `<th class="p-1 font-semibold text-light-text sticky right-0 bg-card-bg z-10">${formatarDinheiro(totalPerDay)}</th></tr>`;
                 }
             }
-            
+                    
             tableHtml += `
-                        </tbody>
-                        <tfoot>
-                            <tr class="font-semibold text-primary bg-slate-700/50">
-                                <th scope="row" class="px-4 py-3 text-base rounded-l-lg sticky left-0 bg-slate-800 z-10">Total Mês</th>
-                                ${totalsPerMonth.map((total, i) => selectedMonths.includes(i) ? `<td class="px-4 py-3 text-center">${formatarDinheiro(total)}</td>` : '').join('')}
-                                <td class="px-4 py-3 text-center rounded-r-lg font-extrabold text-secondary">${formatarDinheiro(selectedMonths.reduce((acc, monthIndex) => acc + totalsPerMonth[monthIndex], 0))}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
+                    </tbody>
+                    <tfoot class="font-bold text-primary">
+                        <tr>
+                            <th class="p-2 sticky left-0 bg-card-bg z-10 rounded-bl-lg">Total Mês</th>
+                            ${totalsPerMonth.map(total => `<td class="p-2">${formatarDinheiro(total)}</td>`).join('')}
+                            <th class="p-2 sticky right-0 bg-card-bg z-10 text-secondary rounded-br-lg">${formatarDinheiro(totalsPerMonth.reduce((a, b) => a + b, 0))}</th>
+                        </tr>
+                    </tfoot>
+                </table>
             `;
 
             container.innerHTML = tableHtml;
+
+            // 4. Generate Legend
+            legendContainer.innerHTML = `
+                <span>Menos</span>
+                <div class="w-3 h-4 rounded-sm" style="background-color: ${getColor(maxValue * 0.01)}"></div>
+                <div class="w-3 h-4 rounded-sm" style="background-color: ${getColor(maxValue * 0.25)}"></div>
+                <div class="w-3 h-4 rounded-sm" style="background-color: ${getColor(maxValue * 0.50)}"></div>
+                <div class="w-3 h-4 rounded-sm" style="background-color: ${getColor(maxValue * 0.75)}"></div>
+                <div class="w-3 h-4 rounded-sm" style="background-color: ${getColor(maxValue)}"></div>
+                <span>Mais</span>
+            `;
         }
-        
+
         function renderizarGraficoComparativoMensal() {
             if (comparativoMensalChart) comparativoMensalChart.destroy();
             const anoEl = document.getElementById('filtroAnoComparativo');
@@ -1304,115 +1349,6 @@
             });
         }
         
-        function renderizarDetalhesComparativoDiario(ano) {
-            const container = document.getElementById('comparativoDiarioDetalhes');
-            if (!container) return;
-
-            container.innerHTML = `
-                <div class="h-96"><canvas id="entradasDiariasChart"></canvas></div>
-                <div id="entradasDiariasTableContainer" class="mt-8"></div>
-            `;
-            
-            const selectedMonths = comparativoDiarioSelectedMonths;
-            const monthlyData = Array.from({ length: 12 }, () => Array(31).fill(0));
-            const entradasDoAno = entradas.filter(e => new Date(e.data).getUTCFullYear() === ano);
-
-            entradasDoAno.forEach(entrada => {
-                const date = new Date(entrada.data);
-                const month = date.getUTCMonth();
-                const dayIndex = date.getUTCDate() - 1;
-                if (month >= 0 && month < 12 && dayIndex >= 0 && dayIndex < 31) {
-                    monthlyData[month][dayIndex] += entrada.valor;
-                }
-            });
-            
-            renderizarGraficoEntradasDiarias(ano, monthlyData, selectedMonths);
-            renderizarTabelaEntradasDiarias(ano, monthlyData, selectedMonths);
-        }
-
-        function renderizarComparativoDiario() {
-            if (entradasMensaisChart) entradasMensaisChart.destroy();
-            const anoEl = document.getElementById('filtroAnoComparativoDiario');
-            const ctx = document.getElementById('entradasMensaisChart')?.getContext('2d');
-            const detailsContainer = document.getElementById('comparativoDiarioDetalhes');
-
-            const drawMessage = (chartCtx, message) => { if(!chartCtx) return; chartCtx.clearRect(0,0,chartCtx.canvas.width,chartCtx.canvas.height); chartCtx.font="16px Inter"; chartCtx.fillStyle="#94a3b8"; chartCtx.textAlign="center"; chartCtx.fillText(message,chartCtx.canvas.width/2,chartCtx.canvas.height/2); };
-            
-            if (!ctx || !anoEl || !anoEl.value) {
-                drawMessage(ctx, "Carregando...");
-                detailsContainer.innerHTML = '';
-                return;
-            }
-            
-            const ano = parseInt(anoEl.value);
-            const monthlyTotals = Array(12).fill(0);
-            const monthsWithData = new Set();
-            
-            entradas.filter(e => new Date(e.data).getUTCFullYear() === ano)
-                .forEach(e => {
-                    const month = new Date(e.data).getUTCMonth();
-                    monthlyTotals[month] += e.valor;
-                    monthsWithData.add(month);
-                });
-
-            if (comparativoDiarioSelectedMonths.length === 0 && monthsWithData.size > 0) {
-                comparativoDiarioSelectedMonths = Array.from(monthsWithData).slice(0, 2);
-            }
-            
-            const backgroundColors = monthlyTotals.map((_, i) => comparativoDiarioSelectedMonths.includes(i) ? '#f59e0b' : '#334155');
-
-            entradasMensaisChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: MESES_NOME.map(m => m.substring(0,3)),
-                    datasets: [{
-                        label: 'Total de Entradas',
-                        data: monthlyTotals,
-                        backgroundColor: backgroundColors,
-                        borderColor: '#1e293b',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    onClick: (evt, elements) => {
-                        if (elements.length > 0) {
-                            const index = elements[0].index;
-                            const pos = comparativoDiarioSelectedMonths.indexOf(index);
-                            if (pos !== -1) {
-                                comparativoDiarioSelectedMonths.splice(pos, 1);
-                            } else {
-                                comparativoDiarioSelectedMonths.push(index);
-                            }
-                            renderizarComparativoDiario();
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: { display: false },
-                        tooltip: {
-                             callbacks: {
-                                label: function(context) {
-                                    return `${MESES_NOME[context.dataIndex]}: ${formatarDinheiro(context.parsed.y)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { grid: { color: '#334155' }, ticks: { display: false } },
-                        x: { grid: { color: 'transparent' } }
-                    }
-                }
-            });
-            
-            if (comparativoDiarioSelectedMonths.length > 0) {
-                renderizarDetalhesComparativoDiario(ano);
-            } else {
-                detailsContainer.innerHTML = '<p class="text-subtle-text text-center py-10">Clique em uma ou mais barras para comparar os detalhes diários.</p>';
-            }
-        }
-
         function renderizarAbaRelatorios() {
             const anos = getAnosDisponiveis().sort((a,b) => a - b);
             const anoAtual = new Date().getFullYear();
@@ -1420,20 +1356,19 @@
 
             tabs.relatorios.innerHTML = `<div class="space-y-6">
                 
-                <!-- Análise Comparativa de Entradas Diárias -->
+                <!-- Mapa de Calor de Entradas Diárias -->
                 <div class="bg-card-bg text-primary p-6 rounded-xl shadow-lg border border-border">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                        <h4 class="font-bold text-xl text-light-text">Análise Comparativa de Entradas Diárias</h4>
+                        <h4 class="font-bold text-xl text-light-text">Mapa de Calor de Entradas Diárias</h4>
                          <div class="flex flex-wrap items-center justify-start sm:justify-end gap-x-4 gap-y-2">
                             <div class="flex items-center gap-2">
-                                <label for="filtroAnoComparativoDiario" class="text-sm font-medium text-subtle-text">Ano:</label>
-                                <select id="filtroAnoComparativoDiario" class="${filterSelectClasses}"></select>
+                                <label for="filtroAnoHeatmap" class="text-sm font-medium text-subtle-text">Ano:</label>
+                                <select id="filtroAnoHeatmap" class="${filterSelectClasses}"></select>
                             </div>
                         </div>
                     </div>
-                    <p class="text-center text-subtle-text text-sm mb-4">Clique nas barras para selecionar/remover meses da comparação.</p>
-                    <div class="h-60 mb-8"><canvas id="entradasMensaisChart"></canvas></div>
-                    <div id="comparativoDiarioDetalhes"></div>
+                    <div id="heatmapContainer" class="overflow-x-auto"></div>
+                    <div id="heatmapLegend" class="flex items-center justify-end gap-2 mt-4 text-xs"></div>
                 </div>
 
                 <!-- Relatório de Evolução Mensal -->
@@ -1520,7 +1455,7 @@
             const anoComparativoEl = document.getElementById('filtroAnoComparativo');
             const anoComparativoSaidasEl = document.getElementById('filtroAnoComparativoSaidas');
             const anoCustosNegocioEl = document.getElementById('filtroAnoCustosNegocio');
-            const anoComparativoDiarioEl = document.getElementById('filtroAnoComparativoDiario');
+            const anoHeatmapEl = document.getElementById('filtroAnoHeatmap');
 
             if(anos.length > 0) {
                 const todosAnosHtml = anos.map(a => `<option value="${a}">${a}</option>`).join('');
@@ -1531,7 +1466,7 @@
                 anoComparativoEl.innerHTML = anosDescHtml;
                 anoComparativoSaidasEl.innerHTML = anosDescHtml;
                 anoCustosNegocioEl.innerHTML = anosDescHtml;
-                anoComparativoDiarioEl.innerHTML = anosDescHtml;
+                anoHeatmapEl.innerHTML = anosDescHtml;
 
                 anoInicialEl.value = anoAtual;
                 anoFinalEl.value = anoAtual;
@@ -1539,7 +1474,7 @@
                     anoComparativoEl.value = anoAtual;
                     anoComparativoSaidasEl.value = anoAtual;
                     anoCustosNegocioEl.value = anoAtual;
-                    anoComparativoDiarioEl.value = anoAtual;
+                    anoHeatmapEl.value = anoAtual;
                 }
             }
             anoInicialEl.addEventListener('change', renderizarGraficoEvolucao);
@@ -1547,15 +1482,12 @@
             anoComparativoEl.addEventListener('change', renderizarGraficoComparativoMensal);
             anoComparativoSaidasEl.addEventListener('change', renderizarGraficoComparativoSaidasMensal);
             anoCustosNegocioEl.addEventListener('change', renderizarGraficoCustosNegocio);
-            anoComparativoDiarioEl.addEventListener('change', () => {
-                comparativoDiarioSelectedMonths = []; // Reset selection when year changes
-                renderizarComparativoDiario();
-            });
+            anoHeatmapEl.addEventListener('change', renderizarHeatmapEntradas);
 
             document.getElementById('filtroMesRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
             document.getElementById('filtroAnoRecebimentos').addEventListener('change', renderizarGraficoRecebimentosDiarios);
             
-            renderizarComparativoDiario();
+            renderizarHeatmapEntradas();
             renderizarGraficoEvolucao();
             renderizarGraficoRecebimentosDiarios();
             renderizarGraficoComparativoMensal();
