@@ -1,4 +1,4 @@
-let filtroDashboardState = { month: hoje.getUTCMonth(), year: hoje.getUTCFullYear(), perfil: 'todos' };
+let filtroDashboardState = { month: hoje.getUTCMonth(), year: hoje.getUTCFullYear(), perfis: [] };
 
 function getAnosDisponiveis() {
   const todosAnos = new Set([...entradas, ...saidas].map(item => new Date(item.data).getUTCFullYear()));
@@ -9,11 +9,11 @@ function getAnosDisponiveis() {
 }
 
 function calcularTotais() {
-  const { month, year, perfil } = filtroDashboardState;
+  const { month, year, perfis } = filtroDashboardState;
   const inicioMesFiltro = new Date(Date.UTC(year, month, 1));
   const fimMesFiltro = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
 
-  const filtroPerfil = (item) => perfil === 'todos' || (item.perfil || '') === perfil;
+  const filtroPerfil = (item) => perfis.length === 0 || perfis.includes(item.perfil || '');
 
   const entradasAnteriores = entradas.filter(e => new Date(e.data) < inicioMesFiltro && filtroPerfil(e));
   const saidasPagasAnteriores = saidas.filter(s => new Date(s.data) < inicioMesFiltro && s.status === 'pago' && filtroPerfil(s));
@@ -25,7 +25,7 @@ function calcularTotais() {
   const totalEntradas = entradasPeriodo.reduce((a, e) => a + e.valor, 0);
   const totalPagamentosRealizados = saidasPeriodo.filter(s => s.status === 'pago').reduce((a, s) => a + s.valor, 0);
   const totalValoresEmAberto = saidasPeriodo.filter(s => s.status === 'em aberto').reduce((a, s) => a + s.valor, 0);
-  const gastosPrevistosFuturos = saidas.filter(s => new Date(s.data) > fimMesFiltro && s.status === 'em aberto').reduce((a, s) => a + s.valor, 0);
+  const gastosPrevistosFuturos = saidas.filter(s => new Date(s.data) > fimMesFiltro && s.status === 'em aberto' && filtroPerfil(s)).reduce((a, s) => a + s.valor, 0);
 
   return { saldoMesAnterior, totalEntradas, totalPagamentosRealizados, totalValoresEmAberto, gastosPrevistosFuturos, entradasPeriodo, saidasPeriodo };
 }
@@ -75,8 +75,9 @@ function renderizarFiltrosDashboard() {
   const container = document.getElementById('dashboardFiltersContainer');
   if (!container) return;
   const anos = getAnosDisponiveis();
+  const perfis = getPerfis();
   container.innerHTML = `
-    <div class="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-x-6 gap-y-2">
+    <div class="flex flex-col sm:flex-row flex-wrap justify-center items-start sm:items-center gap-x-6 gap-y-2">
       <div class="flex items-center gap-2">
         <label for="filtroMesDashboard" class="text-sm font-medium text-subtle-text">Mês:</label>
         <select id="filtroMesDashboard" class="bg-input-bg border-border text-subtle-text text-xs rounded-md focus:ring-secondary focus:border-secondary block p-2 w-auto border">
@@ -89,12 +90,23 @@ function renderizarFiltrosDashboard() {
           ${anos.map(ano => `<option value="${ano}" ${ano === filtroDashboardState.year ? 'selected' : ''}>${ano}</option>`).join('')}
         </select>
       </div>
-      <div class="flex items-center gap-2">
-        <label for="filtroPerfilDashboard" class="text-sm font-medium text-subtle-text">Perfil:</label>
-        <select id="filtroPerfilDashboard" class="bg-input-bg border-border text-subtle-text text-xs rounded-md focus:ring-secondary focus:border-secondary block p-2 w-auto border">
-          <option value="todos" ${filtroDashboardState.perfil === 'todos' ? 'selected' : ''}>Todos</option>
-          ${getPerfis().map(p => `<option value="${p}" ${filtroDashboardState.perfil === p ? 'selected' : ''}>${p || 'Geral'}</option>`).join('')}
-        </select>
+      <div class="flex items-start sm:items-center gap-2">
+        <label class="text-sm font-medium text-subtle-text pt-1">Perfis:</label>
+        <div class="flex flex-wrap gap-x-3 gap-y-1">
+          <label class="flex items-center gap-1 text-xs cursor-pointer hover:text-light-text ${filtroDashboardState.perfis.length === 0 ? 'text-secondary font-semibold' : 'text-subtle-text'}">
+            <input type="checkbox" class="perfil-checkbox item-checkbox" value="__todos__" ${filtroDashboardState.perfis.length === 0 ? 'checked' : ''}>
+            Todos
+          </label>
+          ${perfis.map(p => {
+            const nome = p || 'Geral';
+            const cor = getCorPerfil(p);
+            return `<label class="flex items-center gap-1 text-xs cursor-pointer hover:text-light-text ${filtroDashboardState.perfis.includes(p) ? 'text-light-text font-semibold' : 'text-subtle-text'}">
+              <input type="checkbox" class="perfil-checkbox item-checkbox" value="${p}" ${filtroDashboardState.perfis.includes(p) ? 'checked' : ''}>
+              <span class="w-2 h-2 rounded-full inline-block" style="background:${cor}"></span>
+              ${nome}
+            </label>`;
+          }).join('')}
+        </div>
       </div>
     </div>`;
 
@@ -106,9 +118,17 @@ function renderizarFiltrosDashboard() {
     filtroDashboardState.year = parseInt(e.target.value);
     atualizarDashboard();
   });
-  document.getElementById('filtroPerfilDashboard').addEventListener('change', e => {
-    filtroDashboardState.perfil = e.target.value;
-    atualizarDashboard();
+  container.querySelectorAll('.perfil-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const checked = Array.from(container.querySelectorAll('.perfil-checkbox:checked')).map(c => c.value);
+      if (checked.includes('__todos__') || checked.length === 0) {
+        filtroDashboardState.perfis = [];
+      } else {
+        filtroDashboardState.perfis = checked;
+      }
+      renderizarFiltrosDashboard();
+      atualizarDashboard();
+    });
   });
 }
 
