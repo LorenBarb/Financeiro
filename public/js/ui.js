@@ -1,3 +1,6 @@
+const FONTES_VALIDAS = ['iFood', 'Uber', '99', 'Salário', 'Vale Refeição', 'Vale Alimentação', 'Cartão Alvo', 'Ajuste', 'Outro'];
+const CATEGORIAS_SAIDA = ['Custo Fixo', 'Cartão de Crédito', 'Débito', 'Saque', 'Dízimo', 'Outro'];
+
 const MESES_NOME = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -5,6 +8,8 @@ const MESES_NOME = [
 
 const CORES_FONTES = {
   'iFood': '#EA1D2C', 'Uber': '#000000', '99': '#FFC700',
+  'Salário': '#22c55e', 'Vale Refeição': '#14b8a6',
+  'Vale Alimentação': '#8b5cf6', 'Cartão Alvo': '#f97316',
   'Ajuste': '#3b82f6', 'Outro': '#6B7280'
 };
 
@@ -12,6 +17,13 @@ const CORES_SAIDAS = {
   'Cartão de Crédito': '#ef4444', 'Dízimo': '#FFD700',
   'Custo Fixo': '#22c55e', 'Débito': '#6366F1',
   'Saque': '#EC4899', 'Outro': '#84CC16'
+};
+
+const CORES_PERFIS = {
+  '': '#94a3b8',
+  'Família': '#3b82f6',
+  'João': '#22c55e',
+  'Maria': '#ec4899',
 };
 
 const brasilDateFormatter = new Intl.DateTimeFormat('en-CA', {
@@ -95,6 +107,90 @@ function showInfoModal(message) {
       </div>
     </div>`;
   showModal(modals.info, content);
+}
+
+// --- GERENCIAMENTO DE PERFIS ---
+function getPerfis() {
+  try {
+    const salvos = localStorage.getItem('financeiro_perfis');
+    if (salvos) return JSON.parse(salvos);
+  } catch (e) { /* ignore */ }
+  return ['', 'Família', 'João', 'Maria'];
+}
+
+function salvarPerfis(perfis) {
+  localStorage.setItem('financeiro_perfis', JSON.stringify(perfis));
+}
+
+function getCorPerfil(perfil) {
+  return CORES_PERFIS[perfil] || '#6366F1';
+}
+
+function renderizarModalGerenciarPerfis() {
+  let perfis = getPerfis();
+  const optionsHtml = perfis.filter(p => p).map(p => `<option value="${p}">${p}</option>`).join('');
+  const content = `
+    <div class="bg-card-bg rounded-lg shadow-xl w-full max-w-md m-4 text-primary border border-border">
+      <div class="p-4 border-b border-border flex justify-between items-center">
+        <h3 class="text-xl font-semibold text-light-text">Gerenciar Perfis</h3>
+        <button class="close-modal-btn text-3xl text-subtle-text hover:text-light-text">&times;</button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="flex gap-2">
+          <input type="text" id="novoPerfilInput" class="w-full bg-input-bg border border-border text-light-text text-sm rounded-lg focus:ring-secondary focus:border-secondary block p-2.5" placeholder="Novo perfil...">
+          <button id="adicionarPerfilBtn" class="bg-secondary hover:bg-amber-600 text-dark-bg font-bold py-2 px-4 rounded-lg transition-colors flex-shrink-0">+</button>
+        </div>
+        <select id="listaPerfis" size="5" class="w-full bg-input-bg border border-border text-light-text text-sm rounded-lg p-2" style="min-height:120px">${optionsHtml}</select>
+        <div class="flex gap-2">
+          <button id="renomearPerfilBtn" class="bg-neutral text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm">Renomear</button>
+          <button id="removerPerfilBtn" class="bg-negative text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm">Remover</button>
+        </div>
+        <p class="text-xs text-subtle-text">Os perfis aparecem nos formulários e filtros de entrada e saída.</p>
+      </div>
+    </div>`;
+  showModal(modals.info, content);
+
+  document.getElementById('adicionarPerfilBtn').addEventListener('click', () => {
+    const input = document.getElementById('novoPerfilInput');
+    const nome = input.value.trim();
+    if (!nome) return;
+    let lista = getPerfis();
+    if (!lista.includes(nome)) {
+      lista.push(nome);
+      salvarPerfis(lista);
+      renderizarModalGerenciarPerfis();
+    }
+    input.value = '';
+  });
+
+  document.getElementById('renomearPerfilBtn').addEventListener('click', () => {
+    const select = document.getElementById('listaPerfis');
+    const antigo = select.value;
+    if (!antigo) return;
+    const novo = prompt('Novo nome para "' + antigo + '":');
+    if (!novo || novo === antigo) return;
+    let lista = getPerfis();
+    const idx = lista.indexOf(antigo);
+    if (idx >= 0) {
+      lista[idx] = novo;
+      salvarPerfis(lista);
+      renderizarModalGerenciarPerfis();
+    }
+  });
+
+  document.getElementById('removerPerfilBtn').addEventListener('click', () => {
+    const select = document.getElementById('listaPerfis');
+    const nome = select.value;
+    if (!nome) return;
+    if (!confirm(`Remover perfil "${nome}"?`)) return;
+    let lista = getPerfis();
+    const idx = lista.indexOf(nome);
+    if (idx >= 0) {
+      lista.splice(idx, 1);
+      salvarPerfis(lista);
+      renderizarModalGerenciarPerfis();
+    }
+  });
 }
 
 function showToast(message, type = 'success') {

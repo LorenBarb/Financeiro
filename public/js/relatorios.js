@@ -249,7 +249,8 @@ function renderizarGraficoRecebimentosDiarios() {
   const diasNoMes = new Date(ano, mes + 1, 0).getDate();
   const labels = Array.from({ length: diasNoMes }, (_, i) => String(i + 1).padStart(2, '0'));
 
-  const dataPorFonte = { 'iFood': new Array(diasNoMes).fill(0), 'Uber': new Array(diasNoMes).fill(0), '99': new Array(diasNoMes).fill(0), 'Ajuste': new Array(diasNoMes).fill(0), 'Outro': new Array(diasNoMes).fill(0) };
+  const dataPorFonte = {};
+  FONTES_VALIDAS.forEach(f => { dataPorFonte[f] = new Array(diasNoMes).fill(0); });
 
   const inicioMes = new Date(Date.UTC(ano, mes, 1));
   const fimMes = new Date(Date.UTC(ano, mes + 1, 0, 23, 59, 59, 999));

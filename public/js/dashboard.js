@@ -1,4 +1,4 @@
-let filtroDashboardState = { month: hoje.getUTCMonth(), year: hoje.getUTCFullYear() };
+let filtroDashboardState = { month: hoje.getUTCMonth(), year: hoje.getUTCFullYear(), perfil: 'todos' };
 
 function getAnosDisponiveis() {
   const todosAnos = new Set([...entradas, ...saidas].map(item => new Date(item.data).getUTCFullYear()));
@@ -9,16 +9,18 @@ function getAnosDisponiveis() {
 }
 
 function calcularTotais() {
-  const { month, year } = filtroDashboardState;
+  const { month, year, perfil } = filtroDashboardState;
   const inicioMesFiltro = new Date(Date.UTC(year, month, 1));
   const fimMesFiltro = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
 
-  const entradasAnteriores = entradas.filter(e => new Date(e.data) < inicioMesFiltro);
-  const saidasPagasAnteriores = saidas.filter(s => new Date(s.data) < inicioMesFiltro && s.status === 'pago');
+  const filtroPerfil = (item) => perfil === 'todos' || (item.perfil || '') === perfil;
+
+  const entradasAnteriores = entradas.filter(e => new Date(e.data) < inicioMesFiltro && filtroPerfil(e));
+  const saidasPagasAnteriores = saidas.filter(s => new Date(s.data) < inicioMesFiltro && s.status === 'pago' && filtroPerfil(s));
   const saldoMesAnterior = entradasAnteriores.reduce((a, e) => a + e.valor, 0) - saidasPagasAnteriores.reduce((a, s) => a + s.valor, 0);
 
-  const entradasPeriodo = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMesFiltro && d <= fimMesFiltro; });
-  const saidasPeriodo = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMesFiltro && d <= fimMesFiltro; });
+  const entradasPeriodo = entradas.filter(e => { const d = new Date(e.data); return d >= inicioMesFiltro && d <= fimMesFiltro && filtroPerfil(e); });
+  const saidasPeriodo = saidas.filter(s => { const d = new Date(s.data); return d >= inicioMesFiltro && d <= fimMesFiltro && filtroPerfil(s); });
 
   const totalEntradas = entradasPeriodo.reduce((a, e) => a + e.valor, 0);
   const totalPagamentosRealizados = saidasPeriodo.filter(s => s.status === 'pago').reduce((a, s) => a + s.valor, 0);
@@ -87,6 +89,13 @@ function renderizarFiltrosDashboard() {
           ${anos.map(ano => `<option value="${ano}" ${ano === filtroDashboardState.year ? 'selected' : ''}>${ano}</option>`).join('')}
         </select>
       </div>
+      <div class="flex items-center gap-2">
+        <label for="filtroPerfilDashboard" class="text-sm font-medium text-subtle-text">Perfil:</label>
+        <select id="filtroPerfilDashboard" class="bg-input-bg border-border text-subtle-text text-xs rounded-md focus:ring-secondary focus:border-secondary block p-2 w-auto border">
+          <option value="todos" ${filtroDashboardState.perfil === 'todos' ? 'selected' : ''}>Todos</option>
+          ${getPerfis().map(p => `<option value="${p}" ${filtroDashboardState.perfil === p ? 'selected' : ''}>${p || 'Geral'}</option>`).join('')}
+        </select>
+      </div>
     </div>`;
 
   document.getElementById('filtroMesDashboard').addEventListener('change', e => {
@@ -95,6 +104,10 @@ function renderizarFiltrosDashboard() {
   });
   document.getElementById('filtroAnoDashboard').addEventListener('change', e => {
     filtroDashboardState.year = parseInt(e.target.value);
+    atualizarDashboard();
+  });
+  document.getElementById('filtroPerfilDashboard').addEventListener('change', e => {
+    filtroDashboardState.perfil = e.target.value;
     atualizarDashboard();
   });
 }

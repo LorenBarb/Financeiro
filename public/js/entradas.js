@@ -1,4 +1,4 @@
-let filtroEntradasState = { month: hoje.getUTCMonth(), year: hoje.getUTCFullYear(), source: 'todos', status: 'todos' };
+let filtroEntradasState = { month: hoje.getUTCMonth(), year: hoje.getUTCFullYear(), source: 'todos', status: 'todos', perfil: 'todos' };
 let selectedEntradas = new Set();
 
 function renderizarAbaEntradas() {
@@ -15,7 +15,7 @@ function renderizarAbaEntradas() {
         <h3 class="text-lg font-semibold mb-4 text-light-text">Adicionar Nova Entrada</h3>
         <form id="formEntrada" class="space-y-4">
           <div><label for="fonteEntrada" class="block text-sm font-medium text-subtle-text mb-1">Fonte</label>
-            <select id="fonteEntrada" class="${selectClasses}"><option>iFood</option><option>Uber</option><option>99</option><option>Ajuste</option><option>Outro</option></select></div>
+            <select id="fonteEntrada" class="${selectClasses}">${FONTES_VALIDAS.map(f => `<option>${f}</option>`).join('')}</select></div>
           <div><label for="valorEntrada" class="block text-sm font-medium text-subtle-text mb-1">Valor Bruto</label>
             <input type="text" inputmode="decimal" id="valorEntrada" class="${inputClasses}" placeholder="150,00" required></div>
           <div>
@@ -26,6 +26,8 @@ function renderizarAbaEntradas() {
               <div class="date-input-icon">...</div>
             </div>
           </div>
+          <div><label for="perfilEntrada" class="block text-sm font-medium text-subtle-text mb-1">Perfil</label>
+            <select id="perfilEntrada" class="${selectClasses}">${getPerfis().map(p => `<option value="${p}">${p || 'Geral'}</option>`).join('')}</select></div>
           <div><label for="statusRepasse" class="block text-sm font-medium text-subtle-text mb-1">Status</label>
             <select id="statusRepasse" class="${selectClasses}"><option value="pendente">Pendente</option><option value="resgatado">Resgatado</option></select></div>
           <button type="submit" class="${buttonClasses} mt-2">Adicionar Entrada</button>
@@ -43,14 +45,14 @@ function renderizarAbaEntradas() {
             </select>
             <select id="filtroFonteEntradas" class="${filterSelectClasses}">
               <option value="todos" ${filtroEntradasState.source === 'todos' ? 'selected' : ''}>Todas</option>
-              <option value="iFood" ${filtroEntradasState.source === 'iFood' ? 'selected' : ''}>iFood</option>
-              <option value="Uber" ${filtroEntradasState.source === 'Uber' ? 'selected' : ''}>Uber</option>
-              <option value="99" ${filtroEntradasState.source === '99' ? 'selected' : ''}>99</option>
-              <option value="Ajuste" ${filtroEntradasState.source === 'Ajuste' ? 'selected' : ''}>Ajuste</option>
-              <option value="Outro" ${filtroEntradasState.source === 'Outro' ? 'selected' : ''}>Outro</option>
+              ${FONTES_VALIDAS.map(f => `<option value="${f}" ${filtroEntradasState.source === f ? 'selected' : ''}>${f}</option>`).join('')}
             </select>
             <select id="filtroMesEntradas" class="${filterSelectClasses}">${MESES_NOME.map((mes, i) => `<option value="${i}" ${i === filtroEntradasState.month ? 'selected' : ''}>${mes}</option>`).join('')}</select>
             <select id="filtroAnoEntradas" class="${filterSelectClasses}">${anos.map(ano => `<option value="${ano}" ${ano === filtroEntradasState.year ? 'selected' : ''}>${ano}</option>`).join('')}</select>
+            <select id="filtroPerfilEntradas" class="${filterSelectClasses}">
+              <option value="todos" ${filtroEntradasState.perfil === 'todos' ? 'selected' : ''}>Todos</option>
+              ${getPerfis().map(p => `<option value="${p}" ${filtroEntradasState.perfil === p ? 'selected' : ''}>${p || 'Geral'}</option>`).join('')}
+            </select>
           </div>
         </div>
         <div id="bulkActionsEntradas" class="hidden bg-slate-700/50 p-2 rounded-md mb-4 flex-wrap gap-2 items-center"></div>
@@ -84,7 +86,8 @@ function renderizarAbaEntradas() {
         fonte: form.fonteEntrada.value,
         valor: valor,
         data: form.dataEntrada.value,
-        status: form.statusRepasse.value
+        status: form.statusRepasse.value,
+        perfil: form.perfilEntrada.value
       });
       await carregarDadosCompletos();
       showToast('Entrada adicionada com sucesso!');
@@ -114,6 +117,10 @@ function renderizarAbaEntradas() {
   });
   document.getElementById('filtroStatusEntradas').addEventListener('change', e => {
     filtroEntradasState.status = e.target.value;
+    renderizarListaEntradas();
+  });
+  document.getElementById('filtroPerfilEntradas').addEventListener('change', e => {
+    filtroEntradasState.perfil = e.target.value;
     renderizarListaEntradas();
   });
   document.getElementById('selectAllEntradas').addEventListener('change', (e) => {
@@ -165,7 +172,7 @@ function renderBulkActionsEntradas() {
 function renderizarListaEntradas() {
   const listaEl = document.getElementById('listaEntradas');
   if (!listaEl) return;
-  const { month, year, source, status } = filtroEntradasState;
+  const { month, year, source, status, perfil } = filtroEntradasState;
   const inicio = new Date(Date.UTC(year, month, 1));
   const fim = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
 
@@ -173,6 +180,7 @@ function renderizarListaEntradas() {
     const d = new Date(e.data);
     if (!(d >= inicio && d <= fim)) return false;
     if (source !== 'todos' && e.fonte !== source) return false;
+    if (perfil !== 'todos' && (e.perfil || '') !== perfil) return false;
     if (status === 'todos') return true;
     if (status === 'pendente') return e.status === 'pendente' || !e.status;
     if (status === 'resgatado') return e.status === 'resgatado' || e.status === 'repassado';
@@ -194,7 +202,7 @@ function renderizarListaEntradas() {
       <div class="flex items-center flex-grow gap-4">
         <input type="checkbox" data-id="${e._id}" onchange="handleEntradaSelection(this)" class="item-checkbox flex-shrink-0" ${selectedEntradas.has(e._id) ? 'checked' : ''}>
         <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${CORES_FONTES[e.fonte] || '#6B7280'}"></span>
-        <div><p class="font-semibold text-light-text">${e.fonte}</p><p class="text-sm text-subtle-text">${formatarData(e.data)}</p></div>
+        <div><p class="font-semibold text-light-text">${e.fonte}${e.perfil ? ' · ' + e.perfil : ''}</p><p class="text-sm text-subtle-text">${formatarData(e.data)}</p></div>
       </div>
       <div class="flex items-center gap-2">
         <div class="text-right">
@@ -223,10 +231,11 @@ function mostrarModalEditarEntrada(id) {
     </div>
     <form id="formEditEntrada" class="p-6 space-y-4">
       <input type="hidden" name="id" value="${entrada._id}">
-      <div><label class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select name="fonte" class="${selectClasses}" required><option ${entrada.fonte === 'iFood' ? 'selected' : ''}>iFood</option><option ${entrada.fonte === 'Uber' ? 'selected' : ''}>Uber</option><option ${entrada.fonte === '99' ? 'selected' : ''}>99</option><option ${entrada.fonte === 'Ajuste' ? 'selected' : ''}>Ajuste</option><option ${entrada.fonte === 'Outro' ? 'selected' : ''}>Outro</option></select></div>
+      <div><label class="block text-sm font-medium text-subtle-text mb-1">Fonte</label><select name="fonte" class="${selectClasses}" required>${FONTES_VALIDAS.map(f => `<option ${entrada.fonte === f ? 'selected' : ''}>${f}</option>`).join('')}</select></div>
       <div><label class="block text-sm font-medium text-subtle-text mb-1">Valor Bruto</label><input type="text" inputmode="decimal" name="valor" value="${String(entrada.valor).replace('.', ',')}" class="${inputClasses}" required></div>
       <div><label class="block text-sm font-medium text-subtle-text mb-1">Data</label><input type="date" name="data" value="${dataValor}" class="${inputClasses}" required></div>
       <div><label class="block text-sm font-medium text-subtle-text mb-1">Status</label><select name="status" class="${selectClasses}" required><option value="pendente" ${entrada.status === 'pendente' ? 'selected' : ''}>Pendente</option><option value="resgatado" ${entrada.status === 'resgatado' ? 'selected' : ''}>Resgatado</option></select></div>
+      <div><label class="block text-sm font-medium text-subtle-text mb-1">Perfil</label><select name="perfil" class="${selectClasses}">${getPerfis().map(p => `<option value="${p}" ${(entrada.perfil || '') === p ? 'selected' : ''}>${p || 'Geral'}</option>`).join('')}</select></div>
       <div class="flex justify-end gap-2 pt-4">
         <button type="button" class="close-modal-btn py-2 px-4 rounded-md border border-border hover:bg-border">Cancelar</button>
         <button type="submit" class="${buttonClasses} !w-auto">Salvar</button>
@@ -240,7 +249,7 @@ function mostrarModalEditarEntrada(id) {
     const valor = parseFloat(form.valor.value.replace(',', '.'));
     if (isNaN(valor) || valor <= 0) { showInfoModal('Valor inválido!'); return; }
     try {
-      await editarItem('entradas', form.id.value, { fonte: form.fonte.value, valor, data: form.data.value, status: form.status.value });
+      await editarItem('entradas', form.id.value, { fonte: form.fonte.value, valor, data: form.data.value, status: form.status.value, perfil: form.perfil.value });
       hideModal(modals.editEntrada);
       await carregarDadosCompletos();
       showToast('Entrada atualizada com sucesso!');

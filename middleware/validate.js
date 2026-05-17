@@ -2,7 +2,8 @@ function validarEntrada(req, res, next) {
   const { fonte, valor, data, status } = req.body;
   const erros = [];
 
-  if (!fonte || !['iFood', 'Uber', '99', 'Ajuste', 'Outro'].includes(fonte)) {
+  const FONTES_VALIDAS = ['iFood', 'Uber', '99', 'Salário', 'Vale Refeição', 'Vale Alimentação', 'Cartão Alvo', 'Ajuste', 'Outro'];
+  if (!fonte || !FONTES_VALIDAS.includes(fonte)) {
     erros.push('Fonte inválida');
   }
 

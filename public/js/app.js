@@ -52,5 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  document.getElementById('btnGerenciarPerfis').addEventListener('click', (e) => {
+    e.stopPropagation();
+    renderizarModalGerenciarPerfis();
+  });
+
   carregarDadosCompletos();
 });

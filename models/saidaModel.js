@@ -29,7 +29,10 @@ const saidaSchema = new mongoose.Schema({
     enum: ['em aberto', 'pago'],
     default: 'em aberto'
   },
-  // Campo para vincular o dízimo à entrada original
+  perfil: {
+    type: String,
+    default: ''
+  },
   entradaId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Entrada',

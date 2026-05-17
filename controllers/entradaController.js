@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 const Entrada = require('../models/entradaModel');
 const Saida = require('../models/saidaModel');
 
+const FONTES_SEM_DIZIMO = ['Ajuste', 'Vale Refeição', 'Vale Alimentação', 'Cartão Alvo'];
+
+function deveGerarDizimo(fonte) {
+  return !FONTES_SEM_DIZIMO.includes(fonte);
+}
+
 exports.listar = async (req, res, next) => {
   try {
     const entradas = await Entrada.find().sort({ data: -1 });
@@ -15,11 +21,11 @@ exports.criar = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { fonte, valor, data, status } = req.body;
-    const entrada = new Entrada({ fonte, valor, data, status });
+    const { fonte, valor, data, status, perfil } = req.body;
+    const entrada = new Entrada({ fonte, valor, data, status, perfil });
     const newEntrada = await entrada.save({ session });
 
-    if (newEntrada.valor > 0 && newEntrada.fonte !== 'Ajuste') {
+    if (newEntrada.valor > 0 && deveGerarDizimo(newEntrada.fonte)) {
       const dizimo = new Saida({
         descricao: `Dízimo sobre ${newEntrada.fonte}`,
         categoria: 'Dízimo',
@@ -52,17 +58,17 @@ exports.atualizar = async (req, res, next) => {
       return res.status(404).json({ message: 'Entrada não encontrada' });
     }
 
-    const updatedEntrada = await Entrada.findByIdAndUpdate(id, req.body, { new: true, session });
+    const updatedEntrada = await Entrada.findByIdAndUpdate(id, req.body, { new: true, runValidators: true, session });
     if (!updatedEntrada) {
       throw new Error('Falha ao atualizar a entrada');
     }
 
-    const eraAjuste = entradaOriginal.fonte === 'Ajuste';
-    const virouAjuste = updatedEntrada.fonte === 'Ajuste';
+    const eraSemDizimo = !deveGerarDizimo(entradaOriginal.fonte);
+    const virouSemDizimo = !deveGerarDizimo(updatedEntrada.fonte);
 
-    if (!eraAjuste && virouAjuste) {
+    if (!eraSemDizimo && virouSemDizimo) {
       await Saida.findOneAndDelete({ entradaId: updatedEntrada._id }, { session });
-    } else if (eraAjuste && !virouAjuste) {
+    } else if (eraSemDizimo && !virouSemDizimo) {
       if (updatedEntrada.valor > 0) {
         const dizimo = new Saida({
           descricao: `Dízimo sobre ${updatedEntrada.fonte}`,
@@ -75,7 +81,7 @@ exports.atualizar = async (req, res, next) => {
         });
         await dizimo.save({ session });
       }
-    } else if (!eraAjuste && !virouAjuste) {
+    } else if (!eraSemDizimo && !virouSemDizimo) {
       const novoValorDizimo = updatedEntrada.valor * 0.1;
       const dizimoExistente = await Saida.findOneAndUpdate(
         { entradaId: updatedEntrada._id },
