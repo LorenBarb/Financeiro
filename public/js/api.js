@@ -46,6 +46,7 @@ async function adicionarSaida(formData) {
       data: dataParcela.toISOString().split('T')[0],
       isCustoNegocio: formData.isCustoNegocio || false,
       status: formData.status,
+      perfil: formData.perfil || '',
     });
   }
 }
